@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/fakerly/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fakerly — Free Mock Data Generator | Fake JSON, CSV & SQL Test Data</title>
+<meta name="description" content="Fakerly is a free mock data generator: design a field schema, generate thousands of realistic test rows with a deterministic seed, correlate fields like city-country and age-job title, inject errors for dirty-data testing, and export JSON, CSV or SQL INSERTs. No signup.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Ccircle cx='32' cy='26' r='11' fill='%23FFFBEB'/%3E%3Crect x='14' y='42' width='36' height='7' rx='3.5' fill='%23F97066'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: { cream: '#FFFBEB', coral: '#F97066', deepteal: '#0F766E' },
+      fontFamily: { display: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+    }
+  }
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  input[type=range] { accent-color: #F97066; }
+  .field-card { transition: box-shadow .15s ease, transform .15s ease; }
+  .field-card:hover { box-shadow: 0 8px 24px -12px rgba(15,118,110,.35); }
+  .data-table th { position: sticky; top: 0; }
+  @media print { .no-print { display: none !important; } }
+  select, input, textarea { font-size: 14px; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a mock data generator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A mock data generator is a tool that creates realistic-looking fake data — names, emails, phone numbers, addresses, dates, numbers and more — for software testing and development. Instead of hand-writing test fixtures or risking real customer data, developers generate thousands of plausible rows in seconds and load them into apps, databases or APIs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Fakerly really free and unlimited?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Fakerly is completely free with no signup, no paywall, no watermark and no usage caps. You can define any schema, generate up to 10,000 rows per run, and export JSON, CSV and SQL as often as you like. Everything runs in your browser, so there is nothing to pay for and nothing to throttle."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the deterministic seed work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Fakerly uses a seeded pseudo-random number generator (mulberry32). The seed plus your schema fully determine the output: enter the same seed and keep the schema identical and you get the exact same dataset, row for row, every time. Share the seed with your team to reproduce test fixtures, or change it to get a fresh dataset."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which export formats does Fakerly support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Fakerly exports pretty-printed JSON, RFC-4180-style CSV with correct quoting, and ready-to-run SQL INSERT statements with proper escaping and NULL handling. The SQL export lets you set the target table name and chunks large datasets into multi-row INSERT statements, so you can seed a database in one paste."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I generate dirty data for testing edge cases?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Fakerly has an error-injection mode: set a percentage and it randomly injects nulls, duplicate values copied from earlier rows, and malformed values such as invalid emails or impossible dates. Because injection uses its own seeded stream, dirty datasets are reproducible too — perfect for testing validation logic."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does my data leave my browser? Is it private?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Everything happens locally in your browser with JavaScript. Fakerly makes no network requests, stores no data on any server, and has no backend or AI calls. Your schema and generated rows never leave your device, so it is safe to model even sensitive-looking structures."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body id="top" class="bg-cream text-slate-800 antialiased">
+
+<!-- ======================= HEADER ======================= -->
+<header class="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-orange-200/70">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-deepteal shadow-sm">
+        <svg viewBox="0 0 64 64" class="h-5 w-5" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="#FFFBEB"/><rect x="14" y="42" width="36" height="7" rx="3.5" fill="#F97066"/></svg>
+      </span>
+      <span class="text-xl font-extrabold tracking-tight text-deepteal">Fakerly</span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-semibold">
+      <a href="#top" class="text-slate-600 hover:text-deepteal">Home</a>
+      <a href="https://fixoraa.tech" class="rounded-full bg-deepteal px-4 py-2 text-white hover:bg-teal-800">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= TOOL ======================= -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="text-center max-w-2xl mx-auto">
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-coral/10 border border-coral/30 text-coral px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+      Unlimited Free Usage
+    </span>
+    <h1 class="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">Fake data that <span class="text-coral">looks real</span>,<br class="hidden sm:block"> reproduces exactly.</h1>
+    <p class="mt-3 text-slate-600">Design a field schema, generate thousands of realistic test rows with a deterministic seed, correlate fields, inject errors on purpose — then export JSON, CSV or SQL.</p>
+  </div>
+
+  <div class="mt-8 grid gap-6 lg:grid-cols-12">
+
+    <!-- ============ LEFT: SCHEMA BUILDER ============ -->
+    <section class="lg:col-span-4 rounded-2xl bg-white border border-orange-200/70 shadow-sm p-5" aria-label="Schema builder">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-extrabold text-deepteal">Schema Builder</h2>
+        <span id="fieldCount" class="text-xs font-semibold text-slate-500">0 fields</span>
+      </div>
+
+      <div id="fieldList" class="mt-4 space-y-3 max-h-[520px] overflow-y-auto pr-1"></div>
+
+      <div class="mt-4 rounded-xl bg-cream border border-orange-200/70 p-3">
+        <label for="typeSelect" class="text-xs font-bold uppercase tracking-wide text-slate-500">Add a field</label>
+        <div class="mt-2 flex gap-2">
+          <select id="typeSelect" class="flex-1 rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deepteal"></select>
+          <button id="addFieldBtn" class="rounded-lg bg-coral px-4 py-2 text-sm font-bold text-white hover:brightness-95">Add</button>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <button id="sampleBtn" class="flex-1 rounded-lg border border-deepteal/40 text-deepteal px-3 py-1.5 text-xs font-bold hover:bg-deepteal/5">Load sample schema</button>
+          <button id="clearBtn" class="flex-1 rounded-lg border border-slate-300 text-slate-500 px-3 py-1.5 text-xs font-bold hover:bg-slate-50">Clear all</button>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-4 rounded-xl border border-orange-200/70 p-4">
+        <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wide">Dataset settings</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="rowCount" class="text-xs font-bold text-slate-500">Rows (max 10,000)</label>
+            <input id="rowCount" type="number" min="0" max="10000" value="100" class="mt-1 w-full rounded-lg border border-orange-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-deepteal">
+          </div>
+          <div>
+            <label for="seedInput" class="text-xs font-bold text-slate-500">Seed</label>
+            <div class="mt-1 flex gap-1.5">
+              <input id="seedInput" type="number" value="12345" class="w-full rounded-lg border border-orange-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-deepteal">
+              <button id="diceBtn" title="Random seed" class="shrink-0 rounded-lg bg-deepteal/10 px-2.5 text-deepteal font-bold hover:bg-deepteal/20">⚄</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="errorRate" class="text-xs font-bold text-slate-500">Error injection <span class="font-normal">(dupes · nulls · malformed)</span></label>
+            <span id="errorRateLabel" class="text-xs font-extrabold text-coral">0%</span>
+          </div>
+          <input id="errorRate" type="range" min="0" max="30" step="1" value="0" class="mt-1 w-full">
+        </div>
+        <div>
+          <label for="tableName" class="text-xs font-bold text-slate-500">SQL table name</label>
+          <input id="tableName" type="text" value="fakerly_data" spellcheck="false" class="mt-1 w-full rounded-lg border border-orange-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-deepteal">
+        </div>
+        <button id="generateBtn" class="w-full rounded-xl bg-deepteal py-3 text-white font-extrabold text-base hover:bg-teal-800 active:scale-[0.99]">
+          Generate data
+        </button>
+        <p class="text-[11px] leading-relaxed text-slate-500">Deterministic: the same seed + the same schema reproduces the dataset <em>exactly</em>. Share the seed with your team to replay fixtures.</p>
+      </div>
+    </section>
+
+    <!-- ============ RIGHT: PREVIEW + EXPORT ============ -->
+    <section class="lg:col-span-8 rounded-2xl bg-white border border-orange-200/70 shadow-sm p-5 flex flex-col" aria-label="Data preview and export">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-extrabold text-deepteal">Data Preview</h2>
+        <p id="statusLine" class="text-xs text-slate-500">Define fields on the left, then hit Generate.</p>
+      </div>
+
+      <!-- export bar -->
+      <div class="no-print mt-3 flex flex-wrap gap-2 rounded-xl bg-cream border border-orange-200/70 p-3">
+        <button id="copyJsonBtn" class="rounded-lg bg-deepteal px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-800">Copy JSON</button>
+        <button id="dlJsonBtn" class="rounded-lg border border-deepteal/40 px-3.5 py-2 text-xs font-bold text-deepteal hover:bg-deepteal/5">JSON ↓</button>
+        <button id="dlCsvBtn" class="rounded-lg border border-deepteal/40 px-3.5 py-2 text-xs font-bold text-deepteal hover:bg-deepteal/5">CSV ↓</button>
+        <button id="copySqlBtn" class="rounded-lg bg-coral px-3.5 py-2 text-xs font-bold text-white hover:brightness-95">Copy SQL</button>
+        <button id="dlSqlBtn" class="rounded-lg border border-coral/50 px-3.5 py-2 text-xs font-bold text-coral hover:bg-coral/5">SQL ↓</button>
+        <span id="copyToast" class="hidden items-center text-xs font-bold text-deepteal ml-1">Copied!</span>
+      </div>
+
+      <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center py-16 text-slate-400">
+        <svg class="h-14 w-14 mb-4 text-orange-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p class="font-semibold">No data yet</p>
+        <p class="text-sm mt-1 max-w-xs">Add fields in the schema builder and press <span class="font-bold text-deepteal">Generate data</span> to preview rows here.</p>
+      </div>
+
+      <div id="tableWrap" class="hidden mt-3 flex-1 overflow-auto rounded-xl border border-orange-200/70 max-h-[560px]">
+        <table class="data-table w-full text-sm border-collapse bg-white">
+          <thead id="previewHead" class="bg-deepteal text-white text-xs uppercase tracking-wide"></thead>
+          <tbody id="previewBody" class="divide-y divide-orange-100"></tbody>
+        </table>
+      </div>
+
+      <div id="pager" class="hidden no-print mt-3 flex items-center justify-between text-sm">
+        <button id="prevPage" class="rounded-lg border border-orange-200 px-3 py-1.5 font-bold text-slate-600 hover:bg-cream disabled:opacity-40">← Prev</button>
+        <span id="pageInfo" class="text-xs font-semibold text-slate-500"></span>
+        <button id="nextPage" class="rounded-lg border border-orange-200 px-3 py-1.5 font-bold text-slate-600 hover:bg-cream disabled:opacity-40">Next →</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- differentiator cards -->
+  <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl bg-white border border-orange-200/70 p-5">
+      <div class="text-2xl">🎲</div>
+      <h3 class="mt-2 font-extrabold text-slate-800">Deterministic seed</h3>
+      <p class="mt-1 text-sm text-slate-600">Same seed + schema = byte-identical dataset. Replay fixtures, share seeds with your team, debug with confidence.</p>
+    </div>
+    <div class="rounded-2xl bg-white border border-orange-200/70 p-5">
+      <div class="text-2xl">🔗</div>
+      <h3 class="mt-2 font-extrabold text-slate-800">Correlated fields</h3>
+      <p class="mt-1 text-sm text-slate-600">Link emails to names, countries to cities, job titles to ages. Your data stays believable, row after row.</p>
+    </div>
+    <div class="rounded-2xl bg-white border border-orange-200/70 p-5">
+      <div class="text-2xl">🧪</div>
+      <h3 class="mt-2 font-extrabold text-slate-800">Error injection</h3>
+      <p class="mt-1 text-sm text-slate-600">Dial in a percentage of dupes, nulls and malformed values to stress-test validation and error handling.</p>
+    </div>
+    <div class="rounded-2xl bg-white border border-orange-200/70 p-5">
+      <div class="text-2xl">🗄️</div>
+      <h3 class="mt-2 font-extrabold text-slate-800">One-click SQL</h3>
+      <p class="mt-1 text-sm text-slate-600">Export ready-to-run INSERT statements with proper escaping and chunking. Seed your database in one paste.</p>
+    </div>
+  </div>
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= SEO ARTICLE ======================= -->
+<section class="mx-auto max-w-4xl px-4 sm:px-6 pb-4">
+  <article id="seo-article" class="prose-article rounded-2xl bg-white border border-orange-200/70 p-6 sm:p-10 text-slate-700 leading-relaxed">
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Mock Data Generators: The Complete Guide to Fake Data for Testing</h2>
+
+    <p class="mt-4">Every developer has been there: you have just built a beautiful dashboard, a signup flow, or a reporting pipeline, and now you need to see it with data in it. Real user data is off-limits — it is private, regulated, and messy in ways you cannot control. Hand-typing a dozen rows is slow and gives you a false sense of confidence. This is exactly the problem a <strong>mock data generator</strong> solves. It produces realistic fake data — names, emails, phone numbers, addresses, dates, numbers, identifiers — on demand, in the volume and shape your tests require, so you can build, break, and verify software without ever touching production records.</p>
+
+    <p class="mt-4">A good <strong>fake data generator</strong> is not just a random string machine. The difference between useless noise and genuinely useful test data comes down to realism and control. "asdf qwer zxcv" tells you nothing about how your email validator, your table layout, or your search index behaves. "Priya Sharma, priya.sharma42@example.com, +91 98220 44510, Mumbai, India" exercises your code the way the real world will. The best tools let you define a schema — the columns you need — configure each field's type and constraints, and then generate thousands of rows that respect those rules. That generated dataset becomes a fixture you can load into a local database, feed to an API, paste into a spreadsheet, or commit alongside your tests.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Why realistic test data matters more than you think</h3>
+    <p class="mt-3">Bugs love the gap between the data you imagined and the data that actually arrives. Consider a few classics. A name field that was only ever tested with "John Smith" explodes on "María José García-López". A phone column sized for ten digits silently truncates international numbers. A date picker tested only in January never meets February 29th. An analytics query that ran fine on 50 rows times out at 5 million. A <strong>test data generator</strong> closes these gaps cheaply: generate a few thousand rows with international names, varied phone formats, edge-case dates, and realistic distributions, and entire classes of bugs surface before your users find them.</p>
+    <p class="mt-3">There is also a compliance angle that keeps getting more important. Regulations like the GDPR, CCPA, and their counterparts worldwide make copying production databases into staging environments legally risky. Real customer data in a test environment is a breach waiting to happen — test dumps get emailed, committed to repositories, and left on laptops. Generating <strong>dummy data for testing</strong> sidesteps the problem entirely: nothing in the dataset corresponds to a real person, so there is nothing to leak, nothing to anonymize, and nothing to audit.</p>
+    <p class="mt-3">Finally, realistic data makes development faster and demos better. A CRM full of "Test User 1" through "Test User 400" is hard to evaluate; a CRM full of plausible people with companies, job titles, cities, and signup dates lets you actually see whether your filters, sorts, and charts make sense. Sales engineers and designers benefit just as much as developers — a prototype populated with believable content sells the vision, while lorem ipsum everywhere invites nitpicking about the wrong things.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">The building blocks: field types every generator should cover</h3>
+    <p class="mt-3">Most test datasets are built from the same vocabulary of field types. Personal fields — full names, emails, phone numbers, addresses, cities, countries, dates of birth — form the backbone of user, customer, and employee fixtures. Identifiers like UUIDs, sequential IDs, and usernames give rows stable keys. Numeric fields with configurable ranges cover ages, prices, quantities, ratings, and scores. Dates bounded to a range let you model signup dates, order timestamps, and subscription renewals. Booleans model flags like "is active" or "email verified". Company names and job titles make B2B fixtures believable. Free-text fields filled with lorem-style sentences test text areas, truncation, and search. And a custom list type — pick from values you supply — covers enums like plan tiers, statuses, and categories.</p>
+    <p class="mt-3">The mark of a serious tool is configurability within each type. A number field should accept a minimum, maximum, and decimal precision. A date field should accept a start and end. A boolean should accept the probability of "true". An email field should optionally derive from the name in the same row, so priya.sharma@example.com actually belongs to Priya Sharma instead of a random stranger. These small controls are what turn a generic dump into a dataset shaped like your domain.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Deterministic seeds: randomness you can replay</h3>
+    <p class="mt-3">Pure randomness is a testing liability. If a test fails on a dataset you can never regenerate, you cannot debug it, and you cannot prove the fix worked. The solution is a <strong>seeded random number generator</strong>: an algorithm like mulberry32 that produces a fixed sequence of pseudo-random values from a starting number — the seed. Same seed plus same schema equals the exact same dataset, row for row, every time, on every machine. Change the seed and you get a completely fresh dataset.</p>
+    <p class="mt-3">This determinism unlocks real workflows. Commit the seed alongside your schema and your integration tests become reproducible: CI generates the identical fixture set on every run. When a bug report says "it broke on row 4,102", you regenerate with the same seed and row 4,102 is right there waiting. Share the seed with a teammate instead of emailing a 50 MB CSV — they regenerate it locally in seconds. And when you want fuzz-style coverage, you loop seeds: seed 1 through seed 50 gives you fifty distinct datasets for the price of fifty integers. Fakerly is built around this principle — the seed box sits front and center, and generation never touches a non-deterministic source.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Correlated fields: data that stays believable</h3>
+    <p class="mt-3">Independent random columns produce absurd rows: a city of "Tokyo" in the country "Brazil", a 19-year-old "Chief Technology Officer", an email address belonging to nobody in the row. Real data is correlated, and test data should be too — because your code often assumes those correlations. A signup form might autocomplete country from city. A hiring dashboard might flag age-title mismatches. An email service expects the address to match the account holder.</p>
+    <p class="mt-3">Correlated generation solves this by letting fields reference each other. A country field can look at the city field in the same row and return that city's actual country. An email field can derive its local part from the row's name field. A job-title field can read the row's age and pick a plausible seniority band — interns and junior roles for the early twenties, senior and lead titles for the forties and beyond. The result reads like a real export rather than a random collage, which means your UI, your validation rules, and your analytics are tested against something shaped like reality.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Dirty data on purpose: error injection</h3>
+    <p class="mt-3">Here is an uncomfortable truth: most production data is dirty. Users skip optional fields, paste phone numbers into email boxes, and submit forms twice. Imports from legacy systems arrive with impossible dates and mojibake. If your tests only ever see pristine rows, your error handling is untested — and error handling is exactly the code that runs at 3 AM.</p>
+    <p class="mt-3"><strong>Error injection</strong> flips the script: you deliberately corrupt a configurable percentage of the dataset and verify your system copes. The three classic corruptions cover most real-world mess. <em>Nulls</em> — empty values where a value was expected — test optional-field handling, default values, and NOT NULL constraints. <em>Duplicates</em> — values copied from earlier rows — test unique constraints, idempotency keys, and deduplication logic. <em>Malformed values</em> — "not-an-email" in an email column, "99/99/9999" in a date column — test validators, parsers, and import pipelines. Set the rate to 5% for a light dusting or 25% for a torture test. Because the corruption uses its own seeded stream, the dirty dataset is reproducible too: the same rows break in the same places, so you can verify each fix.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Export formats: JSON, CSV, and SQL</h3>
+    <p class="mt-3">Generated data is only useful if it flows into your stack, so export formats matter. <strong>JSON test data</strong> is the lingua franca of APIs and JavaScript: pretty-printed arrays of objects drop straight into fetch mocks, Postman collections, and frontend fixtures. <strong>CSV</strong> is the universal interchange format — spreadsheets, data warehouses, and bulk importers all speak it — but only if quoting is done right: values containing commas, quotes, or newlines must be wrapped in quotes with inner quotes doubled, per RFC 4180, or your import will silently shred rows.</p>
+    <p class="mt-3">For backend developers, <strong>SQL INSERT export</strong> is the killer feature. Hand-writing seed scripts for a ten-column table is tedious and error-prone; a generator that emits ready-to-run INSERT statements — with strings properly escaped, empty values rendered as NULL, booleans as TRUE/FALSE, and large datasets chunked into multi-row statements — turns database seeding into a single paste. Set the table name, generate, copy, run. Your local database, your staging environment, and your demo instance all get the same believable data with zero manual SQL.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Best practices for working with generated data</h3>
+    <p class="mt-4">A few habits separate teams that benefit from mock data from teams that just accumulate CSVs. <strong>Version your schemas and seeds</strong> alongside your code — a fixture nobody can regenerate is technical debt. <strong>Match distributions, not just types</strong>: if 70% of your real users are on the free plan, your custom list should reflect that, or your load tests will model a fantasy. <strong>Test the edges deliberately</strong>: minimum and maximum lengths, boundary dates, zero and negative numbers, and unicode names deserve dedicated rows, not accidental coverage. <strong>Keep PII-shaped fields clearly fake</strong> by using example domains and obviously generated phone patterns in shared fixtures, so nobody mistakes test data for real customer records. And <strong>regenerate, don't hand-edit</strong>: if a fixture needs a new column, update the schema and regenerate from the same seed rather than patching CSVs by hand, which silently breaks reproducibility.</p>
+
+    <h3 class="mt-8 text-xl font-extrabold text-slate-900">Why Fakerly</h3>
+    <p class="mt-3">Fakerly was built to put these ideas in one place with zero friction. Define your schema visually — add, rename, remove, and configure fields with a couple of clicks. Generate up to 10,000 rows per run with a deterministic seed you control. Correlate emails to names, countries to cities, and job titles to ages. Inject errors at any percentage to test your validation. Export JSON, CSV, or ready-to-run SQL INSERTs. There is no signup, no paywall, no watermark, and no usage limit — and because everything runs locally in your browser, your schemas never leave your machine. Whether you need to <strong>generate JSON test data</strong> for an API mock, bulk CSV rows for an import test, or a full SQL seed script for a fresh database, Fakerly gets you from "I need data" to "data's ready" in under a minute.</p>
+  </article>
+
+  <!-- ======================= FAQS ======================= -->
+  <div class="mt-8 rounded-2xl bg-white border border-orange-200/70 p-6 sm:p-10">
+    <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Frequently asked questions</h2>
+    <div class="mt-6 space-y-5">
+      <div>
+        <h3 class="font-bold text-slate-900">What is a mock data generator?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">A mock data generator is a tool that creates realistic-looking fake data — names, emails, phone numbers, addresses, dates, numbers and more — for software testing and development. Instead of hand-writing test fixtures or risking real customer data, developers generate thousands of plausible rows in seconds and load them into apps, databases or APIs.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-slate-900">Is Fakerly really free and unlimited?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">Yes. Fakerly is completely free with no signup, no paywall, no watermark and no usage caps. You can define any schema, generate up to 10,000 rows per run, and export JSON, CSV and SQL as often as you like. Everything runs in your browser, so there is nothing to pay for and nothing to throttle.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-slate-900">How does the deterministic seed work?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">Fakerly uses a seeded pseudo-random number generator (mulberry32). The seed plus your schema fully determine the output: enter the same seed and keep the schema identical and you get the exact same dataset, row for row, every time. Share the seed with your team to reproduce test fixtures, or change it to get a fresh dataset.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-slate-900">Which export formats does Fakerly support?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">Fakerly exports pretty-printed JSON, RFC-4180-style CSV with correct quoting, and ready-to-run SQL INSERT statements with proper escaping and NULL handling. The SQL export lets you set the target table name and chunks large datasets into multi-row INSERT statements, so you can seed a database in one paste.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-slate-900">Can I generate dirty data for testing edge cases?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">Yes. Fakerly has an error-injection mode: set a percentage and it randomly injects nulls, duplicate values copied from earlier rows, and malformed values such as invalid emails or impossible dates. Because injection uses its own seeded stream, dirty datasets are reproducible too — perfect for testing validation logic.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-slate-900">Does my data leave my browser? Is it private?</h3>
+        <p class="mt-1 text-slate-600 text-[15px] leading-relaxed">Everything happens locally in your browser with JavaScript. Fakerly makes no network requests, stores no data on any server, and has no backend or AI calls. Your schema and generated rows never leave your device, so it is safe to model even sensitive-looking structures.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FOOTER ======================= -->
+<footer class="border-t border-orange-200/70 mt-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2.5">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-deepteal">
+        <svg viewBox="0 0 64 64" class="h-4 w-4" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="#FFFBEB"/><rect x="14" y="42" width="36" height="7" rx="3.5" fill="#F97066"/></svg>
+      </span>
+      <span class="font-extrabold text-deepteal">Fakerly</span>
+      <span class="text-sm text-slate-500">— realistic mock data, free forever.</span>
+    </div>
+    <nav class="flex items-center gap-5 text-sm font-semibold">
+      <a href="#top" class="text-slate-600 hover:text-deepteal">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-600 hover:text-deepteal">More Tools</a>
+    </nav>
+  </div>
+<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+
+<script id="fakerly-core">
+'use strict';
+/* ============================================================================
+   Fakerly core — pure, deterministic mock-data generation logic (no DOM).
+   This file is inlined VERBATIM into fakerly.html at build time
+   (<script id="fakerly-core">) and exercised directly by the Node test suite.
+   ============================================================================ */
+
+/* Seeded PRNG (mulberry32). Same seed -> identical sequence, every time. */
+function mulberry32(a) {
+  a = a >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function clampNum(v, min, max, fb) {
+  v = Number(v);
+  if (!isFinite(v)) return fb;
+  return Math.min(max, Math.max(min, v));
+}
+
+function pick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
+
+function randInt(rng, min, max) {
+  min = Math.ceil(min); max = Math.floor(max);
+  if (max < min) { var t = min; min = max; max = t; }
+  return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function cleanToken(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/* ------------------------------- data pools ------------------------------ */
+
+var FIRST_NAMES = [
+  'James','Mary','Robert','Jennifer','Michael','Linda','William','Emma','David','Olivia',
+  'Daniel','Sophia','Matthew','Ava','Christopher','Mia','Andrew','Lucas','Ethan','Priya',
+  'Aarav','Ananya','Rohan','Sneha','Chen','Yuki','Mateo','Sofia','Liam','Noah',
+  'Fatima','Omar','Lena','Jonas','Pierre','Camille','Diego','Valentina','Ivan','Aisha'
+];
+
+var LAST_NAMES = [
+  'Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Patel','Sharma',
+  'Khan','Kim','Nguyen','Tanaka','Silva','Rossi','Muller','Dubois','Novak','Kowalski',
+  'Andersen','Larsen','Costa','Santos','Weber','Fischer','Ali','Hassan','Okafor','Adeyemi',
+  'Murphy','Kelly','Singh','Gupta','Reddy','Iyer','Fernandez','Lopez','Haddad','Nakamura'
+];
+
+var CITY_COUNTRY = [
+  { city: 'New York', country: 'United States' },
+  { city: 'Los Angeles', country: 'United States' },
+  { city: 'Chicago', country: 'United States' },
+  { city: 'London', country: 'United Kingdom' },
+  { city: 'Manchester', country: 'United Kingdom' },
+  { city: 'Mumbai', country: 'India' },
+  { city: 'Delhi', country: 'India' },
+  { city: 'Bangalore', country: 'India' },
+  { city: 'Tokyo', country: 'Japan' },
+  { city: 'Osaka', country: 'Japan' },
+  { city: 'Sydney', country: 'Australia' },
+  { city: 'Melbourne', country: 'Australia' },
+  { city: 'Berlin', country: 'Germany' },
+  { city: 'Munich', country: 'Germany' },
+  { city: 'Paris', country: 'France' },
+  { city: 'Lyon', country: 'France' },
+  { city: 'Toronto', country: 'Canada' },
+  { city: 'Vancouver', country: 'Canada' },
+  { city: 'Sao Paulo', country: 'Brazil' },
+  { city: 'Rio de Janeiro', country: 'Brazil' },
+  { city: 'Lagos', country: 'Nigeria' },
+  { city: 'Nairobi', country: 'Kenya' },
+  { city: 'Cape Town', country: 'South Africa' },
+  { city: 'Dubai', country: 'United Arab Emirates' },
+  { city: 'Singapore', country: 'Singapore' },
+  { city: 'Seoul', country: 'South Korea' },
+  { city: 'Mexico City', country: 'Mexico' },
+  { city: 'Buenos Aires', country: 'Argentina' },
+  { city: 'Amsterdam', country: 'Netherlands' },
+  { city: 'Stockholm', country: 'Sweden' },
+  { city: 'Cairo', country: 'Egypt' },
+  { city: 'Bangkok', country: 'Thailand' },
+  { city: 'Jakarta', country: 'Indonesia' },
+  { city: 'Manila', country: 'Philippines' },
+  { city: 'Istanbul', country: 'Turkey' },
+  { city: 'Madrid', country: 'Spain' },
+  { city: 'Rome', country: 'Italy' },
+  { city: 'Dublin', country: 'Ireland' },
+  { city: 'Auckland', country: 'New Zealand' },
+  { city: 'Zurich', country: 'Switzerland' }
+];
+
+var COMPANIES = [
+  'NovaTech Solutions','Brightline Media','CloudNine Systems','Datawise Labs','Vertex Works',
+  'BluePeak Analytics','QuantumLeap Inc','Skyline Digital','PixelForge Studio','Nexora Group',
+  'Ironclad Security','Lumen Health','OrbitPay','FreshCart','SwiftLogix',
+  'GreenLeaf Energy','AeroDynamics Co','MindMesh AI','Harbor Freight Labs','Copperline Foods',
+  'Zenith Robotics','PaperTrail Docs','VoltEdge','Northwind Traders'
+];
+
+var JOB_TITLES = {
+  junior: ['Junior Developer','Intern','Support Associate','Junior Designer','Trainee Analyst','QA Intern','Helpdesk Technician'],
+  mid: ['Software Engineer','Marketing Manager','Data Analyst','UX Designer','Accountant','DevOps Engineer','Content Strategist','Sales Executive'],
+  senior: ['Senior Engineer','Senior Designer','Product Manager','Team Lead','Finance Manager','Senior Data Scientist','Engineering Manager'],
+  lead: ['CTO','VP of Engineering','Director of Product','Head of Design','Founder','Chief Data Officer','Principal Architect']
+};
+var ALL_JOBS = JOB_TITLES.junior.concat(JOB_TITLES.mid, JOB_TITLES.senior, JOB_TITLES.lead);
+
+var LOREM_WORDS = (
+  'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore ' +
+  'et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ' +
+  'ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla ' +
+  'pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim ' +
+  'id est laborum perspiciatis unde omnis iste natus error voluptatem accusantium doloremque laudantium ' +
+  'totam rem aperiam eaque ab illo inventore veritatis quasi architecto beatae vitae dicta explicabo ' +
+  'nemo enim ipsam voluptatem quia voluptas aspernatur odit aut fugit consequuntur magni dolores eos ' +
+  'ratione sequi nesciunt neque porro quisquam dolorem numquam eius modi tempora incidunt magnam quaerat'
+).split(' ');
+
+var EMAIL_DOMAINS = ['gmail.com','yahoo.com','outlook.com','example.com','mail.com','protonmail.com','hotmail.com','icloud.com'];
+
+var PHONE_FORMATS = [
+  '+1 (###) ###-####',
+  '+44 7### ### ###',
+  '+91 ##### #####',
+  '+61 4## ### ###',
+  '+49 1## ### ####',
+  '+33 # ## ## ## ##',
+  '+81 ##-####-####',
+  '+1 ###-###-####'
+];
+
+var STREETS = [
+  'Maple Street','Oak Avenue','Cedar Lane','Park Road','Sunset Boulevard','Elm Drive',
+  'Willow Way','Birch Court','Chestnut Street','River Road','Hillcrest Avenue','Lakeview Drive',
+  'Meadow Lane','Pine Street','Walnut Avenue','Rosewood Drive','Harbor Street','Summit Avenue'
+];
+
+var MALFORMED = {
+  email: 'not-an-email@@',
+  phone: 'abc-def-ghij',
+  date: '99/99/9999',
+  number: 'NaN-ish',
+  age: 'old',
+  boolean: 'maybe',
+  uuid: 'zzzz-not-a-uuid',
+  name: '12345',
+  city: '???',
+  country: '???',
+  address: '???',
+  company: '',
+  job: '',
+  lorem: '###',
+  list: '###BROKEN###'
+};
+
+/* ------------------------------ field types ------------------------------ */
+
+var FIELD_TYPES = [
+  { type: 'name',    label: 'Full Name' },
+  { type: 'email',   label: 'Email' },
+  { type: 'phone',   label: 'Phone' },
+  { type: 'age',     label: 'Age' },
+  { type: 'job',     label: 'Job Title' },
+  { type: 'city',    label: 'City' },
+  { type: 'country', label: 'Country' },
+  { type: 'address', label: 'Address' },
+  { type: 'company', label: 'Company' },
+  { type: 'date',    label: 'Date' },
+  { type: 'number',  label: 'Number' },
+  { type: 'boolean', label: 'Boolean' },
+  { type: 'lorem',   label: 'Lorem Text' },
+  { type: 'uuid',    label: 'UUID' },
+  { type: 'list',    label: 'Custom List' }
+];
+
+function labelFor(type) {
+  for (var i = 0; i < FIELD_TYPES.length; i++) {
+    if (FIELD_TYPES[i].type === type) return FIELD_TYPES[i].label;
+  }
+  return 'Field';
+}
+
+function defaultOptions(type) {
+  switch (type) {
+    case 'number':  return { min: 0, max: 1000, decimals: 0 };
+    case 'age':     return { min: 18, max: 70 };
+    case 'date':    return { start: '2015-01-01', end: '2026-12-31' };
+    case 'boolean': return { truePct: 50 };
+    case 'email':   return { deriveFrom: '' };
+    case 'country': return { cityField: '' };
+    case 'job':     return { ageField: '' };
+    case 'lorem':   return { words: 12 };
+    case 'list':    return { values: '' };
+    default:        return {};
+  }
+}
+
+function toColumnBase(name) {
+  var k = String(name == null ? '' : name).toLowerCase().trim()
+    .replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+  return k || 'field';
+}
+
+function keyify(name, used) {
+  var k = toColumnBase(name);
+  if (/^[0-9]/.test(k)) k = 'f_' + k;
+  var out = k, n = 2;
+  while (used.has(out)) out = k + '_' + (n++);
+  used.add(out);
+  return out;
+}
+
+function normalizeSchema(schema) {
+  var used = new Set();
+  var out = [];
+  var list = Array.isArray(schema) ? schema : [];
+  for (var i = 0; i < list.length; i++) {
+    var f = list[i];
+    if (!f || typeof f.type !== 'string') continue;
+    var known = false;
+    for (var j = 0; j < FIELD_TYPES.length; j++) {
+      if (FIELD_TYPES[j].type === f.type) { known = true; break; }
+    }
+    if (!known) continue;
+    var name = String(f.name == null ? '' : f.name).trim() || labelFor(f.type);
+    var key = (typeof f.key === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(f.key) && !used.has(f.key))
+      ? f.key
+      : keyify(name, used);
+    used.add(key);
+    var opts = defaultOptions(f.type);
+    if (f.options && typeof f.options === 'object') {
+      for (var k in f.options) {
+        if (Object.prototype.hasOwnProperty.call(f.options, k)) opts[k] = f.options[k];
+      }
+    }
+    out.push({ id: String(f.id != null ? f.id : 'auto_' + i), key: key, name: name, type: f.type, options: opts });
+  }
+  return out;
+}
+
+/* ---------------------------- value generators --------------------------- */
+
+function genUUID(rng) {
+  function hex(n) { var s = ''; for (var i = 0; i < n; i++) s += randInt(rng, 0, 15).toString(16); return s; }
+  return hex(8) + '-' + hex(4) + '-4' + hex(3) + '-' +
+    pick(rng, ['8', '9', 'a', 'b']) + hex(3) + '-' + hex(12);
+}
+
+function genDate(rng, startStr, endStr) {
+  var start = Date.parse(startStr), end = Date.parse(endStr);
+  if (!isFinite(start)) start = Date.parse('2015-01-01');
+  if (!isFinite(end)) end = Date.parse('2026-12-31');
+  if (end < start) { var t = start; start = end; end = t; }
+  var ts = start + Math.floor(rng() * (end - start + 1));
+  return new Date(ts).toISOString().slice(0, 10);
+}
+
+/* Resolve a field's value, generating correlation sources on demand (any order). */
+function ensureField(key, schema, row, rng, stack) {
+  if (row[key] !== undefined) return row[key];
+  var f = null;
+  for (var i = 0; i < schema.length; i++) {
+    if (schema[i].key === key) { f = schema[i]; break; }
+  }
+  if (!f) return undefined;
+  if (stack.indexOf(key) !== -1) return ''; /* cycle guard */
+  row[key] = genValue(f, schema, row, rng, stack.concat([key]));
+  return row[key];
+}
+
+function genValue(f, schema, row, rng, stack) {
+  var o = f.options || {};
+  switch (f.type) {
+    case 'name':
+      return pick(rng, FIRST_NAMES) + ' ' + pick(rng, LAST_NAMES);
+
+    case 'email': {
+      var local;
+      if (o.deriveFrom) {
+        var nm = String(ensureField(o.deriveFrom, schema, row, rng, stack) || '');
+        var parts = nm.split(/\s+/).filter(Boolean);
+        var first = cleanToken(parts[0] || 'user') || 'user';
+        var last = cleanToken(parts.slice(1).join('')) || 'x';
+        local = first + '.' + last;
+      } else {
+        local = cleanToken(pick(rng, FIRST_NAMES)) + '.' + cleanToken(pick(rng, LAST_NAMES));
+      }
+      if (rng() < 0.3) local += randInt(rng, 1, 99);
+      return local + '@' + pick(rng, EMAIL_DOMAINS);
+    }
+
+    case 'phone':
+      return pick(rng, PHONE_FORMATS).replace(/#/g, function () { return String(randInt(rng, 0, 9)); });
+
+    case 'age': {
+      var amin = clampNum(o.min, 0, 120, 18), amax = clampNum(o.max, 0, 120, 70);
+      if (amax < amin) { var t = amin; amin = amax; amax = t; }
+      return randInt(rng, amin, amax);
+    }
+
+    case 'job': {
+      var band = null;
+      if (o.ageField) {
+        var a = Number(ensureField(o.ageField, schema, row, rng, stack));
+        if (isFinite(a)) band = a < 23 ? 'junior' : a < 32 ? 'mid' : a < 48 ? 'senior' : 'lead';
+      }
+      return pick(rng, band ? JOB_TITLES[band] : ALL_JOBS);
+    }
+
+    case 'city':
+      return pick(rng, CITY_COUNTRY).city;
+
+    case 'country': {
+      if (o.cityField) {
+        var cv = ensureField(o.cityField, schema, row, rng, stack);
+        for (var i = 0; i < CITY_COUNTRY.length; i++) {
+          if (CITY_COUNTRY[i].city === cv) return CITY_COUNTRY[i].country;
+        }
+      }
+      return pick(rng, CITY_COUNTRY).country;
+    }
+
+    case 'address': {
+      var e = pick(rng, CITY_COUNTRY);
+      return randInt(rng, 1, 9999) + ' ' + pick(rng, STREETS) + ', ' + e.city + ', ' + e.country;
+    }
+
+    case 'company':
+      return pick(rng, COMPANIES);
+
+    case 'date':
+      return genDate(rng, o.start, o.end);
+
+    case 'number': {
+      var nmin = clampNum(o.min, -1e12, 1e12, 0), nmax = clampNum(o.max, -1e12, 1e12, 1000);
+      if (nmax < nmin) { var t2 = nmin; nmin = nmax; nmax = t2; }
+      var dec = Math.round(clampNum(o.decimals, 0, 6, 0));
+      return Number((nmin + rng() * (nmax - nmin)).toFixed(dec));
+    }
+
+    case 'boolean':
+      return rng() * 100 < clampNum(o.truePct, 0, 100, 50);
+
+    case 'lorem': {
+      var n = Math.round(clampNum(o.words, 1, 60, 12));
+      var words = [];
+      for (var w = 0; w < n; w++) words.push(pick(rng, LOREM_WORDS));
+      var s = words.join(' ');
+      return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+    }
+
+    case 'uuid':
+      return genUUID(rng);
+
+    case 'list': {
+      var vals = String(o.values == null ? '' : o.values).split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      return vals.length ? pick(rng, vals) : '';
+    }
+
+    default:
+      return '';
+  }
+}
+
+function generateRow(schema, rng) {
+  var row = {};
+  for (var i = 0; i < schema.length; i++) {
+    ensureField(schema[i].key, schema, row, rng, []);
+  }
+  return row;
+}
+
+/* ------------------------------ error injection -------------------------- */
+
+function injectErrors(rows, schema, ratePct, rng) {
+  var p = clampNum(ratePct, 0, 100, 0) / 100;
+  if (p <= 0) return rows;
+  for (var i = 0; i < rows.length; i++) {
+    for (var s = 0; s < schema.length; s++) {
+      var f = schema[s];
+      if (rng() < p) {
+        var kind = rng();
+        if (kind < 0.34) {
+          rows[i][f.key] = '';                                   /* null / missing */
+        } else if (kind < 0.67 && i > 0) {
+          rows[i][f.key] = rows[Math.floor(rng() * i)][f.key];   /* duplicate of earlier row */
+        } else {
+          rows[i][f.key] = (MALFORMED[f.type] !== undefined ? MALFORMED[f.type] : '###BROKEN###');
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+/* ------------------------------- generation ------------------------------ */
+
+function generateDataset(schema, rowCount, seed, errorRate) {
+  schema = normalizeSchema(schema);
+  rowCount = Math.max(0, Math.floor(Number(rowCount) || 0));
+  seed = Number(seed);
+  if (!isFinite(seed)) seed = 0;
+  var rng = mulberry32(seed);
+  var rows = [];
+  for (var i = 0; i < rowCount; i++) rows.push(generateRow(schema, rng));
+  var rate = clampNum(errorRate, 0, 100, 0);
+  if (rate > 0 && rows.length > 0 && schema.length > 0) {
+    injectErrors(rows, schema, rate, mulberry32((seed >>> 0) ^ 0x9E3779B9));
+  }
+  return rows;
+}
+
+/* --------------------------------- exports ------------------------------- */
+
+function rowsToJSON(rows) {
+  return JSON.stringify(rows || [], null, 2);
+}
+
+function csvCell(v) {
+  var s = (v === null || v === undefined) ? '' : String(v);
+  return (/[",\n\r]/.test(s)) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function rowsToCSV(schema, rows) {
+  schema = normalizeSchema(schema);
+  rows = rows || [];
+  if (!schema.length) return '';
+  var head = schema.map(function (f) { return csvCell(f.name); }).join(',');
+  var lines = rows.map(function (r) {
+    return schema.map(function (f) { return csvCell(r[f.key]); }).join(',');
+  });
+  return head + (lines.length ? '\n' + lines.join('\n') : '');
+}
+
+function sqlCell(f, v) {
+  if (v === null || v === undefined || v === '') return 'NULL';
+  if (f.type === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if ((f.type === 'number' || f.type === 'age') && isFinite(Number(v))) return String(Number(v));
+  return "'" + String(v).replace(/'/g, "''") + "'";
+}
+
+function sanitizeTableName(name) {
+  var t = String(name == null ? '' : name).replace(/[^A-Za-z0-9_]/g, '');
+  return t || 'fakerly_data';
+}
+
+function rowsToSQL(schema, rows, tableName, chunkSize) {
+  schema = normalizeSchema(schema);
+  rows = rows || [];
+  var table = sanitizeTableName(tableName);
+  if (!schema.length || !rows.length) return '-- Fakerly: no fields or rows to export.';
+  var cols = schema.map(function (f) { return '`' + f.key + '`'; }).join(', ');
+  var chunk = Math.round(clampNum(chunkSize, 1, 2000, 500));
+  var parts = [];
+  for (var i = 0; i < rows.length; i += chunk) {
+    var vals = rows.slice(i, i + chunk).map(function (r) {
+      return '(' + schema.map(function (f) { return sqlCell(f, r[f.key]); }).join(', ') + ')';
+    }).join(',\n');
+    parts.push('INSERT INTO `' + table + '` (' + cols + ') VALUES\n' + vals + ';');
+  }
+  return parts.join('\n\n');
+}
+
+/* Node export (ignored in the browser). */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    mulberry32: mulberry32,
+    FIELD_TYPES: FIELD_TYPES,
+    defaultOptions: defaultOptions,
+    normalizeSchema: normalizeSchema,
+    keyify: keyify,
+    toColumnBase: toColumnBase,
+    genValue: genValue,
+    generateRow: generateRow,
+    generateDataset: generateDataset,
+    injectErrors: injectErrors,
+    rowsToJSON: rowsToJSON,
+    rowsToCSV: rowsToCSV,
+    rowsToSQL: rowsToSQL,
+    sanitizeTableName: sanitizeTableName,
+    CITY_COUNTRY: CITY_COUNTRY,
+    JOB_TITLES: JOB_TITLES,
+    cleanToken: cleanToken
+  };
+}
+
+</script>
+
+<script>
+/* ============================ Fakerly app (DOM layer) ============================ */
+(function () {
+  'use strict';
+
+  var PER_PAGE = 25;
+  var LS_KEY = 'fakerly-state-v1';
+
+  var state = {
+    fields: [],
+    rows: [],
+    normSchema: [],
+    seed: 12345,
+    rowCount: 100,
+    errorRate: 0,
+    tableName: 'fakerly_data',
+    page: 1,
+    fieldSeq: 0
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ------------------------------ persistence ------------------------------ */
+  function saveState() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        fields: state.fields, seed: state.seed, rowCount: state.rowCount,
+        errorRate: state.errorRate, tableName: state.tableName, fieldSeq: state.fieldSeq
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return false;
+      var s = JSON.parse(raw);
+      if (!s || !Array.isArray(s.fields)) return false;
+      state.fields = s.fields;
+      state.seed = Number(s.seed) || 12345;
+      state.rowCount = Number(s.rowCount) || 100;
+      state.errorRate = Number(s.errorRate) || 0;
+      state.tableName = s.tableName || 'fakerly_data';
+      state.fieldSeq = Number(s.fieldSeq) || s.fields.length;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* ------------------------------- fields ---------------------------------- */
+  function existingKeys(exceptId) {
+    var keys = {};
+    state.fields.forEach(function (f) { if (f.id !== exceptId) keys[f.key] = true; });
+    return keys;
+  }
+  function makeKey(base, exceptId) {
+    var used = existingKeys(exceptId);
+    var k = toColumnBase(base);
+    if (/^[0-9]/.test(k)) k = 'f_' + k;
+    var out = k, n = 2;
+    while (used[out]) out = k + '_' + (n++);
+    return out;
+  }
+
+  function addField(type, preset) {
+    state.fieldSeq++;
+    var label = labelFor(type);
+    var f = {
+      id: 'fld_' + state.fieldSeq,
+      key: makeKey((preset && preset.name) || label),
+      name: (preset && preset.name) || label,
+      type: type,
+      options: Object.assign(defaultOptions(type), (preset && preset.options) || {})
+    };
+    state.fields.push(f);
+    saveState();
+    renderFieldList();
+    renderTypeSelectHint();
+  }
+
+  function removeField(id) {
+    state.fields = state.fields.filter(function (f) { return f.id !== id; });
+    /* drop dangling correlation references */
+    state.fields.forEach(function (f) {
+      if (f.options.deriveFrom && !state.fields.some(function (x) { return x.key === f.options.deriveFrom; })) f.options.deriveFrom = '';
+      if (f.options.cityField && !state.fields.some(function (x) { return x.key === f.options.cityField; })) f.options.cityField = '';
+      if (f.options.ageField && !state.fields.some(function (x) { return x.key === f.options.ageField; })) f.options.ageField = '';
+    });
+    saveState();
+    renderFieldList();
+  }
+
+  function fieldsOfTypes(types, exceptId) {
+    return state.fields.filter(function (f) { return f.id !== exceptId && types.indexOf(f.type) !== -1; });
+  }
+
+  function optionsHTML(f) {
+    var o = f.options, h = '';
+    function num(id, label, val, min, max, step) {
+      return '<label class="block"><span class="text-[11px] font-bold text-slate-500">' + label + '</span>' +
+        '<input type="number" data-fid="' + f.id + '" data-opt="' + id + '" value="' + esc(val) + '"' +
+        (min !== undefined ? ' min="' + min + '"' : '') + (max !== undefined ? ' max="' + max + '"' : '') +
+        ' step="' + (step || 1) + '" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1"></label>';
+    }
+    switch (f.type) {
+      case 'number':
+        h = '<div class="grid grid-cols-3 gap-2">' + num('min','Min',o.min) + num('max','Max',o.max) + num('decimals','Decimals',o.decimals,0,6) + '</div>';
+        break;
+      case 'age':
+        h = '<div class="grid grid-cols-2 gap-2">' + num('min','Min age',o.min,0,120) + num('max','Max age',o.max,0,120) + '</div>';
+        break;
+      case 'date':
+        h = '<div class="grid grid-cols-2 gap-2">' +
+          '<label class="block"><span class="text-[11px] font-bold text-slate-500">From</span><input type="date" data-fid="' + f.id + '" data-opt="start" value="' + esc(o.start) + '" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1"></label>' +
+          '<label class="block"><span class="text-[11px] font-bold text-slate-500">To</span><input type="date" data-fid="' + f.id + '" data-opt="end" value="' + esc(o.end) + '" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1"></label></div>';
+        break;
+      case 'boolean':
+        h = '<label class="block"><span class="text-[11px] font-bold text-slate-500">% true <span class="boolpct font-extrabold text-coral">' + esc(o.truePct) + '%</span></span>' +
+          '<input type="range" min="0" max="100" value="' + esc(o.truePct) + '" data-fid="' + f.id + '" data-opt="truePct" class="opt-range mt-1 w-full"></label>';
+        break;
+      case 'email': {
+        var names = fieldsOfTypes(['name'], f.id);
+        h = '<label class="block"><span class="text-[11px] font-bold text-slate-500">🔗 Derive from name field</span><select data-fid="' + f.id + '" data-opt="deriveFrom" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1 bg-white">' +
+          '<option value="">Random email</option>' +
+          names.map(function (n) { return '<option value="' + esc(n.key) + '"' + (o.deriveFrom === n.key ? ' selected' : '') + '>' + esc(n.name) + '</option>'; }).join('') +
+          '</select></label>';
+        if (!names.length) h += '<p class="text-[11px] text-slate-400 mt-1">Add a “Full Name” field to enable correlation.</p>';
+        break;
+      }
+      case 'country': {
+        var cities = fieldsOfTypes(['city'], f.id);
+        h = '<label class="block"><span class="text-[11px] font-bold text-slate-500">🔗 Match city field</span><select data-fid="' + f.id + '" data-opt="cityField" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1 bg-white">' +
+          '<option value="">Random country</option>' +
+          cities.map(function (n) { return '<option value="' + esc(n.key) + '"' + (o.cityField === n.key ? ' selected' : '') + '>' + esc(n.name) + '</option>'; }).join('') +
+          '</select></label>';
+        if (!cities.length) h += '<p class="text-[11px] text-slate-400 mt-1">Add a “City” field to enable correlation.</p>';
+        break;
+      }
+      case 'job': {
+        var ages = fieldsOfTypes(['age', 'number'], f.id);
+        h = '<label class="block"><span class="text-[11px] font-bold text-slate-500">🔗 Correlate with age field</span><select data-fid="' + f.id + '" data-opt="ageField" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1 bg-white">' +
+          '<option value="">Random title</option>' +
+          ages.map(function (n) { return '<option value="' + esc(n.key) + '"' + (o.ageField === n.key ? ' selected' : '') + '>' + esc(n.name) + '</option>'; }).join('') +
+          '</select></label>';
+        if (!ages.length) h += '<p class="text-[11px] text-slate-400 mt-1">Add an “Age” or “Number” field to enable correlation.</p>';
+        break;
+      }
+      case 'lorem':
+        h = num('words', 'Words', o.words, 1, 60);
+        break;
+      case 'list':
+        h = '<label class="block"><span class="text-[11px] font-bold text-slate-500">Values (comma separated)</span>' +
+          '<textarea data-fid="' + f.id + '" data-opt="values" rows="2" placeholder="free, pro, enterprise" class="opt-input mt-0.5 w-full rounded-md border border-orange-200 px-2 py-1">' + esc(o.values) + '</textarea></label>';
+        break;
+      default:
+        h = '';
+    }
+    return h ? '<div class="mt-2 rounded-lg bg-cream/70 border border-orange-100 p-2.5 space-y-2">' + h + '</div>' : '';
+  }
+
+  function typeBadge(type) {
+    var colors = {
+      name: 'bg-teal-100 text-teal-800', email: 'bg-blue-100 text-blue-800',
+      phone: 'bg-indigo-100 text-indigo-800', age: 'bg-amber-100 text-amber-800',
+      job: 'bg-purple-100 text-purple-800', city: 'bg-emerald-100 text-emerald-800',
+      country: 'bg-lime-100 text-lime-800', address: 'bg-orange-100 text-orange-800',
+      company: 'bg-rose-100 text-rose-800', date: 'bg-sky-100 text-sky-800',
+      number: 'bg-cyan-100 text-cyan-800', boolean: 'bg-fuchsia-100 text-fuchsia-800',
+      lorem: 'bg-stone-200 text-stone-700', uuid: 'bg-slate-200 text-slate-700',
+      list: 'bg-yellow-100 text-yellow-800'
+    };
+    return '<span class="rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ' + (colors[type] || 'bg-slate-100 text-slate-600') + '">' + esc(type) + '</span>';
+  }
+
+  function renderFieldList() {
+    var list = $('fieldList');
+    $('fieldCount').textContent = state.fields.length + (state.fields.length === 1 ? ' field' : ' fields');
+    if (!state.fields.length) {
+      list.innerHTML = '<div class="rounded-xl border-2 border-dashed border-orange-200 p-6 text-center text-sm text-slate-400">No fields yet.<br>Add your first field below — or load the sample schema.</div>';
+      return;
+    }
+    list.innerHTML = state.fields.map(function (f) {
+      return '<div class="field-card rounded-xl border border-orange-200/70 bg-white p-3" data-card="' + f.id + '">' +
+        '<div class="flex items-center gap-2">' + typeBadge(f.type) +
+        '<input type="text" value="' + esc(f.name) + '" data-fid="' + f.id + '" data-role="name" maxlength="40" class="name-input min-w-0 flex-1 rounded-md border border-transparent px-2 py-1 font-bold text-sm text-slate-800 hover:border-orange-200 focus:border-deepteal focus:outline-none">' +
+        '<button data-fid="' + f.id + '" data-role="remove" title="Remove field" class="shrink-0 rounded-md px-2 py-1 text-slate-400 hover:bg-red-50 hover:text-red-500 font-bold">✕</button></div>' +
+        '<div class="mt-1.5 flex items-center gap-2"><span class="text-[11px] text-slate-400 font-semibold">column:</span>' +
+        '<input type="text" value="' + esc(f.key) + '" data-fid="' + f.id + '" data-role="key" spellcheck="false" maxlength="40" class="key-input min-w-0 flex-1 rounded-md border border-transparent bg-slate-50 px-2 py-0.5 font-mono text-[11px] text-slate-600 hover:border-orange-200 focus:border-deepteal focus:outline-none"></div>' +
+        optionsHTML(f) +
+        '</div>';
+    }).join('');
+  }
+
+  function renderTypeSelectHint() { /* select is static; nothing needed */ }
+
+  /* ------------------------------ generation ------------------------------- */
+  function currentSettings() {
+    state.seed = Math.floor(Number($('seedInput').value) || 0);
+    state.rowCount = Math.max(0, Math.min(10000, Math.floor(Number($('rowCount').value) || 0)));
+    state.errorRate = Math.max(0, Math.min(30, Number($('errorRate').value) || 0));
+    state.tableName = $('tableName').value.trim() || 'fakerly_data';
+    $('errorRateLabel').textContent = state.errorRate + '%';
+  }
+
+  function generate() {
+    currentSettings();
+    if (!state.fields.length) {
+      $('statusLine').textContent = 'Add at least one field first.';
+      $('statusLine').className = 'text-xs font-bold text-coral';
+      return;
+    }
+    state.normSchema = normalizeSchema(state.fields);
+    var t0 = performance.now();
+    state.rows = generateDataset(state.normSchema, state.rowCount, state.seed, state.errorRate);
+    var ms = Math.max(1, Math.round(performance.now() - t0));
+    state.page = 1;
+    saveState();
+    var dirty = state.errorRate > 0 ? ' · ' + state.errorRate + '% error injection' : '';
+    $('statusLine').textContent = state.rows.length.toLocaleString() + ' rows · seed ' + state.seed + dirty + ' · ' + ms + ' ms';
+    $('statusLine').className = 'text-xs text-slate-500';
+    renderTable();
+  }
+
+  function cellText(v) {
+    if (v === null || v === undefined || v === '') return '<span class="text-slate-300 italic">null</span>';
+    if (typeof v === 'boolean') return v ? '<span class="font-bold text-deepteal">true</span>' : '<span class="font-bold text-slate-400">false</span>';
+    return esc(v);
+  }
+
+  function renderTable() {
+    var has = state.rows.length > 0 && state.normSchema.length > 0;
+    $('emptyState').classList.toggle('hidden', has);
+    $('tableWrap').classList.toggle('hidden', !has);
+    $('pager').classList.toggle('hidden', !has);
+    $('pager').classList.toggle('flex', has);
+    if (!has) return;
+    var schema = state.normSchema;
+    $('previewHead').innerHTML = '<tr>' + schema.map(function (f) {
+      return '<th class="px-3 py-2.5 text-left font-bold whitespace-nowrap">' + esc(f.name) + '</th>';
+    }).join('') + '</tr>';
+    var totalPages = Math.max(1, Math.ceil(state.rows.length / PER_PAGE));
+    state.page = Math.min(Math.max(1, state.page), totalPages);
+    var start = (state.page - 1) * PER_PAGE;
+    var slice = state.rows.slice(start, start + PER_PAGE);
+    $('previewBody').innerHTML = slice.map(function (r) {
+      return '<tr class="hover:bg-cream/60">' + schema.map(function (f) {
+        return '<td class="px-3 py-2 border-t border-orange-100 whitespace-nowrap max-w-[220px] overflow-hidden text-ellipsis">' + cellText(r[f.key]) + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    $('pageInfo').textContent = 'Page ' + state.page + ' of ' + totalPages + ' · rows ' + (start + 1).toLocaleString() + '–' + Math.min(start + PER_PAGE, state.rows.length).toLocaleString();
+    $('prevPage').disabled = state.page <= 1;
+    $('nextPage').disabled = state.page >= totalPages;
+  }
+
+  /* -------------------------------- exports -------------------------------- */
+  function needData() {
+    if (!state.rows.length || !state.normSchema.length) {
+      $('statusLine').textContent = 'Generate data first — there is nothing to export yet.';
+      $('statusLine').className = 'text-xs font-bold text-coral';
+      return false;
+    }
+    return true;
+  }
+
+  function download(filename, text, mime) {
+    var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  function toast(msg) {
+    var t = $('copyToast');
+    t.textContent = msg || 'Copied!';
+    t.classList.remove('hidden');
+    t.classList.add('inline-flex');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.add('hidden'); t.classList.remove('inline-flex'); }, 1600);
+  }
+
+  function copyText(text, label) {
+    function done() { toast((label || 'Copied') + '!'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+  }
+
+  /* --------------------------------- events -------------------------------- */
+  function bindEvents() {
+    var sel = $('typeSelect');
+    sel.innerHTML = FIELD_TYPES.map(function (t) {
+      return '<option value="' + t.type + '">' + esc(t.label) + '</option>';
+    }).join('');
+
+    $('addFieldBtn').addEventListener('click', function () { addField(sel.value); });
+    $('clearBtn').addEventListener('click', function () {
+      if (!state.fields.length) return;
+      state.fields = [];
+      saveState();
+      renderFieldList();
+    });
+    $('sampleBtn').addEventListener('click', function () {
+      state.fields = [];
+      state.fieldSeq = 0;
+      function mk(type, name, options) {
+        state.fieldSeq++;
+        var f = { id: 'fld_' + state.fieldSeq, key: makeKey(name), name: name, type: type, options: Object.assign(defaultOptions(type), options || {}) };
+        state.fields.push(f);
+        return f;
+      }
+      var nm = mk('name', 'Full Name');
+      mk('email', 'Email', { deriveFrom: nm.key });
+      var ag = mk('age', 'Age', { min: 18, max: 65 });
+      mk('job', 'Job Title', { ageField: ag.key });
+      var ct = mk('city', 'City');
+      mk('country', 'Country', { cityField: ct.key });
+      mk('phone', 'Phone');
+      mk('company', 'Company');
+      saveState();
+      renderFieldList();
+    });
+
+    $('fieldList').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-role="remove"]');
+      if (btn) removeField(btn.getAttribute('data-fid'));
+    });
+    $('fieldList').addEventListener('input', function (e) {
+      var el = e.target, fid = el.getAttribute('data-fid');
+      if (!fid) return;
+      var f = state.fields.find(function (x) { return x.id === fid; });
+      if (!f) return;
+      if (el.getAttribute('data-role') === 'name') { f.name = el.value; saveState(); }
+      else if (el.getAttribute('data-role') === 'key') {
+        var k = el.value.replace(/[^A-Za-z0-9_]/g, '');
+        if (/^[0-9]/.test(k)) k = 'f' + k;
+        var used = existingKeys(fid);
+        if (k && !used[k]) { f.key = k; saveState(); }
+      }
+      else if (el.classList.contains('opt-input')) {
+        var opt = el.getAttribute('data-opt');
+        var val = el.value;
+        if (['min','max','decimals','words','truePct'].indexOf(opt) !== -1) val = Number(val);
+        f.options[opt] = val;
+        var pct = el.closest('label') ? el.closest('label').querySelector('.boolpct') : null;
+        if (pct) pct.textContent = val + '%';
+        saveState();
+      }
+    });
+    $('fieldList').addEventListener('change', function (e) {
+      var el = e.target, fid = el.getAttribute('data-fid');
+      if (!fid || !el.classList.contains('opt-input')) return;
+      var f = state.fields.find(function (x) { return x.id === fid; });
+      if (!f) return;
+      var opt = el.getAttribute('data-opt');
+      var val = el.value;
+      if (['min','max','decimals','words','truePct'].indexOf(opt) !== -1) val = Number(val);
+      f.options[opt] = val;
+      saveState();
+    });
+
+    $('generateBtn').addEventListener('click', generate);
+    $('errorRate').addEventListener('input', function () { $('errorRateLabel').textContent = $('errorRate').value + '%'; });
+    $('diceBtn').addEventListener('click', function () {
+      var v = (window.crypto && crypto.getRandomValues)
+        ? crypto.getRandomValues(new Uint32Array(1))[0]
+        : Math.floor(Math.random() * 1000000);
+      $('seedInput').value = v;
+    });
+
+    $('prevPage').addEventListener('click', function () { if (state.page > 1) { state.page--; renderTable(); } });
+    $('nextPage').addEventListener('click', function () {
+      var totalPages = Math.max(1, Math.ceil(state.rows.length / PER_PAGE));
+      if (state.page < totalPages) { state.page++; renderTable(); }
+    });
+
+    $('copyJsonBtn').addEventListener('click', function () { if (needData()) copyText(rowsToJSON(state.rows), 'JSON copied'); });
+    $('dlJsonBtn').addEventListener('click', function () { if (needData()) download('fakerly-data.json', rowsToJSON(state.rows), 'application/json'); });
+    $('dlCsvBtn').addEventListener('click', function () { if (needData()) download('fakerly-data.csv', rowsToCSV(state.normSchema, state.rows), 'text/csv'); });
+    $('copySqlBtn').addEventListener('click', function () { if (needData()) { currentSettings(); copyText(rowsToSQL(state.normSchema, state.rows, state.tableName), 'SQL copied'); } });
+    $('dlSqlBtn').addEventListener('click', function () { if (needData()) { currentSettings(); download('fakerly-seed.sql', rowsToSQL(state.normSchema, state.rows, state.tableName), 'application/sql'); } });
+
+    ['rowCount', 'seedInput', 'tableName'].forEach(function (id) {
+      $(id).addEventListener('input', saveState);
+    });
+  }
+
+  /* ---------------------------------- init --------------------------------- */
+  function init() {
+    var restored = loadState();
+    $('seedInput').value = state.seed;
+    $('rowCount').value = state.rowCount;
+    $('errorRate').value = state.errorRate;
+    $('errorRateLabel').textContent = state.errorRate + '%';
+    $('tableName').value = state.tableName;
+    bindEvents();
+    renderFieldList();
+    if (!restored && !state.fields.length) {
+      /* first visit: show the sample schema so the tool is instantly usable */
+      $('sampleBtn').click();
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>
