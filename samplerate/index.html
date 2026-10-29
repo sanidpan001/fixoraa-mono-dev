@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audio File Size Calculator — Sample Rate & Bit Depth | SampleRate</title>
+<meta name="description" content="Audio file sizes by format, sample rate and bit depth, plus upload time.">
+<link rel="canonical" href="https://dev.fixoraa.tech/samplerate/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Audio File Size Calculator — Sample Rate & Bit Depth | SampleRate">
+<meta property="og:description" content="Audio file sizes by format, sample rate and bit depth, plus upload time.">
+<meta property="og:url" content="https://dev.fixoraa.tech/samplerate/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "SampleRate",
+      "url": "https://dev.fixoraa.tech/samplerate/",
+      "applicationCategory": "Music",
+      "operatingSystem": "Web",
+      "description": "Audio file sizes by format, sample rate and bit depth, plus upload time.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How big is a 3-minute WAV file?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "About 30 MB at CD quality (44.1 kHz, 16-bit, stereo). The formula is sample rate \u00d7 bit depth/8 \u00d7 channels \u00d7 seconds: 44,100 \u00d7 2 \u00d7 2 \u00d7 180 seconds = 31.75 million bytes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I record at 44.1 kHz or 48 kHz?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use 48 kHz if the audio will ever touch video \u2014 it is the film/TV standard and avoids conversion. Use 44.1 kHz for pure music releases (the CD/streaming standard). Either is fine sonically; matching your destination saves a conversion step."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is 24-bit really better than 16-bit for recording?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For recording, yes \u2014 24-bit gives ~144 dB of dynamic range versus ~96 dB, so imperfect gain staging is forgiven. For finished, properly dithered masters, 16-bit is audibly transparent. Track in 24-bit, deliver 16 or 24 depending on the spec."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much smaller is FLAC than WAV?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "FLAC typically compresses to 50\u201360% of the WAV size with zero quality loss \u2014 it is bit-identical when decoded. MP3 at 320 kbps is far smaller (~23% of WAV) but permanently discards audio data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do upload speeds use different units than file sizes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "File sizes are measured in bytes (MB) while connection speeds are measured in bits (Mbps) \u2014 8 bits per byte. Divide the file's megabits by your Mbps to get seconds. A 30 MB file is 240 megabits, so ~10 seconds on 25 Mbps."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much storage does a multitrack session need?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Roughly 1 GB per hour for 8 tracks at 24-bit/48 kHz \u2014 about 4 GB per hour before alternate takes. Use the session stacker above with your real track count, and keep the 3-2-1 backup rule: three copies, two media, one offsite."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+:root{
+  --bg:#E3E1F9; --surface:#FFFFFF; --tint:#D5D2F4;
+  --accent:#1E1584; --accent-deep:#155F44; --btn-ink:#FFFFFF;
+  --ink:#1F2E28; --muted:#54685E; --line:#CFE4D8;
+  --display:'IBM Plex Mono',ui-monospace,monospace; --body:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.65;font-size:16px}
+.fx-container{max-width:1120px;margin:0 auto;padding:0 20px}
+.fx-header{background:var(--surface);border-bottom:3px solid var(--accent);position:sticky;top:0;z-index:50}
+.fx-header .fx-container{display:flex;align-items:center;gap:14px;padding:12px 20px;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.fx-tile{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.fx-name{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.fx-nav{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;border:2px solid var(--accent);color:var(--accent);transition:transform .12s ease;background:var(--surface)}
+.fx-btn:hover{transform:translateY(-1px)}
+.fx-btn.solid{background:var(--accent);color:var(--btn-ink)}
+.fx-badge{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--tint);color:var(--accent-deep);font-weight:700;font-size:13px;border:1.5px dashed var(--accent)}
+.article-sec{margin:40px 0;max-width:780px}
+.article-sec h2{font-size:24px;letter-spacing:-.02em;margin:34px 0 12px;font-weight:800;color:var(--ink)}
+.article-sec p{margin-bottom:14px;color:var(--ink)}
+.article-sec ul,.article-sec ol{margin:0 0 14px 22px;color:var(--ink)}
+.article-sec li{margin-bottom:6px}
+.faq-sec{margin:36px 0;max-width:780px}
+.faq-sec h2{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;color:var(--ink)}
+.faq-sec details{background:var(--surface);border:2px solid var(--line);border-radius:14px;margin-bottom:10px;padding:0;overflow:hidden}
+.faq-sec summary{padding:16px 18px;font-weight:700;cursor:pointer;list-style:none;font-size:16px;color:var(--ink)}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary:hover{color:var(--accent)}
+.faq-sec details[open] summary{border-bottom:2px solid var(--line);color:var(--accent)}
+.faq-sec details p{padding:14px 18px;color:var(--ink);font-size:15px}
+.fx-footer{background:var(--footbg,#26211c);color:#f0e6da;margin-top:44px;padding:40px 0 34px}
+.fx-footer .fx-brand{font-size:22px;font-weight:800;margin-bottom:8px;color:#fff}
+.fx-footer p{font-size:15px;color:#cbb9a8;max-width:640px;margin-bottom:14px}
+.fx-footer nav{display:flex;gap:18px;margin-bottom:16px;flex-wrap:wrap}
+.fx-footer nav a{color:#fff;font-weight:700;text-decoration:none;border-bottom:2px solid var(--accent)}
+.fx-credit{font-size:14px!important}
+.fx-credit a{color:#ffd9a8;font-weight:700}
+.no-print{}
+@media(max-width:760px){.fx-nav{margin-left:0}}
+
+
+.sr-hero{padding:46px 0 6px}
+.sr-eyebrow{display:inline-block;font-size:13px;font-weight:600;color:var(--surface);background:var(--accent);padding:6px 14px;border-radius:6px;margin-bottom:14px;letter-spacing:.08em}
+.sr-hero h1{font-size:clamp(34px,5vw,52px);font-weight:700;letter-spacing:-.02em;margin-bottom:10px}
+.sr-hero h1 .cur{color:var(--accent)}
+.sr-hero p{font-size:16px;color:var(--muted);max-width:640px}
+.sr-term{margin:28px 0 10px;background:#10231B;border-radius:16px;overflow:hidden;box-shadow:0 14px 34px rgba(29,124,89,.18);border:2px solid var(--accent-deep)}
+.sr-bar{background:var(--accent-deep);color:#DFF2E8;padding:10px 18px;font-size:13px;display:flex;gap:8px;align-items:center}
+.sr-bar .dot{width:11px;height:11px;border-radius:50%;background:#5FA98A;display:inline-block}
+.sr-body{padding:26px;color:#EAF6F0}
+.sr-out{font-size:15px;color:#9FD4BC;margin-bottom:4px}
+.sr-big{font-size:clamp(40px,6vw,64px);font-weight:700;color:#fff;line-height:1.1;letter-spacing:-.02em;margin-bottom:2px}
+.sr-big small{font-size:20px;color:#9FD4BC;font-weight:500}
+.sr-sub2{font-size:14px;color:#9FD4BC;margin-bottom:22px}
+.sr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sr-f{margin-bottom:0}
+.sr-f label{display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9FD4BC;margin-bottom:8px}
+.sr-f select,.sr-f input{font:inherit;background:#0B1B14;color:#fff;border:2px solid #2A5A44;border-radius:10px;padding:11px 12px;width:100%}
+.sr-f select:focus,.sr-f input:focus{outline:none;border-color:#5FA98A}
+.sr-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.sr-pills button{font:inherit;font-size:14px;font-weight:600;background:transparent;color:#9FD4BC;border:2px solid #2A5A44;border-radius:999px;padding:8px 16px;cursor:pointer}
+.sr-pills button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sr-tracks{border-top:1px dashed #2A5A44;padding-top:18px;margin-top:4px}
+.sr-tracks h2{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#9FD4BC;margin-bottom:12px}
+.sr-trow{display:grid;grid-template-columns:1fr 110px 110px 44px;gap:10px;margin-bottom:8px;align-items:center}
+.sr-trow input{font:inherit;background:#0B1B14;color:#fff;border:2px solid #2A5A44;border-radius:10px;padding:9px 12px;width:100%}
+.sr-del{background:transparent;border:2px solid #2A5A44;color:#9FD4BC;border-radius:10px;font-size:18px;cursor:pointer;height:42px;font:inherit}
+.sr-del:hover{color:#fff;border-color:#5FA98A}
+.sr-add{font:inherit;background:transparent;border:2px dashed #2A5A44;color:#9FD4BC;border-radius:10px;padding:10px;width:100%;cursor:pointer;font-weight:600}
+.sr-add:hover{color:#fff;border-color:#5FA98A}
+.sr-up{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap;font-size:14px;color:#9FD4BC}
+.sr-up input{font:inherit;background:#0B1B14;color:#fff;border:2px solid #2A5A44;border-radius:10px;padding:9px 12px;width:110px}
+.sr-up b{color:#fff}
+@media(max-width:760px){.sr-grid{grid-template-columns:1fr 1fr}.sr-trow{grid-template-columns:1fr 90px 90px 40px}}
+
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container">
+    <a class="fx-logo" href="https://dev.fixoraa.tech/samplerate/" aria-label="SampleRate home">
+      <span class="fx-tile" aria-hidden="true">∿</span>
+      <span class="fx-name">SampleRate</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="sr-hero">
+    <span class="sr-eyebrow">$ ./audio --size</span>
+    <h1>SampleRate</h1>
+    <p>How big is that session, really? Dial in sample rate, bit depth, and format — or stack a multitrack session — and get exact file sizes plus upload time.</p>
+  </section>
+
+  <section class="sr-term" aria-label="SampleRate tool">
+
+  <div class="sr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp;samplerate — audio size estimator</div>
+  <div class="sr-body">
+    <div class="sr-out">&gt; estimated size</div>
+    <div class="sr-big"><span id="sr-size">30.28</span> <small>MB</small></div>
+    <div class="sr-sub2" id="sr-detail">stereo · 44.1 kHz · 16-bit · 3:00 · WAV</div>
+    <div class="sr-grid">
+      <div class="sr-f"><label for="sr-rate">Sample rate</label>
+        <select id="sr-rate">
+          <option value="44100" selected>44.1 kHz</option>
+          <option value="48000">48 kHz</option>
+          <option value="88200">88.2 kHz</option>
+          <option value="96000">96 kHz</option>
+          <option value="192000">192 kHz</option>
+        </select></div>
+      <div class="sr-f"><label for="sr-bits">Bit depth</label>
+        <select id="sr-bits">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+          <option value="32">32-bit float</option>
+        </select></div>
+      <div class="sr-f"><label for="sr-ch">Channels</label>
+        <select id="sr-ch">
+          <option value="1">Mono</option>
+          <option value="2" selected>Stereo</option>
+          <option value="6">5.1 (6 ch)</option>
+        </select></div>
+      <div class="sr-f"><label for="sr-dur">Minutes</label>
+        <input type="number" id="sr-dur" value="3" min="0.1" max="600" step="0.5"></div>
+    </div>
+    <div class="sr-f" style="margin-bottom:18px"><label>Format</label>
+      <div class="sr-pills" id="sr-formats" role="group" aria-label="Format">
+        <button type="button" data-f="wav" class="on">WAV</button>
+        <button type="button" data-f="aiff">AIFF</button>
+        <button type="button" data-f="flac">FLAC</button>
+        <button type="button" data-f="mp3">MP3 320k</button>
+        <button type="button" data-f="aac">AAC 256k</button>
+      </div>
+    </div>
+    <div class="sr-tracks">
+      <h2>Multitrack session</h2>
+      <div id="sr-tracks"></div>
+      <button type="button" class="sr-add" id="sr-add">+ add track</button>
+      <div class="sr-up">
+        <label for="sr-mbps">Upload speed</label>
+        <input type="number" id="sr-mbps" value="25" min="1" max="10000"> <span>Mbps &rarr; upload takes <b id="sr-uptime">9.7 s</b></span>
+      </div>
+    </div>
+  </div>
+
+  </section>
+
+  <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+<article class="article-sec" aria-label="Guide">
+
+<h2>The Only Formula You Need</h2>
+<p>Uncompressed audio size is pure arithmetic: <strong>sample rate × (bit depth ÷ 8) × channels × seconds = bytes</strong>. A CD-quality stereo track — 44,100 samples per second, 16 bits per sample, 2 channels — eats 176,400 bytes per second, which is why a 3-minute song is about 30 MB and a 74-minute CD holds 650 MB. Every number on this page falls out of that one formula; the format buttons just apply each codec's compression on top.</p>
+<p>Note the units: storage is usually quoted in <strong>megabytes (MB)</strong>, while streaming and upload speeds are <strong>megabits (Mbps)</strong> — eight times smaller. A 30 MB file on a 25 Mbps connection takes about 10 seconds to upload, not one. The uploader estimate above does this conversion for you.</p>
+<h2>Sample Rate: How High Is High Enough?</h2>
+<p>Sample rate sets the highest frequency you can capture — the <strong>Nyquist limit</strong> is exactly half the rate, so 44.1 kHz captures up to 22.05 kHz, just past human hearing. <strong>44.1 kHz</strong> remains the music-delivery standard (CDs, most streaming masters). <strong>48 kHz</strong> is the film, TV, and video standard — if your audio will ever touch video, record at 48 to avoid a sample-rate conversion later.</p>
+<p><strong>88.2/96 kHz</strong> double the data for benefits most listeners cannot hear on playback, but they genuinely help <em>processing</em>: pitch-shifting, time-stretching, and heavy plugin chains accumulate fewer digital artifacts at high rates. Many engineers track at 96 kHz and deliver at 44.1/48. <strong>192 kHz</strong> is essentially archival or sound-design territory — four times the storage of 48 kHz for inaudible gains in normal music work. Your hard drive will notice before your ears do.</p>
+<h2>Bit Depth: The Dynamic Range Dial</h2>
+<p>Bit depth sets the <strong>dynamic range</strong> — roughly 6 dB per bit, so 16-bit gives ~96 dB and 24-bit gives ~144 dB. 16-bit is the CD standard and perfectly fine for finished, properly dithered masters. <strong>24-bit</strong> is the recording standard because its huge headroom forgives imperfect gain staging: record a little quiet and boost later with no noise penalty.</p>
+<p><strong>32-bit float</strong> — common inside DAWs — effectively cannot clip; you can record absurdly hot or quiet and normalize afterward. It costs 50% more storage than 24-bit, so it is a working format, not a delivery one. Never deliver 32-bit float to a distributor unless asked; 24-bit WAV (or 16-bit with dither) is the universal handoff.</p>
+<h2>Compressed Formats: What You Actually Lose</h2>
+<p><strong>FLAC</strong> (and ALAC) are lossless: typically 50–60% of WAV size with bit-identical audio. Archive everything in FLAC, not MP3 — future you, with better speakers, will be grateful. <strong>MP3 320 kbps</strong> is the "transparent enough" lossy standard: a 3-minute song shrinks from 30 MB to ~7 MB, and most listeners cannot reliably tell it from the WAV in blind tests. <strong>AAC 256k</strong> (Apple/YouTube/Spotify's family) beats MP3 at equal bitrates, which is why streamers standardized on it.</p>
+<p>The real cost of lossy is <strong>generational</strong>: every re-encode of an MP3 degrades further, while WAV→FLAC→WAV is a perfect round trip. Rule: keep a lossless master, encode lossy copies from it, never from each other.</p>
+<h2>Multitrack Sessions: Where Storage Really Goes</h2>
+<p>A finished mix is megabytes; the <strong>session</strong> is gigabytes. Eight tracks of 24-bit/48 kHz for an hour is nearly 4 GB — and that is before takes, playlists, and backups multiply it. The session stacker above totals your tracks so the number stops being a surprise. Two practical rules fall out: record at the <em>lowest</em> rate/depth your work justifies (24/48 for most music), and <strong>commit and archive</strong> — bounce virtual instruments to audio and move dead takes to cold storage.</p>
+<p>SSDs changed the game for active sessions (fast seeks, silent), but spinning drives or cloud cold storage remain the economical archive. Whatever the medium: <strong>3-2-1 backup</strong> — three copies, two media types, one offsite. Sessions are irreplaceable; drives are not.</p>
+<h2>Streaming Bitrates and Delivery Specs</h2>
+<p>Know your destination's spec before you bounce. Spotify normalizes loudness to −14 LUFS and transcodes uploads to Ogg Vorbis/AAC; Apple Music prefers 24-bit masters for "Apple Digital Masters". YouTube re-encodes everything to AAC. Podcast hosts typically want <strong>MP3 128k mono</strong> for speech (half the size of stereo, and nobody misses stereo on a voice). Audiobooks (ACX) demand specific RMS and peak specs — check before you master.</p>
+<p>For client delivery, <strong>24-bit/48 kHz WAV</strong> is the safest universal master: every video editor, mastering engineer, and distributor accepts it. Include a 16-bit/44.1 kHz dithered copy for CD replication if needed.</p>
+<h2>Upload Time: Plan the Handoff</h2>
+<p>Big files meet slow connections at the worst moment — deadline night. A 4 GB session on a 25 Mbps upload takes over 20 minutes; on 5 Mbps it is nearly two hours. The estimator above tells you before you start. If the math is ugly, options include: delivering <strong>stems</strong> instead of full sessions, using FLAC to halve the payload losslessly, or shipping a drive for truly massive projects. And always verify the upload — checksums or at minimum a file-size comparison — because a truncated WAV fails silently until mastering day.</p>
+<h2>Common Mistakes</h2>
+<p>Mistake one: <strong>recording at 192 kHz "for quality"</strong> on a laptop with 256 GB of storage — the session fills the drive mid-take. Mistake two: <strong>converting MP3 to WAV to "restore quality"</strong> — the lost data is gone; the WAV is just a bigger MP3. Mistake three: <strong>normalizing to 0 dBFS</strong> for streaming, where lossy transcoders then clip — leave a dB of headroom. Mistake four: archiving only the mix and deleting the session, then the client asks for "the vocal up 1 dB" two years later.</p>
+<h2>Dither: The Final Step Nobody Sees</h2>
+<p>When you reduce bit depth — bouncing a 24-bit mix to 16-bit for CD, for example — you must <strong>dither</strong>. Truncating bits without dither creates quantization distortion: harsh, correlated artifacts most audible in quiet fades and reverb tails. Dither adds a tiny amount of shaped noise that <em>randomizes</em> the quantization error, replacing distortion with a smooth, inaudible noise floor. It feels backwards — adding noise to improve quality — but the math is settled and every professional master uses it.</p>
+<p>The rules are simple: dither <strong>once, at the very end</strong>, when going down in bit depth — never when staying at the same depth, and never twice. Going 24-bit to 16-bit gets dither; 24-bit to 24-bit does not. Most DAWs and limiters include POW-r or MBIT+ options; any of them beats truncation. And critically, dither <em>after</em> the final limiter in the chain — it is literally the last process before the file is written. Get this right and your quiet passages stay silky; skip it and fades get grainy.</p>
+<h2>Putting It All Together</h2>
+<p>The workflow: track at 24-bit/48 kHz (96 if you process heavily), keep lossless masters in FLAC, deliver 24/48 WAV to clients, encode MP3/AAC copies from the master for listeners, and run the session stacker before the drive fills up. Audio storage is cheap until it is not — usually at 2 a.m. before a deadline. A minute with this calculator beats an hour of cleanup.</p>
+
+  <h2>Archiving Sessions: The 3-2-1 Rule</h2><p>Knowing file sizes is only half the battle; keeping the files safe is the other half. Professional studios follow the <strong>3-2-1 rule</strong>: three copies of every session, on two different media types, with one copy offsite. A finished album project with multitracks, mixes and masters can easily run 50–100 GB, which means a single 1 TB drive holds roughly ten to twenty projects — fewer than most producers expect. Use the session stacker above to estimate each project's footprint, then size your backup drives with headroom to spare.</p><p>For archiving, keep the <strong>uncompressed masters</strong> (WAV or AIFF) and the original multitrack stems; you can always re-encode smaller delivery formats later, but you can never recover quality discarded at export. FLAC is an excellent compromise for archiving mixes — typically 50–60% smaller than WAV with zero quality loss. Label everything with dates and sample rates, because a folder named "final_mix_v2_REAL.wav" helps nobody in three years.</p>
+</article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+    <details><summary>How big is a 3-minute WAV file?</summary><p>About 30 MB at CD quality (44.1 kHz, 16-bit, stereo). The formula is sample rate × bit depth/8 × channels × seconds: 44,100 × 2 × 2 × 180 seconds = 31.75 million bytes.</p></details>
+    <details><summary>Should I record at 44.1 kHz or 48 kHz?</summary><p>Use 48 kHz if the audio will ever touch video — it is the film/TV standard and avoids conversion. Use 44.1 kHz for pure music releases (the CD/streaming standard). Either is fine sonically; matching your destination saves a conversion step.</p></details>
+    <details><summary>Is 24-bit really better than 16-bit for recording?</summary><p>For recording, yes — 24-bit gives ~144 dB of dynamic range versus ~96 dB, so imperfect gain staging is forgiven. For finished, properly dithered masters, 16-bit is audibly transparent. Track in 24-bit, deliver 16 or 24 depending on the spec.</p></details>
+    <details><summary>How much smaller is FLAC than WAV?</summary><p>FLAC typically compresses to 50–60% of the WAV size with zero quality loss — it is bit-identical when decoded. MP3 at 320 kbps is far smaller (~23% of WAV) but permanently discards audio data.</p></details>
+    <details><summary>Why do upload speeds use different units than file sizes?</summary><p>File sizes are measured in bytes (MB) while connection speeds are measured in bits (Mbps) — 8 bits per byte. Divide the file's megabits by your Mbps to get seconds. A 30 MB file is 240 megabits, so ~10 seconds on 25 Mbps.</p></details>
+    <details><summary>How much storage does a multitrack session need?</summary><p>Roughly 1 GB per hour for 8 tracks at 24-bit/48 kHz — about 4 GB per hour before alternate takes. Use the session stacker above with your real track count, and keep the 3-2-1 backup rule: three copies, two media, one offsite.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">SampleRate</div>
+    <p>SampleRate estimates audio file sizes from sample rate, bit depth, channels and format — WAV, FLAC, MP3 and more — with multitrack session totals and upload-time math.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+
+function wavBytes(sr, bits, ch, sec){ return sr * (bits/8) * ch * sec; }
+function formatBytes(sr, bits, ch, sec, format){
+  var w = wavBytes(sr, bits, ch, sec);
+  if(format === 'flac') return w * 0.58;
+  if(format === 'mp3') return 320000/8 * sec;
+  if(format === 'aac') return 256000/8 * sec;
+  return w;
+}
+function fmtSize(bytes){ return Math.round(bytes/1048576*100)/100; }
+function fmtClock(sec){
+  sec = Math.round(sec);
+  var h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  if(h>0) return h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  return m+':'+String(s).padStart(2,'0');
+}
+function uploadSec(bytes, mbps){ return Math.round(bytes*8/(mbps*1e6)*10)/10; }
+
+
+(function(){
+var format='wav';
+var tracks=[{name:'Mix', min:3}];
+var $=function(id){return document.getElementById(id);};
+function fmtDur(min){var s=Math.round(min*60);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function renderTracks(){
+  var box=$('sr-tracks');box.innerHTML='';
+  tracks.forEach(function(t,i){
+    var row=document.createElement('div');row.className='sr-trow';
+    var nm=document.createElement('input');nm.value=t.name;nm.setAttribute('aria-label','Track name');
+    nm.addEventListener('input',function(){t.name=nm.value;});
+    var mn=document.createElement('input');mn.type='number';mn.min='0.1';mn.step='0.5';mn.value=t.min;mn.setAttribute('aria-label','Track minutes');
+    mn.addEventListener('input',function(){t.min=parseFloat(mn.value)||0;calc();});
+    var ch=document.createElement('input');ch.type='number';ch.min='1';ch.max='64';ch.step='1';ch.value=t.ch||2;ch.setAttribute('aria-label','Track channels');
+    ch.addEventListener('input',function(){t.ch=parseInt(ch.value,10)||2;calc();});
+    var del=document.createElement('button');del.type='button';del.className='sr-del';del.textContent='×';del.setAttribute('aria-label','Remove track');
+    del.addEventListener('click',function(){tracks.splice(i,1);renderTracks();calc();});
+    row.appendChild(nm);row.appendChild(mn);row.appendChild(ch);row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+$('sr-add').addEventListener('click',function(){tracks.push({name:'Track '+(tracks.length+1),min:3,ch:2});renderTracks();calc();});
+$('sr-formats').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  format=b.getAttribute('data-f');
+  this.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+  b.classList.add('on');calc();
+});
+function calc(){
+  var sr=parseFloat($('sr-rate').value), bits=parseFloat($('sr-bits').value),
+      ch=parseFloat($('sr-ch').value), durMin=parseFloat($('sr-dur').value)||0;
+  var sec=durMin*60;
+  var bytes=formatBytes(sr,bits,ch,sec,format);
+  var sessBytes=0;
+  tracks.forEach(function(t){sessBytes+=formatBytes(sr,bits,t.ch||2,(t.min||0)*60,format);});
+  var total=bytes+sessBytes;
+  $('sr-size').textContent=fmtSize(total).toLocaleString('en-US');
+  var flabel={wav:'WAV',aiff:'AIFF',flac:'FLAC',mp3:'MP3 320k',aac:'AAC 256k'}[format];
+  $('sr-detail').textContent=(ch===1?'mono':ch===2?'stereo':ch+' ch')+' · '+(sr/1000)+' kHz · '+bits+'-bit · '+fmtDur(durMin)+' · '+flabel+(tracks.length?' · +'+tracks.length+' session tracks':'');
+  var mbps=parseFloat($('sr-mbps').value)||25;
+  var up=uploadSec(total,mbps);
+  $('sr-uptime').textContent=up>=90?fmtClock(up):(up+' s');
+}
+['sr-rate','sr-bits','sr-ch','sr-dur','sr-mbps'].forEach(function(id){
+  $(id).addEventListener('input',calc);$(id).addEventListener('change',calc);
+});
+renderTracks();calc();
+})();
+
+</script>
+</body>
+</html>
