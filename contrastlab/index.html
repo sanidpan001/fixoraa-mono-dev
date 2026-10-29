@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contrast Checker: Ratio, AA/AAA &amp; Palettes – ContrastLab</title>
+<meta name="description" content="Free WCAG contrast checker: live ratio, AA/AAA badges, multi-pair palette tester, large-text toggle and one-click fix suggestions for failing pairs.">
+<link rel="canonical" href="https://dev.fixoraa.tech/contrastlab/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Contrast Checker: Ratio, AA/AAA &amp; Palettes – ContrastLab">
+<meta property="og:description" content="Free WCAG contrast checker: live ratio, AA/AAA badges, multi-pair palette tester, large-text toggle and one-click fix suggestions for failing pairs.">
+<meta property="og:url" content="https://dev.fixoraa.tech/contrastlab/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "ContrastLab",
+      "url": "https://dev.fixoraa.tech/contrastlab/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Free WCAG contrast checker: live ratio, AA/AAA badges, multi-pair palette tester, large-text toggle and one-click fix suggestions for failing pairs.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How is the WCAG contrast ratio calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use the formula (L1 + 0.05) / (L2 + 0.05), where L1 and L2 are the relative luminances of the lighter and darker colours. Relative luminance = 0.2126R + 0.7152G + 0.0722B after gamma correction of each channel."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What contrast ratio do I need for AA and AAA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AA requires 4.5:1 for normal text and 3:1 for large text (18pt+, or 14pt bold+). AAA requires 7:1 for normal text and 4.5:1 for large text. AA is the widely adopted legal standard."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does grey #777 on white pass WCAG AA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No \u2014 #777777 on white scores about 4.48:1, just under the 4.5:1 AA threshold for normal text. #767676 (~4.54:1) is the lightest grey that passes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I fix a failing colour pair?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Darken the text colour or lighten the background until the ratio reaches the target. The fix suggestion feature finds the closest passing colour by stepping toward black or white."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the ratio work for text over images?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The ratio only measures luminance difference between two flat colours. Text over images or gradients needs testing against the actual pixels behind the text, usually with a scrim or overlay."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What counts as large text in WCAG?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Large text is defined as at least 18pt (24px), or 14pt (18.66px) bold. It gets the lower 3:1 AA threshold because thicker strokes stay legible at lower contrast."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#14171C; --surface:#1D222B; --accent:#FFD60A; --accent-ink:#14171C;
+  --ink:#F5F7FA; --muted:#B8C0CC; --line:#2A313B;
+  --display:'Space Mono',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.cl-wrap{max-width:920px;margin:0 auto;padding:8px 4px;font-family:Inter,system-ui,sans-serif;color:#F5F7FA}.cl-head{text-align:center;padding:36px 14px 18px}.cl-logo{font-size:44px}.cl-h1{font-family:'Space Mono',monospace;font-size:clamp(1.8rem,4.5vw,2.6rem);margin:12px 0 8px;color:#FFD60A}.cl-tag{color:#B8C0CC;font-size:1.02rem;max-width:560px;margin:0 auto}.cl-tabs{display:flex;gap:8px;justify-content:center;margin:22px 0;flex-wrap:wrap}.cl-tab{background:#1D222B;color:#B8C0CC;border:1px solid #2A313B;border-radius:12px;padding:12px 22px;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer;min-height:48px;font-size:.92rem}.cl-tab.active{background:#FFD60A;color:#14171C;border-color:#FFD60A}.cl-panel{display:none;background:#1D222B;border:1px solid #2A313B;border-radius:20px;padding:26px}.cl-panel.active{display:block}.cl-h2{font-family:'Space Mono',monospace;font-size:1.15rem;margin:0 0 18px;color:#FFD60A}.cl-picker{display:grid;grid-template-columns:1fr 1fr;gap:16px}.cl-field{display:grid;gap:8px;font-size:.85rem;font-weight:600;color:#B8C0CC}.cl-swatchrow{display:flex;gap:10px;align-items:center}.cl-swatchrow input[type=color]{width:56px;height:48px;border:1px solid #2A313B;border-radius:10px;background:#14171C;cursor:pointer;padding:4px}.cl-swatchrow input[type=text]{flex:1;background:#14171C;border:1.5px solid #2A313B;border-radius:10px;color:#F5F7FA;padding:12px 14px;font-family:'Space Mono',monospace;font-size:1rem;min-height:48px;box-sizing:border-box}.cl-preview{margin:18px 0;border-radius:14px;padding:26px;text-align:center;border:1px solid #2A313B}.cl-preview .big{font-size:1.6rem;font-weight:700}.cl-preview .small{font-size:.95rem;margin-top:8px}.cl-ratio{font-family:'Space Mono',monospace;font-size:3rem;font-weight:700;color:#FFD60A;text-align:center}.cl-badges{display:flex;gap:10px;justify-content:center;margin:14px 0;flex-wrap:wrap}.cl-badge{border-radius:999px;padding:8px 18px;font-weight:700;font-size:.85rem;border:1.5px solid #2A313B;color:#B8C0CC}.cl-badge.pass{background:#12351f;border-color:#3FB950;color:#7BEC9B}.cl-badge.fail{background:#3d1712;border-color:#F85149;color:#FF9D94}.cl-toggle{display:flex;align-items:center;justify-content:center;gap:10px;color:#B8C0CC;font-size:.9rem;font-weight:600;margin:6px 0;cursor:pointer;min-height:44px}.cl-toggle input{width:22px;height:22px;accent-color:#FFD60A}.cl-fix{background:#14171C;border:1px dashed #3A4350;border-radius:12px;padding:14px 18px;color:#B8C0CC;font-size:.9rem;margin-top:14px}.cl-fix b{color:#FFD60A}.cl-pair{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:center;margin-bottom:10px}.cl-pair input[type=color]{width:52px;height:44px;background:#14171C;border:1px solid #2A313B;border-radius:8px;padding:3px;cursor:pointer}.cl-pair input[type=text]{background:#14171C;border:1.5px solid #2A313B;border-radius:8px;color:#F5F7FA;padding:10px;font-family:'Space Mono',monospace;min-height:44px;box-sizing:border-box;width:100%}.cl-pair .r{font-family:'Space Mono',monospace;font-weight:700;min-width:64px;text-align:right}.cl-add{background:transparent;color:#FFD60A;border:1.5px solid #FFD60A;border-radius:12px;padding:12px 20px;font-weight:700;cursor:pointer;min-height:48px;margin-top:6px}.cl-note{font-size:.82rem;color:#B8C0CC;line-height:1.6;margin-top:16px}.cl-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cl-preset{background:#14171C;border:1px solid #2A313B;border-radius:12px;padding:12px;cursor:pointer;text-align:left;color:#F5F7FA;min-height:56px}.cl-preset:hover{border-color:#FFD60A}.cl-preset .pn{font-size:.8rem;font-weight:700}.cl-preset .pd{font-family:'Space Mono',monospace;font-size:.75rem;color:#B8C0CC}@media(max-width:640px){.cl-picker{grid-template-columns:1fr}.cl-pair{grid-template-columns:1fr 1fr}.cl-presets{grid-template-columns:1fr}.cl-panel{padding:20px 16px}.cl-ratio{font-size:2.4rem}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="ContrastLab home">
+      <span class="fx-logo-tile" aria-hidden="true">◐</span>
+      <span class="fx-brand">ContrastLab</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-tab-bench" aria-label="ContrastLab tool">
+<div class='cl-wrap'>
+  <div class='cl-head'><div class='cl-logo'>◐</div><h1 class='cl-h1'>WCAG Contrast Checker</h1><p class='cl-tag'>Every colour pair, judged by the numbers.</p></div>
+  <div class='cl-tabs'>
+    <button class='cl-tab active' data-tab='calc' type='button'>Calculate</button>
+    <button class='cl-tab' data-tab='compare' type='button'>Compare palette</button>
+    <button class='cl-tab' data-tab='presets' type='button'>Presets</button>
+  </div>
+  <div class='cl-panel active' id='cl-p-calc'>
+    <h2 class='cl-h2'>Check one pair</h2>
+    <div class='cl-picker'>
+      <label class='cl-field'>Text colour<div class='cl-swatchrow'><input type='color' id='cl-fg' value='#F5F7FA'><input type='text' id='cl-fgt' value='#F5F7FA' maxlength='7'></div></label>
+      <label class='cl-field'>Background colour<div class='cl-swatchrow'><input type='color' id='cl-bg' value='#14171C'><input type='text' id='cl-bgt' value='#14171C' maxlength='7'></div></label>
+    </div>
+    <label class='cl-toggle'><input type='checkbox' id='cl-large'> Large text only (3.0 threshold)</label>
+    <div class='cl-preview' id='cl-preview'><div class='big'>The quick brown fox</div><div class='small'>Pack my box with five dozen liquor jugs — 0123456789</div></div>
+    <div class='cl-ratio' id='cl-ratio'>–</div>
+    <div class='cl-badges'><span class='cl-badge' id='cl-aa'>AA</span><span class='cl-badge' id='cl-aaa'>AAA</span></div>
+    <div class='cl-fix' id='cl-fix' style='display:none'></div>
+  </div>
+  <div class='cl-panel' id='cl-p-compare'>
+    <h2 class='cl-h2'>Test your whole palette</h2>
+    <div id='cl-pairs'></div>
+    <button class='cl-add' id='cl-addpair' type='button'>+ Add pair</button>
+    <p class='cl-note'>Add every text/background combination your design actually uses — body, muted, buttons, badges. Muted helper text is the most common failure.</p>
+  </div>
+  <div class='cl-panel' id='cl-p-presets'>
+    <h2 class='cl-h2'>Common pairs, pre-scored</h2>
+    <div class='cl-presets' id='cl-presets'></div>
+    <p class='cl-note'>Tap any preset to load it into the Calculate tab.</p>
+  </div>
+</div>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>What the Contrast Ratio Means</h2>
+<p>The WCAG contrast ratio measures how distinguishable two colours are, on a scale from 1 (identical, e.g. white on white) to 21 (black on white). It is computed from the relative luminance of each colour: (L1 + 0.05) / (L2 + 0.05), where luminance itself is a weighted sum of gamma-corrected red, green and blue. The formula deliberately mimics human vision — we are most sensitive to green, least to blue — which is why a bright yellow on white can fail while a dark blue passes easily.</p>
+<p>Two thresholds matter. <strong>AA</strong> requires 4.5:1 for normal text and 3:1 for large text (at least 18pt, or 14pt bold). <strong>AAA</strong> requires 7:1 for normal text and 4.5:1 for large text. AA is the legal and practical standard — referenced by accessibility laws worldwide — while AAA is the gold standard for critical content. Non-text elements like icons and form borders need 3:1 under WCAG 2.1.</p>
+<h2>Why 4.5:1 Is the Magic Number</h2>
+<p>The 4.5:1 threshold was calibrated against real human vision: it roughly compensates for the contrast loss experienced by someone with 20/40 vision, which is common from about age 40 onward. In other words, AA is not about edge cases — it is about your users as they age, use dimmed phone screens in sunlight, or view your site on a cheap low-contrast display. Text that scores 3:1 might look fine to a designer on a calibrated monitor and be genuinely unreadable to a large slice of the audience.</p>
+<h3>Large text gets a break — but not a free pass</h3>
+<p>Large text (18pt+/14pt bold+) only needs 3:1 for AA because thicker strokes remain legible at lower contrast. The toggle in the calculator switches the pass/fail badges between the two thresholds so you can check display headlines honestly. But beware: the large-text allowance was designed for headings, not for squeezing body copy through at 3:1 by bumping it to 18px.</p>
+<h2>Colours That Fool Designers</h2>
+<p>Certain combinations consistently surprise people. Medium greys on white — #777 on white is about 4.48:1, agonisingly just under AA — are the classic failure. Brand colours are the next: that vibrant orange or cheerful light blue that looks great as a logo often collapses to 2:1 as text. And yellow (#FFD60A, this tool's own accent) on white fails badly, which is exactly why dark themes pair it with near-black text.</p>
+<p>The fix is almost always to darken the text colour or lighten the background, not to tweak both randomly. The suggestion engine in the calculator does exactly this: it walks the failing colour toward black or white in small steps until the pair passes, giving you the closest passing colour to your original choice.</p>
+<h3>A quick reference of common pairs</h3>
+<ul>
+<li>Black on white: 21:1 — AAA, the maximum.</li>
+<li>#777777 on white: ~4.48:1 — fails AA for normal text by a hair.</li>
+<li>#767676 on white: ~4.54:1 — the lightest grey that passes AA.</li>
+<li>White on #0E7C5B (deep green): ~5.9:1 — passes AA.</li>
+<li>#FFD60A on #14171C: ~15:1 — AAA, why yellow-on-black works.</li>
+<li>Same colour on itself: 1:1 — always fails.</li>
+</ul>
+<h2>Testing Whole Palettes, Not Just Pairs</h2>
+<p>Real interfaces use colours in combination: body text on background, muted text on background, accent text on surface, accent ink on accent fills. A palette can pass its headline pair and still fail everywhere else — muted helper text is the usual casualty, since designers lighten it until it looks elegant and unreadable. The Compare tab in the calculator exists for this: load every text/background pair your design actually uses and check them all at once.</p>
+<p>Pay special attention to these frequently-forgotten pairs: placeholder text in inputs, disabled button labels, error text (red on white often fails — dark reds like #B3261E pass, bright reds do not), link colour on body background, and text on coloured badges or chips.</p>
+<h2>Beyond the Ratio: What Contrast Checkers Miss</h2>
+<ul>
+<li><strong>Font weight and size:</strong> the ratio ignores both except via the large-text threshold. Thin 12px text at 4.5:1 is technically passing but practically harsh.</li>
+<li><strong>Backgrounds that are not flat:</strong> text over images, gradients or video needs a scrim or overlay; the ratio of text to the average background colour is meaningless.</li>
+<li><strong>Dark mode inversions:</strong> flipping a palette often breaks pairs that passed in light mode — retest every pair after theming.</li>
+<li><strong>Focus indicators:</strong> keyboard focus rings need 3:1 against adjacent colours too, and they are the most commonly failing element in audits.</li>
+<li><strong>Colour alone:</strong> contrast is necessary but not sufficient — never encode meaning (like errors) in colour without a text or icon cue.</li>
+</ul>
+<h2>Designing with Contrast from the Start</h2>
+<p>The cheapest workflow is to define your palette as tested pairs, not as loose colours. Pick background, then choose text colours that pass against it; pick accent, then choose the ink that sits on it. Document each pair with its ratio in your design tokens. When marketing asks for the light-grey body text, you can answer with a number instead of an opinion. Accessibility stops being a retrofit and becomes a property of the system.</p>
+<h2>How This Calculator Helps</h2>
+<p>ContrastLab is a workbench, not a single input: the Calculate tab gives you the live ratio with AA/AAA badges and a large-text toggle, the Compare tab stress-tests your whole palette at once, and the fix suggestions hand you the nearest passing colour when a pair fails. Check early, check every pair, ship text everyone can read.</p>
+<h2>Contrast in Dark Mode</h2>
+<p>Dark themes invert the contrast challenge: instead of dark text failing on light backgrounds, light text fails on dark ones. Pure white on near-black passes easily, but designers rarely use pure white — they mute it for aesthetics, and that is where failures creep in. Muted text on dark backgrounds needs the same 4.5:1 discipline: #B8C0CC on #14171C scores about 9.8:1 and passes comfortably, but push the grey lighter or the background lighter and pairs start failing. Always retest every pair after theming — a palette that passes in light mode frequently breaks in dark mode, especially accent colours. This very tool is dark-themed, and every colour in it was checked with the calculator it contains.</p>
+<h2>Building Contrast into Your Workflow</h2>
+<p>Manual checking does not scale; automate it. Lint colour tokens in CI with a contrast check, add axe or Lighthouse accessibility audits to your pipeline, and document each design token pair with its ratio so designers choose from pre-approved combinations. When adding a new colour, the workflow is: pick the colour, run it against every background it will sit on, and only then add it to the system. Teams that do this never have contrast regressions, because an untested pair simply cannot ship.</p>
+<h2>Focus Indicators, Borders and Non-Text Contrast</h2>
+<p>WCAG 2.1 added a 3:1 requirement for non-text contrast: the visual elements users need to operate the interface — input borders, focus rings, icons, chart lines. These fail constantly because they are designed to be subtle. A light-grey input border on white is often near 1.5:1; keyboard focus rings in pale blue can vanish against white. Test these pairs in the Compare tab just like text: sample the border colour against the background, and the focus colour against adjacent colours. An interface that is readable but unusable by keyboard is only half accessible.</p>
+<h2>Test with Real Users, Not Just Tools</h2>
+<p>Automated contrast checks catch formula failures; they cannot catch perception failures. A ratio-passing combination can still feel harsh at small sizes or in bright sunlight, and colour-blind users may struggle with pairs that score well on luminance alone. Complement the numbers with quick usability tests: ask someone over forty to read your body text on a dimmed phone outdoors, and run your palette through a colour-blindness simulator. The calculator gives you the objective floor — human testing tells you whether that floor is comfortable to stand on, and the two together are what accessible design actually requires.</p>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>How is the WCAG contrast ratio calculated?</summary><p>Use the formula (L1 + 0.05) / (L2 + 0.05), where L1 and L2 are the relative luminances of the lighter and darker colours. Relative luminance = 0.2126R + 0.7152G + 0.0722B after gamma correction of each channel.</p></details>
+<details><summary>What contrast ratio do I need for AA and AAA?</summary><p>AA requires 4.5:1 for normal text and 3:1 for large text (18pt+, or 14pt bold+). AAA requires 7:1 for normal text and 4.5:1 for large text. AA is the widely adopted legal standard.</p></details>
+<details><summary>Does grey #777 on white pass WCAG AA?</summary><p>No — #777777 on white scores about 4.48:1, just under the 4.5:1 AA threshold for normal text. #767676 (~4.54:1) is the lightest grey that passes.</p></details>
+<details><summary>How do I fix a failing colour pair?</summary><p>Darken the text colour or lighten the background until the ratio reaches the target. The fix suggestion feature finds the closest passing colour by stepping toward black or white.</p></details>
+<details><summary>Does the ratio work for text over images?</summary><p>No. The ratio only measures luminance difference between two flat colours. Text over images or gradients needs testing against the actual pixels behind the text, usually with a scrim or overlay.</p></details>
+<details><summary>What counts as large text in WCAG?</summary><p>Large text is defined as at least 18pt (24px), or 14pt (18.66px) bold. It gets the lower 3:1 AA threshold because thicker strokes stay legible at lower contrast.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">ContrastLab</div>
+    <p>ContrastLab checks WCAG contrast ratios, tests whole palettes and suggests fixes.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function contrastRatio(hex1,hex2){function lum(h){h=String(h).replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');var r=parseInt(h.substr(0,2),16)/255,g=parseInt(h.substr(2,2),16)/255,b=parseInt(h.substr(4,2),16)/255;function ch(v){return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}return 0.2126*ch(r)+0.7152*ch(g)+0.0722*ch(b);}var l1=lum(hex1),l2=lum(hex2);var hi=Math.max(l1,l2),lo=Math.min(l1,l2);return{ratio:Math.round(((hi+0.05)/(lo+0.05))*100)/100};}
+function clSuggest(fg,bg,target){function hex2rgb(h){h=h.replace('#','');return[parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}function rgb2hex(c){function p(x){var s=Math.round(Math.max(0,Math.min(255,x))).toString(16);return s.length===1?'0'+s:s;}return'#'+p(c[0])+p(c[1])+p(c[2]);}var f=hex2rgb(fg),b=hex2rgb(bg);var lumF=0.2126*f[0]+0.7152*f[1]+0.0722*f[2],lumB=0.2126*b[0]+0.7152*b[1]+0.0722*b[2];var darken=lumF>lumB;for(var i=1;i<=40;i++){var t=i/40;var nf=darken?[f[0]*(1-t),f[1]*(1-t),f[2]*(1-t)]:[f[0]+(255-f[0])*t,f[1]+(255-f[1])*t,f[2]+(255-f[2])*t];var hx=rgb2hex(nf);if(contrastRatio(hx,bg).ratio>=target)return hx;}return null;}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){var tabs=document.querySelectorAll('.cl-tab');tabs.forEach(function(t){t.addEventListener('click',function(){tabs.forEach(function(x){x.classList.remove('active');});t.classList.add('active');document.querySelectorAll('.cl-panel').forEach(function(p){p.classList.remove('active');});document.getElementById('cl-p-'+t.getAttribute('data-tab')).classList.add('active');});});function norm(v){v=v.trim();if(/^#[0-9a-fA-F]{3}$/.test(v)||/^#[0-9a-fA-F]{6}$/.test(v))return v;return null;}function recalc(){var fg=norm(document.getElementById('cl-fgt').value)||'#F5F7FA';var bg=norm(document.getElementById('cl-bgt').value)||'#14171C';document.getElementById('cl-fg').value=fg.length===4?fg:'#000000';document.getElementById('cl-bg').value=bg.length===4?bg:'#000000';if(fg.length===7)document.getElementById('cl-fg').value=fg;if(bg.length===7)document.getElementById('cl-bg').value=bg;var r=contrastRatio(fg,bg).ratio;var large=document.getElementById('cl-large').checked;var aaT=large?3:4.5,aaaT=large?4.5:7;document.getElementById('cl-ratio').textContent=r.toFixed(2)+' : 1';var pv=document.getElementById('cl-preview');pv.style.color=fg;pv.style.background=bg;function badge(id,pass,label){var e=document.getElementById(id);e.className='cl-badge '+(pass?'pass':'fail');e.textContent=label+(pass?' ✓ PASS':' ✗ FAIL');}badge('cl-aa',r>=aaT,'AA '+aaT.toFixed(1));badge('cl-aaa',r>=aaaT,'AAA '+aaaT.toFixed(1));var fix=document.getElementById('cl-fix');if(r<aaT){var s=clSuggest(fg,bg,aaT);fix.style.display='block';fix.innerHTML='Fails AA. '+(s?('Closest passing text colour: <b>'+s+'</b>'):'No passing colour found in range.');}else{fix.style.display='none';}}['cl-fg','cl-bg'].forEach(function(id){document.getElementById(id).addEventListener('input',function(e){var t=document.getElementById(id+'t');t.value=e.target.value;recalc();});});['cl-fgt','cl-bgt'].forEach(function(id){document.getElementById(id).addEventListener('input',recalc);});document.getElementById('cl-large').addEventListener('change',recalc);var pairsEl=document.getElementById('cl-pairs');function addPair(f,b){var d=document.createElement('div');d.className='cl-pair';d.innerHTML="<input type='color' value='"+f+"'><input type='text' value='"+f+"' maxlength='7'><input type='color' value='"+b+"'><input type='text' value='"+b+"' maxlength='7'><span class='r'></span><span class='r aa'></span>";var ins=d.querySelectorAll('input');function upd(){var ff=ins[1].value,bb=ins[3].value;if(norm(ff)&&norm(bb)){if(ff.length===7)ins[0].value=ff;if(bb.length===7)ins[2].value=bb;var r=contrastRatio(ff,bb).ratio;d.querySelector('.r').textContent=r.toFixed(2)+':1';var aa=d.querySelector('.aa');aa.textContent=r>=4.5?'AA ✓':'AA ✗';aa.style.color=r>=4.5?'#7BEC9B':'#FF9D94';}}ins[0].addEventListener('input',function(e){ins[1].value=e.target.value;upd();});ins[2].addEventListener('input',function(e){ins[3].value=e.target.value;upd();});ins[1].addEventListener('input',upd);ins[3].addEventListener('input',upd);upd();pairsEl.appendChild(d);}document.getElementById('cl-addpair').addEventListener('click',function(){addPair('#F5F7FA','#14171C');});addPair('#F5F7FA','#14171C');addPair('#B8C0CC','#14171C');addPair('#14171C','#FFD60A');var presets=[['#000000','#FFFFFF','Black on white'],['#777777','#FFFFFF','Grey #777 on white'],['#767676','#FFFFFF','Grey #767 on white'],['#FFFFFF','#0E7C5B','White on deep green'],['#FFD60A','#14171C','Yellow on near-black'],['#B3261E','#FFFFFF','Dark red on white']];var pr=document.getElementById('cl-presets');presets.forEach(function(p){var r=contrastRatio(p[0],p[1]).ratio;var b=document.createElement('button');b.className='cl-preset';b.type='button';b.innerHTML="<div class='pn'>"+p[2]+"</div><div class='pd'>"+p[0]+' on '+p[1]+' — '+r.toFixed(2)+":1</div>";b.addEventListener('click',function(){document.getElementById('cl-fgt').value=p[0];document.getElementById('cl-bgt').value=p[1];tabs[0].click();recalc();});pr.appendChild(b);});recalc();});}
+</script>
+</body>
+</html>
