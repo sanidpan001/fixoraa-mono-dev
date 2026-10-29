@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/cookielens/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CookieLens — Set-Cookie Decoder Online & Cookie Security Checker</title>
+<meta name="description" content="CookieLens is a free set-cookie decoder online and cookie header parser: paste Set-Cookie headers, decode every attribute, humanize expiry dates, and run a cookie security checker audit with a 0–100 score.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: { lens:'#1a1025', lenspanel:'#241632', lensedgy:'#2f1d42', lensline:'#3d2456', fuch:'#e879f9', gold:'#fbbf24' },
+    fontFamily: { disp:['"Sora"','ui-sans-serif','system-ui','sans-serif'], mono:['"JetBrains Mono"','ui-monospace','monospace'] }
+  }}
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { background:#1a1025; color:#ede9f7; font-family:'Sora',ui-sans-serif,system-ui,sans-serif; }
+  .panel { background:linear-gradient(160deg,#241632 0%,#1d1129 100%); border:1px solid #3d2456; }
+  .panel-flat { background:#221430; border:1px solid #3d2456; }
+  .hdr-blur { background:rgba(26,16,37,.93); backdrop-filter:blur(10px); }
+  .grad-text { background:linear-gradient(90deg,#e879f9,#fbbf24); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .grad-btn { background:linear-gradient(135deg,#e879f9,#c026d3); }
+  .grad-btn:hover { filter:brightness(1.12); }
+  .gold-btn { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#1a1025; }
+  .gold-btn:hover { filter:brightness(1.08); }
+  .ghost-btn { border:1px solid #3d2456; }
+  .ghost-btn:hover { border-color:#e879f9; color:#e879f9; }
+  .mono { font-family:'JetBrains Mono',ui-monospace,monospace; }
+  .attr-row { border-bottom:1px dashed #3d2456; }
+  .attr-row:last-child { border-bottom:none; }
+  details.faq summary { cursor:pointer; }
+  details.faq summary::-webkit-details-marker { display:none; }
+  details.faq[open] .faq-plus { transform:rotate(45deg); }
+  .faq-plus { transition:transform .2s ease; }
+  .pill { font-size:10px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .pill-high { background:rgba(239,68,68,.14); color:#f87171; border:1px solid rgba(239,68,68,.45); }
+  .pill-medium { background:rgba(251,191,36,.13); color:#fbbf24; border:1px solid rgba(251,191,36,.45); }
+  .pill-low { background:rgba(56,189,248,.12); color:#7dd3fc; border:1px solid rgba(56,189,248,.4); }
+  .pill-info { background:rgba(232,121,249,.12); color:#e879f9; border:1px solid rgba(232,121,249,.4); }
+  .score-ring { transition:stroke-dashoffset .9s ease; }
+  .flag-on { color:#a7f3d0; }
+  .flag-off { color:#f87171; }
+  textarea, select, input[type="text"] { color-scheme: dark; }
+  textarea:focus, select:focus { outline:none; border-color:#e879f9 !important; box-shadow:0 0 0 3px rgba(232,121,249,.15); }
+  .copy-toast { transition:opacity .25s ease; }
+  @media (max-width:640px){ .stat-num{ font-size:1.35rem; } }
+  .sev-dot { width:8px; height:8px; border-radius:999px; display:inline-block; margin-right:8px; }
+  .sev-high { background:#f87171; box-shadow:0 0 8px #f87171; }
+  .sev-medium { background:#fbbf24; box-shadow:0 0 8px #fbbf24; }
+  .sev-low { background:#7dd3fc; box-shadow:0 0 8px #7dd3fc; }
+  .sev-info { background:#e879f9; box-shadow:0 0 8px #e879f9; }
+</style>
+</head>
+<body id="top" class="min-h-screen">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-50 border-b border-lensline/70 hdr-blur">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl grad-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1025" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><circle cx="9" cy="10" r="1" fill="#1a1025" stroke="none"/><circle cx="12.5" cy="13" r="1" fill="#1a1025" stroke="none"/><circle cx="9.5" cy="13.5" r="1" fill="#1a1025" stroke="none"/></svg>
+      </span>
+      <span class="font-disp text-xl font-bold tracking-tight">Cookie<span class="grad-text">Lens</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm">
+      <a href="#top" class="text-slate-300 hover:text-fuch transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-fuch transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-2">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style="background:rgba(232,121,249,.12);color:#e879f9;border:1px solid rgba(232,121,249,.4)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      Unlimited Free Usage
+    </span>
+    <span class="text-xs text-slate-500">No signup · No paywall · Everything runs in your browser</span>
+  </div>
+  <h1 class="font-disp text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
+    Set-Cookie <span class="grad-text">Inspector</span> &amp; Security Audit
+  </h1>
+  <p class="mt-3 max-w-2xl text-slate-400 text-sm sm:text-base">
+    Paste one or many <span class="mono text-fuch">Set-Cookie</span> response headers and CookieLens decodes every attribute, tells you
+    <span class="text-slate-200">when each cookie actually expires</span>, and runs a cookie security checker audit with a
+    <span class="text-slate-200">0–100 score</span> — plus a one-click hardened rewrite of each header.
+  </p>
+</section>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= TOOL ================= -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+
+  <!-- SUMMARY STRIP -->
+  <div id="audit-summary" class="hidden mb-6 panel rounded-2xl p-4 sm:p-5">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div class="panel-flat rounded-xl p-3">
+        <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-1">Cookies parsed</div>
+        <div id="sum-count" class="stat-num font-disp text-2xl sm:text-3xl font-bold text-slate-100">0</div>
+      </div>
+      <div class="panel-flat rounded-xl p-3">
+        <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-1">Avg security score</div>
+        <div id="sum-score" class="stat-num font-disp text-2xl sm:text-3xl font-bold" style="color:#e879f9">–</div>
+      </div>
+      <div class="panel-flat rounded-xl p-3">
+        <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-1"><span class="sev-dot sev-high"></span>High findings</div>
+        <div id="sum-high" class="stat-num font-disp text-2xl sm:text-3xl font-bold text-red-400">0</div>
+      </div>
+      <div class="panel-flat rounded-xl p-3">
+        <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-1"><span class="sev-dot sev-medium"></span>Medium findings</div>
+        <div id="sum-medium" class="stat-num font-disp text-2xl sm:text-3xl font-bold" style="color:#fbbf24">0</div>
+      </div>
+      <div class="panel-flat rounded-xl p-3">
+        <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-1">Grade spread</div>
+        <div id="sum-grades" class="mono text-sm text-slate-300 pt-1">–</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT DASHBOARD -->
+  <div class="panel rounded-2xl p-5 sm:p-6 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <h2 class="font-disp text-lg font-semibold">Paste Set-Cookie headers</h2>
+      <span class="text-xs text-slate-500">One per line · <span class="mono">Set-Cookie:</span> prefix optional</span>
+    </div>
+    <textarea id="cookie-input" rows="7" spellcheck="false"
+      class="mono w-full rounded-xl border border-lensline bg-lens p-4 text-[13px] leading-relaxed text-slate-200 placeholder-slate-600 transition"
+      placeholder="sessionid=abc123xyz; Path=/; Secure; HttpOnly; SameSite=Lax&#10;prefs=dark_mode; Path=/; Max-Age=31536000&#10;tracker=xyz; Domain=.example.com; SameSite=None"></textarea>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <button id="inspect-btn" class="grad-btn rounded-xl px-6 py-2.5 text-sm font-bold text-lens transition">🔍 Inspect Cookies</button>
+      <button id="sample-btn" class="ghost-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-300 transition">Load sample</button>
+      <button id="clear-btn" class="ghost-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-300 transition">Clear</button>
+    </div>
+
+    <!-- HARDENED GENERATOR OPTIONS -->
+    <div class="mt-5 panel-flat rounded-xl p-4">
+      <div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-3">⚙️ Hardened header generator — applied to every cookie below</div>
+      <div class="flex flex-wrap items-end gap-4">
+        <label class="text-sm text-slate-300">SameSite
+          <select id="hardened-samesite" class="ml-2 rounded-lg border border-lensline bg-lens px-3 py-2 text-sm mono">
+            <option value="Lax" selected>Lax</option>
+            <option value="Strict">Strict</option>
+            <option value="None">None</option>
+          </select>
+        </label>
+        <label class="text-sm text-slate-300 flex items-center gap-2 cursor-pointer">
+          <input id="hardened-httponly" type="checkbox" checked class="h-4 w-4 accent-fuchsia-400"> HttpOnly
+        </label>
+        <label class="text-sm text-slate-300 flex items-center gap-2 cursor-pointer">
+          <input id="hardened-partitioned" type="checkbox" class="h-4 w-4 accent-fuchsia-400"> Partitioned <span class="text-xs text-slate-500">(CHIPS)</span>
+        </label>
+        <button id="reharden-btn" class="ghost-btn rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 transition">Re-apply to results</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="cookie-results" class="space-y-5"></div>
+  <p id="results-hint" class="text-center text-sm text-slate-500 py-6">👆 Paste headers above and hit <span class="text-fuch font-semibold">Inspect Cookies</span> — your decoded dashboard appears here.</p>
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SEO ARTICLE ================= -->
+<article id="seo-article" class="mx-auto max-w-4xl px-4 sm:px-6 pb-10 text-slate-300 text-[15px] leading-relaxed">
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">What Is a Set-Cookie Header, Really?</h2>
+  <p class="mb-4">Every time you log in to a website, add something to a cart, or dismiss a banner, there is a quiet conversation happening between your browser and the server. The server's most important sentence in that conversation is the <span class="mono text-fuch">Set-Cookie</span> response header. It is a single line of text that tells the browser: remember this name and value, send it back with future requests, and here are the rules for how long it lives and where it may travel. A typical header looks like <span class="mono text-sm">sessionid=abc123; Path=/; Secure; HttpOnly; SameSite=Lax</span> — compact, precise, and easy to misread if you don't know what each attribute does.</p>
+  <p class="mb-4">The problem is that real-world <span class="mono">Set-Cookie</span> headers are rarely that tidy. Production headers pile on attributes, expire dates in a format nobody uses anywhere else, integer lifetimes, domain scoping rules, and flags with no values at all. When you are debugging an authentication bug, auditing a client's site, or reviewing your own code, staring at a raw header string is slow and error-prone. That is exactly why a <strong class="text-slate-100">set-cookie decoder online</strong> exists: you paste the raw header, and the tool breaks it into a clean attribute table so you can see — at a glance — the cookie's name, value, domain scope, path scope, lifetime, and every security flag.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">Decoding a Cookie Header by Hand vs. Using a Cookie Header Parser</h2>
+  <p class="mb-4">You can decode a cookie header manually, of course. Split the string on semicolons, treat the first segment as the <span class="mono">name=value</span> pair, and classify everything after it as attributes. But the devil is in the details. The <span class="mono">Expires</span> attribute contains a comma (<span class="mono">Wed, 21 Oct 2026 07:28:00 GMT</span>), which breaks naive parsers that split on commas. The <span class="mono">Max-Age</span> attribute is a duration in seconds, not a date, and when both are present <span class="mono">Max-Age</span> silently wins. Boolean flags like <span class="mono">Secure</span> and <span class="mono">HttpOnly</span> carry no value at all, so a parser that expects <span class="mono">key=value</span> everywhere will misclassify them. Quoted values, base64 payloads with <span class="mono">=</span> padding, and attribute names in unexpected cases (<span class="mono">httponly</span>, <span class="mono">SECURE</span>) add more traps.</p>
+  <p class="mb-4">A purpose-built <strong class="text-slate-100">cookie header parser</strong> handles all of this for you. It normalizes attribute names case-insensitively, strips the optional <span class="mono">Set-Cookie:</span> field prefix, unquotes DQUOTE-wrapped values, splits name and value on the <em>first</em> equals sign so base64 padding survives, parses HTTP dates into real timestamps, validates <span class="mono">Max-Age</span> integers, and flags attributes it does not recognize instead of silently dropping them. For batch work — pasting ten headers from a response dump — it processes every line independently and reports per-cookie results plus an aggregate summary. That is the difference between ten minutes of squinting and ten seconds of clarity.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">Every Set-Cookie Attribute, Explained</h2>
+  <p class="mb-4"><strong class="text-slate-100">Name and value.</strong> The core payload. Names should be RFC 6265 tokens; the value is opaque to the browser but often contains session IDs, JWTs, or preference strings. Empty values are legal and are commonly used as deletion markers.</p>
+  <p class="mb-4"><strong class="text-slate-100">Domain.</strong> Controls which hosts receive the cookie. Without it, the cookie is host-only and goes back solely to the exact domain that set it. With <span class="mono">Domain=.example.com</span>, subdomains like <span class="mono">app.example.com</span> get it too. The leading dot is legacy syntax — modern browsers ignore the dot but still apply subdomain scope.</p>
+  <p class="mb-4"><strong class="text-slate-100">Path.</strong> Narrows the cookie to URL paths. <span class="mono">Path=/</span> means the whole site; omitting it defaults to the request path that set the cookie, which surprises many developers when their cookie "disappears" on other pages.</p>
+  <p class="mb-4"><strong class="text-slate-100">Expires and Max-Age.</strong> Two ways to say "how long". <span class="mono">Expires</span> is an absolute HTTP date; <span class="mono">Max-Age</span> is a relative number of seconds from now. If both are present, <span class="mono">Max-Age</span> wins. A negative <span class="mono">Max-Age</span> deletes the cookie. And since 2022, browsers cap persistent cookie lifetimes at 400 days (RFC 6265bis) — anything longer gets truncated, no matter what your server asked for.</p>
+  <p class="mb-4"><strong class="text-slate-100">Secure.</strong> The cookie is only sent over HTTPS. Without it, the cookie value travels in plain text on HTTP connections and can be sniffed on public Wi-Fi. This is the single most impactful flag on the list.</p>
+  <p class="mb-4"><strong class="text-slate-100">HttpOnly.</strong> Hides the cookie from JavaScript (<span class="mono">document.cookie</span>). It does not stop all attacks, but it neutralizes the most common XSS payload — stealing the session token — by keeping it out of the DOM entirely.</p>
+  <p class="mb-4"><strong class="text-slate-100">SameSite.</strong> Your CSRF shield. <span class="mono">Lax</span> sends the cookie on top-level navigations but not on cross-site subrequests; <span class="mono">Strict</span> never sends it cross-site at all; <span class="mono">None</span> allows cross-site use but requires <span class="mono">Secure</span>. Browsers default to <span class="mono">Lax</span> when the attribute is missing, but relying on the default instead of setting it explicitly is a code smell auditors love to flag.</p>
+  <p class="mb-4"><strong class="text-slate-100">Partitioned.</strong> The CHIPS attribute (Cookies Having Independent Partitioned State). It lets embedded third-party content set cookies keyed to the top-level site, so the same embed on two different sites gets two isolated cookie jars. It requires both <span class="mono">Secure</span> and <span class="mono">SameSite=None</span> — miss either and browsers ignore or reject it.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">Why a Cookie Security Checker Score Matters</h2>
+  <p class="mb-4">Knowing what the attributes mean is step one; judging whether a cookie is <em>safe</em> is step two. A <strong class="text-slate-100">cookie security checker</strong> applies a consistent audit to every cookie: is <span class="mono">Secure</span> present? Is <span class="mono">HttpOnly</span> set on anything session-like? Is <span class="mono">SameSite</span> explicit? Does <span class="mono">SameSite=None</span> have its mandatory <span class="mono">Secure</span> partner, or will browsers reject the cookie outright? Is the lifetime within the 400-day cap? Is <span class="mono">Max-Age</span> even a valid integer?</p>
+  <p class="mb-4">CookieLens scores each cookie from 0 to 100 and grades it A through F. Missing <span class="mono">Secure</span> costs 30 points — a high-severity finding, because a session cookie without <span class="mono">Secure</span> is one open network away from account takeover. Missing <span class="mono">HttpOnly</span> costs 20 points — high severity for session tokens, since any reflected XSS becomes a full session theft. A missing <span class="mono">SameSite</span> attribute costs 15 points at medium severity: browsers will guess <span class="mono">Lax</span>, but explicit beats implicit when you are defending against CSRF. The deadliest combination, <span class="mono">SameSite=None</span> without <span class="mono">Secure</span>, is flagged as high severity on its own — Chrome, Edge, Firefox, and Safari all reject such cookies, so the feature you thought you shipped is silently broken for everyone.</p>
+  <p class="mb-4">The audit also catches quieter issues: negative <span class="mono">Max-Age</span> values that delete cookies on arrival, expiries beyond the 400-day browser cap, missing <span class="mono">Path</span> attributes that scope cookies too narrowly, empty values, non-token characters in names, and unrecognized attributes that browsers will ignore. Each finding carries a plain-English explanation, so the report doubles as a learning tool for developers who inherited a cookie setup they didn't write.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">The SameSite=None Without Secure Trap</h2>
+  <p class="mb-4">This deserves its own section because it is the single most common cookie bug in production. A developer embeds a widget, a payment iframe, or a cross-site SSO flow, and learns they need <span class="mono">SameSite=None</span> for the cookie to travel cross-site. They add it, test on localhost — where browsers relax the <span class="mono">Secure</span> requirement — and everything works. Then they deploy to production, and the cookie vanishes. No error in the application logs, no crash; the browser simply refuses to store a <span class="mono">SameSite=None</span> cookie that lacks <span class="mono">Secure</span>. Sessions break, logins loop, and the debugging session begins in the wrong place entirely.</p>
+  <p class="mb-4">CookieLens flags this combination explicitly and at high severity, because it is both a security finding and a functionality bug. The fix is mechanical: add <span class="mono">Secure</span> (and serve over HTTPS, which you should be doing anyway), or reconsider whether the cookie needs to be cross-site at all — <span class="mono">SameSite=Lax</span> is the right default for first-party session cookies, and <span class="mono">Strict</span> suits high-sensitivity flows like banking dashboards.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">Reading Expiry Like a Human</h2>
+  <p class="mb-4">Raw expiry data is hostile to humans. <span class="mono">Max-Age=31536000</span> is a year, but you have to do the math. <span class="mono">Expires=Wed, 21 Oct 2026 07:28:00 GMT</span> is precise but tells you nothing about how far away that is. CookieLens translates both into plain language — "expires in 3 days", "expired 2 hours ago" — computed against the current time. It also tells you which mechanism is in force when both are present, warns when a lifetime exceeds the 400-day cap, and marks session cookies (no <span class="mono">Expires</span> or <span class="mono">Max-Age</span> at all) as dying with the browser tab.</p>
+  <p class="mb-4">This matters beyond curiosity. Stale expiries are a real operational hazard: a cookie set to expire in 2038 will be silently truncated by the browser, and a cookie your server thinks is persistent may actually be a session cookie because the <span class="mono">Expires</span> date was malformed and ignored. Humanized expiry turns these silent failures into visible ones.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">From Audit to Fix: The Hardened Header Generator</h2>
+  <p class="mb-4">Finding problems is only half the job, so CookieLens includes a hardened header generator. For each parsed cookie it produces a best-practice rewrite: it preserves your name, value, domain, and lifetime, then applies <span class="mono">Secure</span>, <span class="mono">HttpOnly</span> (toggleable, for cookies your JavaScript legitimately needs to read), an explicit <span class="mono">SameSite</span> policy (Lax by default, Strict or None on demand), a sensible <span class="mono">Path=/</span> default, and optional <span class="mono">Partitioned</span> for CHIPS use cases. One click copies the rewritten header, ready to paste into your server configuration or framework's cookie options.</p>
+  <p class="mb-4">This closes the loop that most cookie tools leave open: decode, understand, audit, and then immediately generate the fixed version. For teams doing security reviews, the workflow is paste → inspect → copy hardened headers into the ticket. For solo developers, it is the fastest way to bring a legacy cookie setup up to modern best practice without memorizing the RFC.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">A Practical Workflow for Developers and Auditors</h2>
+  <p class="mb-4">Here is how CookieLens fits into real work. <strong class="text-slate-100">Debugging login issues:</strong> open your browser's devtools, copy the <span class="mono">Set-Cookie</span> response headers from the Network tab, paste them into CookieLens, and check whether the session cookie is actually being stored — expired dates, rejected <span class="mono">SameSite=None</span> cookies, and domain mismatches show up immediately. <strong class="text-slate-100">Security audits:</strong> paste every <span class="mono">Set-Cookie</span> header your application emits and review the aggregate findings — any high-severity item is a ticket. <strong class="text-slate-100">Code review:</strong> when a pull request touches cookie configuration, decode the resulting headers and confirm the flags match the intent. <strong class="text-slate-100">Learning:</strong> if you are new to web security, paste headers from sites you use and read the findings — it is the fastest practical education in cookie security available.</p>
+  <p class="mb-4">Everything happens in your browser. CookieLens never sends your headers anywhere — there is no server, no analytics on your input, no account. Paste, inspect, copy the hardened version, and move on. That privacy guarantee matters: <span class="mono">Set-Cookie</span> headers often contain live session tokens, and you should never paste those into a tool that phones home.</p>
+
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mt-8 mb-4">Cookie Security Checklist (The Short Version)</h2>
+  <p class="mb-4">If you take one thing from this page, take the checklist: always set <span class="mono">Secure</span>; always set <span class="mono">HttpOnly</span> unless JavaScript must read the cookie; always set <span class="mono">SameSite</span> explicitly (<span class="mono">Lax</span> by default, <span class="mono">Strict</span> for sensitive flows); never pair <span class="mono">SameSite=None</span> with a missing <span class="mono">Secure</span>; prefer <span class="mono">Max-Age</span> over <span class="mono">Expires</span> for new code; keep lifetimes at or under 400 days; scope <span class="mono">Path</span> and <span class="mono">Domain</span> as narrowly as your app allows; and re-audit whenever your cookie setup changes. Paste your headers into the inspector above, fix what it flags, and ship with confidence.</p>
+</article>
+
+<!-- ================= FAQS ================= -->
+<section class="mx-auto max-w-4xl px-4 sm:px-6 pb-12">
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mb-5">Frequently Asked Questions</h2>
+  <div class="space-y-3">
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        What does a Set-Cookie decoder do?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed">A Set-Cookie decoder takes a raw <span class="mono">Set-Cookie</span> response header — like <span class="mono">sessionid=abc; Path=/; Secure; HttpOnly; SameSite=Lax</span> — and breaks it into a readable table of name, value, Domain, Path, Expires/Max-Age, Secure, HttpOnly, SameSite, and Partitioned. CookieLens goes further by humanizing expiry times ("expires in 3 days"), auditing each cookie's security with a 0–100 score, and generating a hardened rewrite of the header.</p>
+    </details>
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        Why is SameSite=None without Secure a problem?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed">Modern browsers reject any cookie marked <span class="mono">SameSite=None</span> that does not also carry the <span class="mono">Secure</span> flag. The cookie is silently dropped — your server thinks it set it, but the browser never stores it. This commonly breaks cross-site widgets, embedded checkouts, and SSO flows that were tested on localhost (where browsers relax the rule) but fail in production. CookieLens flags this combination at high severity.</p>
+    </details>
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        What is the difference between Expires and Max-Age?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed"><span class="mono">Expires</span> sets an absolute date and time when the cookie dies; <span class="mono">Max-Age</span> sets a relative lifetime in seconds from the moment it is received. When both are present, <span class="mono">Max-Age</span> takes precedence. A cookie with neither is a session cookie that disappears when the browser closes. Note that browsers cap persistent cookie lifetimes at 400 days regardless of what the server requests.</p>
+    </details>
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        How is the cookie security score calculated?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed">Each cookie starts at 100 and loses points per finding: missing <span class="mono">Secure</span> costs 30 (high severity), missing <span class="mono">HttpOnly</span> costs 20 (high), <span class="mono">SameSite=None</span> without <span class="mono">Secure</span> costs 25 (high), missing <span class="mono">SameSite</span> costs 15 (medium), and lifetime or attribute issues cost 5–10. Scores map to grades A (90+) through F (below 60), so you can triage a whole batch at a glance.</p>
+    </details>
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        Can I inspect multiple cookies at once?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed">Yes. Paste one <span class="mono">Set-Cookie</span> header per line — CookieLens parses each independently, renders a dashboard card per cookie with its own attribute table, audit findings, and hardened rewrite, and shows an aggregate summary strip with the total count, average score, and finding severity counts.</p>
+    </details>
+    <details class="faq panel rounded-xl px-5 py-4">
+      <summary class="flex items-center justify-between gap-4 font-semibold text-slate-100">
+        Is it safe to paste cookies containing session tokens?
+        <span class="faq-plus text-fuch text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-3 text-sm text-slate-400 leading-relaxed">CookieLens runs entirely in your browser — there is no backend, no database, and no network request carrying your input anywhere. The parsing, auditing, and header generation all happen locally in JavaScript. That said, as a general habit, prefer pasting headers from test or staging environments over production session tokens whenever you can.</p>
+    </details>
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What does a Set-Cookie decoder do?", "acceptedAnswer": { "@type": "Answer", "text": "A Set-Cookie decoder takes a raw Set-Cookie response header and breaks it into a readable table of name, value, Domain, Path, Expires/Max-Age, Secure, HttpOnly, SameSite, and Partitioned. CookieLens also humanizes expiry times, audits each cookie's security with a 0-100 score, and generates a hardened rewrite of the header." } },
+    { "@type": "Question", "name": "Why is SameSite=None without Secure a problem?", "acceptedAnswer": { "@type": "Answer", "text": "Modern browsers reject any cookie marked SameSite=None that does not also carry the Secure flag. The cookie is silently dropped, which commonly breaks cross-site widgets, embedded checkouts, and SSO flows that worked on localhost but fail in production." } },
+    { "@type": "Question", "name": "What is the difference between Expires and Max-Age?", "acceptedAnswer": { "@type": "Answer", "text": "Expires sets an absolute date when the cookie dies; Max-Age sets a relative lifetime in seconds. When both are present, Max-Age wins. A cookie with neither is a session cookie. Browsers cap persistent cookie lifetimes at 400 days." } },
+    { "@type": "Question", "name": "How is the cookie security score calculated?", "acceptedAnswer": { "@type": "Answer", "text": "Each cookie starts at 100 and loses points per finding: missing Secure costs 30, missing HttpOnly costs 20, SameSite=None without Secure costs 25, missing SameSite costs 15, and smaller attribute issues cost 5-10. Scores map to grades A through F." } },
+    { "@type": "Question", "name": "Can I inspect multiple cookies at once?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Paste one Set-Cookie header per line. CookieLens parses each independently, renders a dashboard card per cookie with its attribute table, audit findings, and hardened rewrite, plus an aggregate summary strip." } },
+    { "@type": "Question", "name": "Is it safe to paste cookies containing session tokens?", "acceptedAnswer": { "@type": "Answer", "text": "CookieLens runs entirely in your browser with no backend and no network requests carrying your input. Parsing, auditing, and header generation all happen locally in JavaScript." } }
+  ]
+}
+</script>
+
+<!-- ================= PURE LOGIC LIB (inlined at build time) ================= -->
+<script id="v3-cookielens-cookie-inspector-lib">
+/* CookieLens Set-Cookie inspector engine — PURE functions only.
+   No DOM, no window, no document, no localStorage, no navigator, no fetch.
+   Top-level function declarations so the test harness can eval via new Function.
+   NOTE: must never contain the literal script-closing tag sequence. */
+
+function trimStr(v) {
+  return String(v === undefined || v === null ? '' : v).trim();
+}
+
+function isFiniteNum(n) {
+  return typeof n === 'number' && isFinite(n);
+}
+
+function clampNum(n, lo, hi) {
+  if (n < lo) return lo;
+  if (n > hi) return hi;
+  return n;
+}
+
+/* ---------------- parsing ---------------- */
+
+/* parseSetCookie(line) ->
+   { ok, name, value, attrs, error }
+   attrs = { domain, path, expires (ms epoch|null), expiresRaw, maxAge (int|null),
+             maxAgeRaw, secure, httpOnly, sameSite (Lax|Strict|None|raw|null),
+             partitioned, unknown[] } */
+function parseSetCookie(line) {
+  line = trimStr(line);
+  var attrs = {
+    domain: null, path: null,
+    expires: null, expiresRaw: null,
+    maxAge: null, maxAgeRaw: null,
+    secure: false, httpOnly: false,
+    sameSite: null, partitioned: false,
+    unknown: []
+  };
+  if (!line) return { ok: false, name: '', value: '', attrs: attrs, error: 'Empty header line.' };
+  // Strip a leading "Set-Cookie:" field name if present.
+  var stripped = line.replace(/^\s*set-cookie\s*:/i, '');
+  var segments = stripped.split(';');
+  var first = trimStr(segments.shift());
+  var eq = first.indexOf('=');
+  var name, value;
+  if (eq === -1) {
+    name = first; value = '';
+  } else {
+    name = trimStr(first.slice(0, eq));
+    value = first.slice(eq + 1).trim();
+  }
+  if (!name) return { ok: false, name: '', value: '', attrs: attrs, error: 'No cookie name found.' };
+  // RFC 6265 cookie-octet unquoting: strip a single pair of DQUOTE if present.
+  if (value.length >= 2 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+    value = value.slice(1, -1);
+  }
+  segments.forEach(function (seg) {
+    seg = trimStr(seg);
+    if (!seg) return;
+    var i = seg.indexOf('=');
+    var aName = trimStr(i === -1 ? seg : seg.slice(0, i)).toLowerCase();
+    var aVal = i === -1 ? '' : trimStr(seg.slice(i + 1));
+    switch (aName) {
+      case 'domain':
+        attrs.domain = aVal;
+        break;
+      case 'path':
+        attrs.path = aVal;
+        break;
+      case 'expires':
+        attrs.expiresRaw = aVal;
+        var t = Date.parse(aVal);
+        attrs.expires = isNaN(t) ? null : t;
+        break;
+      case 'max-age':
+        attrs.maxAgeRaw = aVal;
+        var mi = parseInt(aVal, 10);
+        attrs.maxAge = (/^-?\d+$/.test(aVal) && !isNaN(mi)) ? mi : null;
+        break;
+      case 'secure':
+        attrs.secure = true;
+        break;
+      case 'httponly':
+        attrs.httpOnly = true;
+        break;
+      case 'samesite': {
+        var s = aVal.toLowerCase();
+        attrs.sameSite = (s === 'lax') ? 'Lax' : (s === 'strict') ? 'Strict' : (s === 'none') ? 'None' : (aVal || null);
+        break;
+      }
+      case 'partitioned':
+        attrs.partitioned = true;
+        break;
+      default:
+        attrs.unknown.push(seg);
+    }
+  });
+  return { ok: true, name: name, value: value, attrs: attrs, error: '' };
+}
+
+/* parseBatch(text) -> [{ line, index, ok, name, value, attrs, error }] */
+function parseBatch(text) {
+  var lines = trimStr(text).split(/\r?\n/);
+  var out = [];
+  var idx = 0;
+  lines.forEach(function (ln) {
+    var t = trimStr(ln);
+    if (!t) return;
+    var p = parseSetCookie(t);
+    out.push({
+      line: t,
+      index: idx,
+      ok: p.ok,
+      name: p.name,
+      value: p.value,
+      attrs: p.attrs,
+      error: p.error
+    });
+    idx++;
+  });
+  return out;
+}
+
+/* cookieExpiryMs(parsed, nowMs) -> ms epoch | null.
+   Max-Age wins over Expires per RFC 6265. Session cookie -> null. */
+function cookieExpiryMs(parsed, nowMs) {
+  if (!parsed || !parsed.ok) return null;
+  nowMs = isFiniteNum(nowMs) ? nowMs : Date.now();
+  var a = parsed.attrs;
+  if (isFiniteNum(a.maxAge)) return nowMs + a.maxAge * 1000;
+  if (isFiniteNum(a.expires)) return a.expires;
+  return null;
+}
+
+/* ---------------- humanized expiry ---------------- */
+
+/* relTime(absMs) -> "3 days" / "45 seconds" (no prefix/suffix) */
+function relTime(absMs) {
+  var s = Math.floor(absMs / 1000);
+  if (s < 60) return s + (s === 1 ? ' second' : ' seconds');
+  var m = Math.floor(s / 60);
+  if (m < 60) return m + (m === 1 ? ' minute' : ' minutes');
+  var h = Math.floor(m / 60);
+  if (h < 48) return h + (h === 1 ? ' hour' : ' hours');
+  var d = Math.floor(h / 24);
+  if (d < 60) return d + (d === 1 ? ' day' : ' days');
+  var mo = Math.floor(d / 30.44);
+  if (mo < 24) return mo + (mo === 1 ? ' month' : ' months');
+  var y = Math.floor(mo / 12);
+  return y + (y === 1 ? ' year' : ' years');
+}
+
+/* humanizeExpiry(expiryMs, nowMs) -> "expires in 3 days" | "expired 2 hours ago"
+   | "expires right now" | "session cookie (expires when the browser closes)" */
+function humanizeExpiry(expiryMs, nowMs) {
+  if (!isFiniteNum(expiryMs)) return 'session cookie (expires when the browser closes)';
+  nowMs = isFiniteNum(nowMs) ? nowMs : Date.now();
+  var diff = expiryMs - nowMs;
+  if (diff > 0) return 'expires in ' + relTime(diff);
+  if (diff < 0) return 'expired ' + relTime(-diff) + ' ago';
+  return 'expires right now';
+}
+
+/* ---------------- security audit ---------------- */
+
+/* Finding severity: 'high' | 'medium' | 'low' | 'info' */
+function auditCookie(parsed, nowMs) {
+  var findings = [];
+  var score = 100;
+  function add(sev, code, message, penalty) {
+    findings.push({ severity: sev, code: code, message: message });
+    score -= (penalty || 0);
+  }
+  if (!parsed || !parsed.ok) {
+    return { score: 0, grade: 'F', findings: [{ severity: 'high', code: 'unparseable', message: 'Header could not be parsed: ' + (parsed && parsed.error ? parsed.error : 'unknown error') }] };
+  }
+  nowMs = isFiniteNum(nowMs) ? nowMs : Date.now();
+  var a = parsed.attrs;
+
+  if (!a.secure) {
+    add('high', 'missing-secure', 'Missing Secure flag — this cookie can be sent over plain HTTP and sniffed on the network.', 30);
+  }
+  if (!a.httpOnly) {
+    add('high', 'missing-httponly', 'Missing HttpOnly flag — the cookie is readable by JavaScript, which makes XSS attacks far more dangerous.', 20);
+  }
+  if (!a.sameSite) {
+    add('medium', 'missing-samesite', 'SameSite not set — modern browsers default to Lax, but setting it explicitly removes ambiguity and blocks older-browser surprises.', 15);
+  }
+  if (a.sameSite === 'None' && !a.secure) {
+    add('high', 'samesite-none-without-secure', 'SameSite=None without Secure — modern browsers REJECT this cookie outright, so it will never be set.', 25);
+  }
+  if (a.sameSite === 'None' && a.secure) {
+    add('info', 'samesite-none-ok', 'SameSite=None with Secure allows cross-site use — correct for widgets/embeds, but audit whether you really need third-party cookies.');
+  }
+  if (a.partitioned && !a.secure) {
+    add('high', 'partitioned-without-secure', 'Partitioned (CHIPS) requires Secure — browsers will reject this cookie.', 20);
+  }
+  if (a.partitioned && a.secure && a.sameSite !== 'None') {
+    add('medium', 'partitioned-needs-samesite-none', 'Partitioned cookies must also use SameSite=None — browsers may ignore the Partitioned attribute otherwise.', 10);
+  }
+  if (a.maxAgeRaw !== null && a.maxAge === null) {
+    add('medium', 'invalid-max-age', 'Max-Age value "' + a.maxAgeRaw + '" is not a valid integer — browsers will ignore it.', 5);
+  }
+  if (isFiniteNum(a.maxAge) && a.maxAge < 0) {
+    add('low', 'negative-max-age', 'Negative Max-Age — this instructs the browser to delete the cookie immediately.');
+  }
+  var expMs = cookieExpiryMs(parsed, nowMs);
+  if (isFiniteNum(expMs)) {
+    var MAX_LIFE = 400 * 24 * 3600 * 1000; // RFC 6265bis cap
+    if (expMs - nowMs > MAX_LIFE) {
+      add('medium', 'expiry-over-cap', 'Lifetime exceeds the 400-day browser cap (RFC 6265bis) — browsers will truncate the expiry.', 10);
+    }
+    if (expMs <= nowMs) {
+      add('info', 'already-expired', 'This cookie is already expired — the browser will discard it instead of storing it.');
+    }
+  }
+  if (!a.path) {
+    add('low', 'missing-path', 'No Path attribute — the cookie defaults to the current request path instead of the whole site.', 5);
+  }
+  if (a.domain && a.domain.charAt(0) === '.') {
+    add('info', 'legacy-dot-domain', 'Leading dot in Domain is legacy syntax — modern browsers ignore the dot, but the cookie still covers subdomains.');
+  }
+  if (parsed.value === '') {
+    add('low', 'empty-value', 'Empty cookie value — fine for flags or deletion markers, but double-check it is intentional.');
+  }
+  if (/[^\x21\x23-\x2b\x2d-\x3a\x3c-\x5b\x5d-\x7e]/.test(parsed.name)) {
+    add('low', 'name-non-token', 'Cookie name contains characters outside the RFC 6265 token set — some servers or proxies may mangle it.');
+  }
+  if (a.unknown.length > 0) {
+    add('info', 'unknown-attrs', 'Unrecognized attribute(s): ' + a.unknown.join(', ') + ' — browsers will ignore them.');
+  }
+  score = clampNum(Math.round(score), 0, 100);
+  var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+  return { score: score, grade: grade, findings: findings };
+}
+
+/* batchSummary(audited) -> { count, avgScore, high, medium, low, info, grades } */
+function batchSummary(audited) {
+  audited = audited || [];
+  var s = { count: audited.length, avgScore: 0, high: 0, medium: 0, low: 0, info: 0, grades: { A: 0, B: 0, C: 0, D: 0, F: 0 } };
+  if (audited.length === 0) return s;
+  var total = 0;
+  audited.forEach(function (a) {
+    total += a.score;
+    if (s.grades[a.grade] !== undefined) s.grades[a.grade]++;
+    (a.findings || []).forEach(function (fnd) {
+      if (s[fnd.severity] !== undefined) s[fnd.severity]++;
+    });
+  });
+  s.avgScore = Math.round(total / audited.length);
+  return s;
+}
+
+/* ---------------- hardened header generator ---------------- */
+
+/* generateHardened(parsed, opts) -> "name=value; Path=/; Secure; HttpOnly; SameSite=Lax"
+   opts: { sameSite: 'Lax'|'Strict'|'None', httpOnly: bool, partitioned: bool, path: string } */
+function generateHardened(parsed, opts) {
+  if (!parsed || !parsed.ok) return '';
+  opts = opts || {};
+  var a = parsed.attrs;
+  var ss = opts.sameSite;
+  if (ss !== 'Lax' && ss !== 'Strict' && ss !== 'None') ss = 'Lax';
+  var wantHttpOnly = opts.httpOnly === undefined ? true : !!opts.httpOnly;
+  var wantPartitioned = !!opts.partitioned;
+  var path = trimStr(opts.path);
+  if (!path) path = a.path ? a.path : '/';
+  var parts = [parsed.name + '=' + parsed.value];
+  if (a.domain) parts.push('Domain=' + a.domain);
+  parts.push('Path=' + path);
+  if (isFiniteNum(a.maxAge)) parts.push('Max-Age=' + a.maxAge);
+  else if (isFiniteNum(a.expires)) parts.push('Expires=' + new Date(a.expires).toUTCString());
+  parts.push('Secure');
+  if (wantHttpOnly) parts.push('HttpOnly');
+  parts.push('SameSite=' + ss);
+  if (wantPartitioned && ss === 'None') parts.push('Partitioned');
+  return parts.join('; ');
+}
+
+</script>
+
+<!-- ================= UI WIRING (DOM only — not part of the testable lib) ================= -->
+<script>
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  var GRADE_COLOR = { A: '#4ade80', B: '#a3e635', C: '#fbbf24', D: '#fb923c', F: '#f87171' };
+  var RING_C = 2 * Math.PI * 26;
+
+  var SAMPLE =
+    'sessionid=abc123xyz; Path=/; Secure; HttpOnly; SameSite=Lax\n' +
+    'prefs=dark_mode; Path=/; Max-Age=31536000\n' +
+    'tracker=xyz; Domain=.example.com; SameSite=None\n' +
+    'legacy=old; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Path=/';
+
+  var lastParsed = [];
+
+  function hardenedOpts() {
+    return {
+      sameSite: $('hardened-samesite').value,
+      httpOnly: $('hardened-httponly').checked,
+      partitioned: $('hardened-partitioned').checked
+    };
+  }
+
+  function flagHtml(on) {
+    return on
+      ? '<span class="flag-on font-semibold">✓ set</span>'
+      : '<span class="flag-off font-semibold">✗ missing</span>';
+  }
+
+  function scoreRing(score, grade) {
+    var color = GRADE_COLOR[grade] || '#e879f9';
+    var off = RING_C - (RING_C * score / 100);
+    return '<div class="relative shrink-0" style="width:84px;height:84px">' +
+      '<svg viewBox="0 0 64 64" class="w-full h-full -rotate-90">' +
+      '<circle cx="32" cy="32" r="26" fill="none" stroke="#3d2456" stroke-width="7"/>' +
+      '<circle class="score-ring" cx="32" cy="32" r="26" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" ' +
+      'stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '"/>' +
+      '</svg>' +
+      '<div class="absolute inset-0 flex flex-col items-center justify-center">' +
+      '<span class="font-disp text-xl font-bold" style="color:' + color + '">' + score + '</span>' +
+      '<span class="text-[10px] uppercase tracking-widest text-slate-500">grade ' + grade + '</span>' +
+      '</div></div>';
+  }
+
+  function attrTableHtml(p, nowMs) {
+    var a = p.attrs;
+    function row(k, vHtml) {
+      return '<div class="attr-row flex justify-between gap-4 py-1.5 text-[13px]">' +
+        '<span class="text-slate-500 shrink-0">' + k + '</span>' +
+        '<span class="mono text-slate-200 text-right break-all">' + vHtml + '</span></div>';
+    }
+    var expMs = cookieExpiryMs(p, nowMs);
+    var expLabel = expMs
+      ? esc(humanizeExpiry(expMs, nowMs)) + ' <span class="text-slate-500">(' + esc(new Date(expMs).toUTCString()) + ')</span>'
+      : '<span class="text-slate-500">session cookie — dies with the browser</span>';
+    var maxAgeLabel = a.maxAgeRaw === null
+      ? '<span class="text-slate-500">—</span>'
+      : esc(a.maxAgeRaw) + 's' + (a.maxAge === null ? ' <span class="flag-off">(invalid)</span>' : '');
+    return '<div class="panel-flat rounded-xl p-4">' +
+      '<div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-2">Attribute table</div>' +
+      row('Name', esc(p.name)) +
+      row('Value', p.value === '' ? '<span class="text-slate-500">(empty)</span>' : esc(p.value.length > 80 ? p.value.slice(0, 80) + '…' : p.value)) +
+      row('Domain', a.domain ? esc(a.domain) : '<span class="text-slate-500">— (host-only)</span>') +
+      row('Path', a.path ? esc(a.path) : '<span class="text-slate-500">— (request-path default)</span>') +
+      row('Expires', expLabel) +
+      row('Max-Age', maxAgeLabel) +
+      row('Secure', flagHtml(a.secure)) +
+      row('HttpOnly', flagHtml(a.httpOnly)) +
+      row('SameSite', a.sameSite ? esc(a.sameSite) : '<span class="text-slate-500">— (browser defaults to Lax)</span>') +
+      row('Partitioned', flagHtml(a.partitioned)) +
+      '</div>';
+  }
+
+  function findingsHtml(findings) {
+    if (!findings.length) {
+      return '<div class="panel-flat rounded-xl p-4 text-sm text-emerald-300">✓ No issues found — textbook cookie.</div>';
+    }
+    var items = findings.map(function (f) {
+      return '<div class="flex items-start gap-2 py-1.5 border-b border-lensline/60 last:border-0">' +
+        '<span class="pill pill-' + f.severity + ' mt-0.5 shrink-0">' + f.severity + '</span>' +
+        '<span class="text-[13px] text-slate-300">' + esc(f.message) + '</span></div>';
+    }).join('');
+    return '<div class="panel-flat rounded-xl p-4"><div class="text-[11px] uppercase tracking-[0.15em] text-slate-500 mb-2">Security audit findings</div>' + items + '</div>';
+  }
+
+  function cardHtml(p, audit, nowMs, idx) {
+    var hard = generateHardened(p, hardenedOpts());
+    return '<div class="panel rounded-2xl p-5 sm:p-6" id="cookie-card-' + idx + '">' +
+      '<div class="flex items-start justify-between gap-4 flex-wrap mb-4">' +
+        '<div class="min-w-0">' +
+          '<div class="mono text-lg font-semibold text-fuch break-all">' + esc(p.name) + '</div>' +
+          '<div class="text-xs text-slate-500 mt-1">line ' + (p.index + 1) + '</div>' +
+        '</div>' + scoreRing(audit.score, audit.grade) +
+      '</div>' +
+      '<div class="grid lg:grid-cols-2 gap-4 mb-4">' +
+        '<div>' + attrTableHtml(p, nowMs) + '</div>' +
+        '<div>' + findingsHtml(audit.findings) + '</div>' +
+      '</div>' +
+      '<div class="panel-flat rounded-xl p-4">' +
+        '<div class="flex items-center justify-between flex-wrap gap-2 mb-2">' +
+          '<div class="text-[11px] uppercase tracking-[0.15em] text-slate-500">🛡️ Hardened header</div>' +
+          '<button class="copy-hardened-btn ghost-btn rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 transition" data-hardened="' + esc(hard) + '">Copy hardened header</button>' +
+        '</div>' +
+        '<pre class="mono text-[12px] leading-relaxed text-gold break-all whitespace-pre-wrap">' + esc(hard) + '</pre>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function errorCardHtml(p) {
+    return '<div class="panel rounded-2xl p-5 border-red-900/60">' +
+      '<div class="mono text-lg font-semibold text-red-400 break-all">⚠ line ' + (p.index + 1) + ' — not parsed</div>' +
+      '<pre class="mono text-[12px] text-slate-400 mt-2 break-all whitespace-pre-wrap">' + esc(p.line) + '</pre>' +
+      '<p class="text-sm text-slate-500 mt-2">' + esc(p.error) + '</p></div>';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'copy-toast fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-semibold';
+    t.style.cssText = 'background:#2f1d42;border:1px solid #e879f9;color:#e879f9;opacity:0';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.style.opacity = '1'; });
+    setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 1600);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { showToast('Copied to clipboard ✓'); }, function () { showToast('Copy failed — select manually'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('Copied to clipboard ✓'); }
+      catch (e) { showToast('Copy failed — select manually'); }
+      ta.remove();
+    }
+  }
+
+  function render() {
+    var nowMs = Date.now();
+    var parsed = parseBatch($('cookie-input').value);
+    lastParsed = parsed;
+    var box = $('cookie-results');
+    var hint = $('results-hint');
+    var sum = $('audit-summary');
+    if (!parsed.length) {
+      box.innerHTML = '';
+      hint.classList.remove('hidden');
+      sum.classList.add('hidden');
+      return;
+    }
+    hint.classList.add('hidden');
+    var audited = [];
+    box.innerHTML = parsed.map(function (p, i) {
+      if (!p.ok) return errorCardHtml(p);
+      var audit = auditCookie(p, nowMs);
+      audited.push(audit);
+      return cardHtml(p, audit, nowMs, i);
+    }).join('');
+    var s = batchSummary(audited);
+    sum.classList.remove('hidden');
+    $('sum-count').textContent = parsed.length;
+    $('sum-score').textContent = s.avgScore;
+    $('sum-high').textContent = s.high;
+    $('sum-medium').textContent = s.medium;
+    $('sum-grades').textContent = ['A', 'B', 'C', 'D', 'F'].map(function (g) { return g + '×' + s.grades[g]; }).join(' ');
+    var btns = box.querySelectorAll('.copy-hardened-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () { copyText(this.getAttribute('data-hardened')); });
+    }
+  }
+
+  $('inspect-btn').addEventListener('click', render);
+  $('reharden-btn').addEventListener('click', render);
+  $('sample-btn').addEventListener('click', function () { $('cookie-input').value = SAMPLE; render(); });
+  $('clear-btn').addEventListener('click', function () { $('cookie-input').value = ''; render(); });
+  ['hardened-samesite', 'hardened-httponly', 'hardened-partitioned'].forEach(function (id) {
+    $(id).addEventListener('change', function () { if (lastParsed.length) render(); });
+  });
+})();
+</script>
+<footer style="padding:18px 12px 26px"><p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p></footer>
+</body>
+</html>
