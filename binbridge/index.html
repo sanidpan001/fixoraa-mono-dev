@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BinBridge — Binary Translator: Text to Binary, Hex, Octal & Decimal Converter</title>
+<meta name="description" content="Free binary translator. Convert text to binary, hex, octal and decimal live as you type — and decode binary back to text. Per-character breakdown table included.">
+<link rel="canonical" href="https://dev.fixoraa.tech/binbridge/">
+<meta property="og:title" content="BinBridge — Binary Translator: Text to Binary, Hex, Octal & Decimal Converter">
+<meta property="og:description" content="Free binary translator. Convert text to binary, hex, octal and decimal live as you type — and decode binary back to text. Per-character breakdown table included.">
+<meta property="og:url" content="https://dev.fixoraa.tech/binbridge/">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--pri:#15803D;--acc:#EAB308;--bgc:#F0FDF4}
+body{background:var(--bgc);font-family:'Courier New',monospace}
+.pri{background:var(--pri)} .prit{color:var(--pri)} .acct{color:var(--acc)}
+.btn{background:var(--pri);color:#fff;padding:.6rem 1.2rem;border-radius:.6rem;font-weight:600;cursor:pointer;border:none}
+.btn:hover{opacity:.9} .btn2{background:var(--acc);color:#111;padding:.6rem 1.2rem;border-radius:.6rem;font-weight:600;cursor:pointer;border:none}
+input,select,textarea{border:1.5px solid #cbd5e1;border-radius:.55rem;padding:.55rem .7rem;width:100%;background:#fff;color:#0f172a}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-color:transparent}
+label{font-size:.83rem;font-weight:600;display:block;margin-bottom:.3rem}
+.card{background:#fff;border-radius:1rem;box-shadow:0 8px 30px rgba(15,23,42,.08);padding:1.4rem}
+article p{margin:.7rem 0;line-height:1.75;color:#334155}
+article h2{font-size:1.45rem;font-weight:800;margin:1.6rem 0 .4rem;color:#0f172a}
+.faq{background:#fff;border-radius:.7rem;padding:.9rem 1.1rem;margin:.55rem 0;box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.faq summary{font-weight:700;cursor:pointer}
+table.dt{width:100%;border-collapse:collapse} table.dt th,table.dt td{border:1px solid #e2e8f0;padding:.45rem .6rem;text-align:left;font-size:.9rem}
+table.dt th{background:#f1f5f9}
+
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "BinBridge", "url": "https://dev.fixoraa.tech/binbridge/", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "description": "Free binary translator. Convert text to binary, hex, octal and decimal live as you type \u2014 and decode binary back to text. Per-character breakdown table included."}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I convert text to binary?", "acceptedAnswer": {"@type": "Answer", "text": "Just type in the Text box \u2014 the binary appears instantly, one 8-bit byte per character, alongside hex, octal and decimal. Use the copy buttons to take the binary anywhere."}}, {"@type": "Question", "name": "How do I decode binary back to text?", "acceptedAnswer": {"@type": "Answer", "text": "Paste your binary into the Binary box, with or without spaces between bytes. The decoded text appears in the Text box and all other formats update to match."}}, {"@type": "Question", "name": "Why does each character take 8 bits?", "acceptedAnswer": {"@type": "Answer", "text": "Standard English characters have code points under 128, which fit in one byte (8 bits) \u2014 the classic ASCII range. Unicode characters like emoji have larger code points and need more bytes in UTF-8."}}, {"@type": "Question", "name": "What is the difference between hex and binary?", "acceptedAnswer": {"@type": "Answer", "text": "They are the same numbers in different bases. Hex is compact \u2014 one byte is always exactly two hex digits \u2014 so programmers read hex where machines use binary. BinBridge shows both for every character."}}, {"@type": "Question", "name": "Why is a space shown as a character?", "acceptedAnswer": {"@type": "Answer", "text": "Because it is one: code 32, binary 00100000. Invisible characters still occupy bytes, which is why the breakdown marks the space clearly as \u2423 instead of a blank cell."}}, {"@type": "Question", "name": "Can I convert numbers instead of text?", "acceptedAnswer": {"@type": "Answer", "text": "The decimal column shows each character's numeric code \u2014 the number the computer stores. To explore pure number-base conversion, type digits as text and read their codes, or decode binary of any byte value 0\u2013255."}}]}</script>
+</head>
+<body id="top">
+<header class="sticky top-0 z-40 shadow-md" style="background:#052E16">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <a href="#top" class="text-xl font-extrabold tracking-tight" style="color:#F0FDF4">0101 BinBridge</a>
+    <nav class="flex gap-5 text-sm font-semibold" style="color:#F0FDF4">
+      <a href="#top" class="hover:underline">Home</a>
+      <a href="https://fixoraa.tech" class="hover:underline">More Tools</a>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="text-center mb-6">
+    <h1 class="text-3xl sm:text-4xl font-extrabold" style="color:#0f172a">Binary Translator — Text ⇄ Binary, Hex, Octal & Decimal</h1>
+    <p class="mt-2 text-slate-600 max-w-2xl mx-auto">Type any text and watch it become binary, hexadecimal, octal and decimal character codes in real time — or paste binary and decode it back to words. The per-character table shows exactly how every letter is encoded.</p>
+    <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold text-white pri">✓ Unlimited Free Usage — No Signup, No Watermark</span>
+  </div>
+  <div class="grid md:grid-cols-2 gap-6">
+  <div class="card space-y-3">
+    <div><label>Text</label><textarea id="txt" rows="4" oninput="fromText()">Hello</textarea></div>
+    <div><label>Binary (space-separated bytes)</label><textarea id="bin" rows="4" oninput="fromBin()"></textarea></div>
+    <div class="flex gap-2 flex-wrap"><button class="btn" onclick="copyOut('bin')">Copy binary</button><button class="btn2" onclick="copyOut('hex')">Copy hex</button></div>
+  </div>
+  <div class="card space-y-3">
+    <div><label>Hexadecimal</label><textarea id="hex" rows="3" readonly></textarea></div>
+    <div><label>Octal</label><textarea id="oct" rows="3" readonly></textarea></div>
+    <div><label>Decimal codes</label><textarea id="dec" rows="3" readonly></textarea></div>
+  </div>
+ </div>
+ <div class="card mt-6"><h3 class="font-bold mb-2">Per-character breakdown</h3><div class="overflow-x-auto"><table class="dt" id="tbl"></table></div></div>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+<section class="mx-auto max-w-4xl px-4 sm:px-6 pb-6">
+  <article>
+  <h2>Everything on a computer is numbers wearing costumes</h2>
+<p>The letter H on your screen feels like a letter, but inside the machine it is the number 72, stored as the binary pattern 01001000. That single fact — text is numbers, numbers are binary — is the foundation under every file, message and photograph you have ever touched. BinBridge makes the foundation visible: type a word and see the actual bytes, in the four notations programmers and computers use to talk about them. Once you have watched your own name turn into ones and zeroes, encoding stops being an abstraction and becomes a mechanism you understand.</p>
+<p>The mapping used here is the character-code system descended from ASCII, the 1960s standard that assigned English letters, digits and punctuation to numbers 0–127, later extended by Unicode so every writing system on Earth could join the table. Your text's characters map to their code points, and each code point is then written in binary (base 2), octal (base 8), decimal (base 10) and hexadecimal (base 16) — four spellings of the same number.</p>
+<h2>Why four number bases exist</h2>
+<p>Binary is what hardware speaks: two states, on and off, one bit each, eight bits to a byte. It is faithful and unreadable — a sentence becomes a wall of digits. Hexadecimal is the programmer's compression of binary: each hex digit is exactly four bits, so a byte is always two tidy hex characters, which is why memory dumps, colour codes and error reports wear hex. Octal, three bits per digit, survives from older machines and still runs Unix file permissions. Decimal is simply for humans — the character codes in reference tables are most often quoted in the base you count in.</p>
+<p>BinBridge shows all four at once because fluency means translating between audiences: the machine's binary, the debugger's hex, the manual's decimal. The per-character table is the Rosetta stone — find any character and read its identity in every notation simultaneously. Students meeting encoding for the first time, and working developers sanity-checking a byte sequence, end up using the same grid.</p>
+<h2>Reading and writing binary by hand</h2>
+<p>A byte's value is the sum of its lit positions: from the right, the bits are worth 1, 2, 4, 8, 16, 32, 64 and 128. The pattern 01001000 lights the 64 and 8 positions — 72, the letter H. Uppercase letters occupy 65–90, lowercase 97–122 (exactly 32 more, a single bit's difference — which is why case-insensitive comparisons were cheap for early computers), and digits sit at 48–57. Learn those three anchors and you can decode short binary messages with nothing but patience, a party trick with real understanding underneath.</p>
+<p>Decoding in the other direction, paste binary into BinBridge with spaces between bytes — or none at all for a continuous stream, which the decoder chunks into eights automatically. If a pasted sequence produces gibberish, the usual culprits are a missing bit shifting every byte after it, or text that was encoded in a multi-byte scheme; the per-character table helps you spot where the alignment breaks.</p>
+<h2>Where you will meet these encodings in real work</h2>
+<p>Debugging any data format eventually becomes staring at bytes: a file that will not open, an API returning mojibake, a sensor sending values you must interpret. Hex editors, network inspectors and log files all present the same numbers this page generates. Web colours are hex bytes in costume — #FF8800 is three bytes for red, green and blue. Even the humble space is a byte (32, 00100000), which is why 'trailing whitespace' bugs are real: an invisible character is still a character, still counted, still capable of breaking an exact-match comparison.</p>
+<p>There is also simple delight here. Binary messages are a staple of puzzle hunts, escape rooms, classroom worksheets and geeky birthday cards. Encode a sentence, print the bytes, and you have a code a friend can crack with the table on this page — no app, no account, just arithmetic and patience.</p>
+<h2>ASCII, Unicode and the limits of one byte</h2>
+<p>Classic ASCII fits in one byte because it only promised English. The modern world writes in thousands of scripts and millions of emoji, so Unicode assigns every character a code point that may need up to four bytes in UTF-8 encoding. BinBridge's live table uses the code point of each character; for the familiar A–Z, a–z, digits and punctuation that means exactly one byte, matching classic ASCII and most learning materials. Type an emoji and you will see its (much larger) code point — a small window into why modern encoding needs the extra room.</p>
+<p>That distinction is worth carrying into development work: character count, byte count and display width are three different numbers, and confusing them truncates names, corrupts files and breaks signatures in systems worldwide. Seeing your own text as bytes is the fastest inoculation against ever confusing them yourself.</p>
+<h2>A five-minute exercise that makes it stick</h2>
+<p>Encode your initials and memorise their bytes. Then encode a short word, cover the text box, and decode it back from the binary by hand using the position values. Finally, change one bit in one byte of a word — flip the 32-value bit in a letter — and decode again: you will have changed its case, because that bit is precisely the case bit. Few exercises teach so much about how text lives inside machines, so quickly. BinBridge is the lab bench; bring curiosity.</p>
+<h2>Try it: five bytes that explain computing</h2>
+<p>Encode the word 'hello' and study the middle column of the breakdown table. Notice every lowercase letter is exactly 32 more than its uppercase twin — one bit apart, the bit worth 32 — which is why old systems compared letters case-insensitively almost for free. Notice the space, code 32, sitting exactly where a bit-pattern boundary falls. Notice that '0' the character is 48, not 0 — the root of a thousand beginner bugs where text digits were treated as numbers. Five bytes, three foundational lessons: that density is why working with real encodings beats reading about them.</p>
+<p>When the table feels familiar, graduate yourself: write a short message, encode it, and hand a friend only the binary plus this page's address. You will have built, from nothing but arithmetic, a tiny encrypted-by-obscurity postal service — and understood, viscerally, the layer of computing on which all the others stand.</p>
+<h2>Binary in games, puzzles and classrooms</h2>
+<p>Binary earns its keep in play as much as in work. Puzzle designers hide messages in byte strings because decoding feels like cracking a code while teaching place value; teachers use five-bit alphabets (A=1 through Z=26) to smuggle arithmetic into treasure hunts; escape rooms plant 01001000-style plaques that reward exactly the skill this page trains. If you are building such a puzzle, encode with the translator, then decode your own message once from a printed copy — every puzzle-maker's duty — because a single dropped bit garbles everything downstream of it, and players deserve ciphers that fail only when they do. Fair puzzles, like fair tools, are verified from the user's side of the glass.</p>
+<h2>From bytes to files: the next layer up</h2>
+<p>Once single characters make sense as bytes, whole files demystify quickly: a text file is bytes in sequence, an image is bytes with a header announcing its format, and the first few bytes of any file — its magic numbers, usually read in hex — declare what it truly is regardless of its name. Rename a PNG to .jpg and its opening bytes still confess the truth to any hex viewer. You now own the conceptual key to that entire layer: everything is numbers, the numbers are bytes, and the bytes are, at last, legible.</p>
+  <h2>Frequently Asked Questions</h2>
+  <details class="faq"><summary>How do I convert text to binary?</summary><p>Just type in the Text box — the binary appears instantly, one 8-bit byte per character, alongside hex, octal and decimal. Use the copy buttons to take the binary anywhere.</p></details>
+<details class="faq"><summary>How do I decode binary back to text?</summary><p>Paste your binary into the Binary box, with or without spaces between bytes. The decoded text appears in the Text box and all other formats update to match.</p></details>
+<details class="faq"><summary>Why does each character take 8 bits?</summary><p>Standard English characters have code points under 128, which fit in one byte (8 bits) — the classic ASCII range. Unicode characters like emoji have larger code points and need more bytes in UTF-8.</p></details>
+<details class="faq"><summary>What is the difference between hex and binary?</summary><p>They are the same numbers in different bases. Hex is compact — one byte is always exactly two hex digits — so programmers read hex where machines use binary. BinBridge shows both for every character.</p></details>
+<details class="faq"><summary>Why is a space shown as a character?</summary><p>Because it is one: code 32, binary 00100000. Invisible characters still occupy bytes, which is why the breakdown marks the space clearly as ␣ instead of a blank cell.</p></details>
+<details class="faq"><summary>Can I convert numbers instead of text?</summary><p>The decimal column shows each character's numeric code — the number the computer stores. To explore pure number-base conversion, type digits as text and read their codes, or decode binary of any byte value 0–255.</p></details>
+  </article>
+</section>
+<footer class="mt-6 py-8" style="background:#052E16;color:#F0FDF4">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 text-center text-sm">
+    <p class="font-bold text-base">BinBridge</p>
+    <p class="opacity-80 mt-1">Free binary translator. Convert text to binary, hex, octal and decimal live as you type — and decode binary back to text. Per-character breakdown table included.</p>
+    <p class="mt-2"><a href="#top" class="underline">Home</a> · <a href="https://fixoraa.tech" class="underline">More Tools</a></p>
+    <p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+  </div>
+</footer>
+<script id="lib-binbridge">
+
+function textToCodes(text){
+  var out=[];
+  for (var i=0;i<text.length;i++){
+    var c=text.charCodeAt(i);
+    out.push({ch:text[i], dec:c, bin:c.toString(2).padStart(8,'0'), hex:c.toString(16).toUpperCase().padStart(2,'0'), oct:c.toString(8).padStart(3,'0')});
+  }
+  return out;
+}
+function binaryToText(bin){
+  var clean=bin.replace(/[^01\s]/g,''); var parts=clean.trim().split(/\s+/).filter(Boolean);
+  if (parts.length===1 && clean.replace(/\s/g,'').length>8){ var s=clean.replace(/\s/g,''); parts=[]; for(var i=0;i<s.length;i+=8) parts.push(s.substr(i,8)); }
+  return parts.map(function(p){return String.fromCharCode(parseInt(p,2));}).join('');
+}
+if (typeof module!=="undefined") module.exports={textToCodes:textToCodes, binaryToText:binaryToText};
+
+</script>
+<script>
+
+function fromText(){
+  var t=document.getElementById('txt').value; var rows=textToCodes(t);
+  document.getElementById('bin').value=rows.map(function(r){return r.bin;}).join(' ');
+  document.getElementById('hex').value=rows.map(function(r){return r.hex;}).join(' ');
+  document.getElementById('oct').value=rows.map(function(r){return r.oct;}).join(' ');
+  document.getElementById('dec').value=rows.map(function(r){return r.dec;}).join(' ');
+  document.getElementById('tbl').innerHTML='<tr><th>Char</th><th>Decimal</th><th>Binary</th><th>Hex</th><th>Octal</th></tr>'+rows.map(function(r){return '<tr><td>'+(r.ch===' '?'␣ (space)':r.ch)+'</td><td>'+r.dec+'</td><td>'+r.bin+'</td><td>'+r.hex+'</td><td>'+r.oct+'</td></tr>';}).join('');
+}
+function fromBin(){
+  var t=binaryToText(document.getElementById('bin').value);
+  document.getElementById('txt').value=t;
+  var rows=textToCodes(t);
+  document.getElementById('hex').value=rows.map(function(r){return r.hex;}).join(' ');
+  document.getElementById('oct').value=rows.map(function(r){return r.oct;}).join(' ');
+  document.getElementById('dec').value=rows.map(function(r){return r.dec;}).join(' ');
+  document.getElementById('tbl').innerHTML='<tr><th>Char</th><th>Decimal</th><th>Binary</th><th>Hex</th><th>Octal</th></tr>'+rows.map(function(r){return '<tr><td>'+(r.ch===' '?'␣ (space)':r.ch)+'</td><td>'+r.dec+'</td><td>'+r.bin+'</td><td>'+r.hex+'</td><td>'+r.oct+'</td></tr>';}).join('');
+}
+function copyOut(id){var el=document.getElementById(id);el.select();document.execCommand('copy');if(navigator.clipboard)navigator.clipboard.writeText(el.value);}
+fromText();
+
+</script>
+</body>
+</html>
