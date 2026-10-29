@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/chmodly/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chmodly — Chmod Calculator &amp; Permission Converter</title>
+<meta name="description" content="Chmodly is a free chmod calculator: tick the rwx permission grid to get octal and symbolic notation instantly, convert both ways, use safe presets and copy the ready chmod command.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#030603;color:#d1fae5}
+.mono{font-family:'JetBrains Mono',monospace}
+.perm-cell input{appearance:none;width:52px;height:52px;border:2px solid #14532d;border-radius:10px;background:#0a140a;cursor:pointer;position:relative;transition:all .15s}
+.perm-cell input:checked{background:#16a34a;border-color:#4ade80;box-shadow:0 0 14px rgba(74,222,128,.45)}
+.perm-cell input:focus-visible{outline:2px solid #4ade80;outline-offset:2px}
+.scan{background-image:repeating-linear-gradient(0deg,rgba(74,222,128,.04) 0 1px,transparent 1px 3px)}
+details summary{cursor:pointer}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does chmod 755 mean?","acceptedAnswer":{"@type":"Answer","text":"Chmod 755 gives the owner full read, write and execute access (7), while the group and everyone else get read and execute only (5 and 5). In symbolic form that is rwxr-xr-x. It is the most common setting for folders and executable scripts because the owner can change things while visitors can safely browse and run them."}},{"@type":"Question","name":"Why is chmod 777 dangerous?","acceptedAnswer":{"@type":"Answer","text":"Chmod 777 grants read, write and execute access to absolutely everyone, shown as rwxrwxrwx. Any account or compromised process on the machine can modify, replace or delete the file, which makes 777 a serious security risk on shared hosting and servers. Almost every problem blamed on permissions can be fixed with 755, 775 or 644 instead."}},{"@type":"Question","name":"How do I convert rwx permissions to a number?","acceptedAnswer":{"@type":"Answer","text":"Give read a value of 4, write a value of 2 and execute a value of 1, then add the values for each group of three letters. For example rwx adds up to 7, r-x adds up to 5 and r-- adds up to 4. Do this separately for owner, group and others and place the three totals side by side to get the octal mode, such as 754."}},{"@type":"Question","name":"What is the difference between 644 and 755?","acceptedAnswer":{"@type":"Answer","text":"Chmod 644 (rw-r--r--) is for regular files: the owner can read and write, everyone else can only read, and nobody can execute the file. Chmod 755 (rwxr-xr-x) adds execute for everyone, which folders need so people can open them and scripts need so they can run. A quick rule is files get 644 and folders get 755."}},{"@type":"Question","name":"What do setuid, setgid and the sticky bit do?","acceptedAnswer":{"@type":"Answer","text":"These are three special bits shown as a fourth leading digit. Setuid (4) runs a program with the file owner rights, setgid (2) runs it with the group rights or makes new files inherit the folder group, and the sticky bit (1) stops people deleting files they do not own inside a shared folder, like /tmp. Together they turn 755 into forms such as 4755, 2755 or 1755."}},{"@type":"Question","name":"How do I apply permissions to a folder and everything inside it?","acceptedAnswer":{"@type":"Answer","text":"Add the capital -R flag, for example chmod -R 755 myfolder, and chmod walks through the folder applying the mode to every file and subfolder inside it. Use it carefully: it gives files the same mode as folders, so executable bits can land on ordinary documents. Many people run separate find commands for files and folders when precision matters."}}]}
+</script>
+</head>
+<body id="top" class="scan min-h-screen">
+<header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-green-900">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <a href="#top" class="mono font-extrabold text-xl text-green-400 tracking-tight">▣ Chmodly<span class="text-green-700">_</span></a>
+    <nav class="flex gap-5 text-sm font-semibold">
+      <a href="#top" class="text-green-200 hover:text-green-400">Home</a>
+      <a href="https://fixoraa.tech" class="text-green-200 hover:text-green-400">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="text-center max-w-2xl mx-auto">
+    <span class="inline-block bg-green-950 border border-green-700 text-green-300 text-xs font-bold px-3 py-1 rounded-full">✓ Unlimited Free Usage — no signup, no watermark</span>
+    <h1 class="mono text-3xl sm:text-5xl font-extrabold text-green-400 mt-4 leading-tight">Chmod Calculator</h1>
+    <p class="text-green-100/70 mt-3">Tick the permission grid and watch octal, symbolic notation and your ready-to-paste command update together. Or type a number like <span class="mono text-green-300">755</span> — or letters like <span class="mono text-green-300">rwxr-xr-x</span> — and the grid follows. Everything runs in your browser.</p>
+    <p class="mono text-green-600 text-sm mt-2">$ whoami → you &nbsp;·&nbsp; $ chmodly --help → just tick the boxes</p>
+  </div>
+
+  <section class="mt-8 bg-[#071007] border border-green-900 rounded-2xl shadow-[0_0_40px_rgba(22,163,74,.15)] overflow-hidden" aria-label="Chmod calculator">
+    <div class="bg-black border-b border-green-900 px-4 py-2 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500/70"></span><span class="w-3 h-3 rounded-full bg-yellow-500/70"></span><span class="w-3 h-3 rounded-full bg-green-500"></span><span class="mono text-xs text-green-600 ml-2">chmodly — permission grid</span></div>
+    <div class="p-4 sm:p-6 grid lg:grid-cols-5 gap-6">
+      <!-- GRID -->
+      <div class="lg:col-span-3">
+        <div class="grid grid-cols-4 gap-2 sm:gap-3 text-center items-end">
+          <div></div>
+          <div class="mono font-bold text-green-400">READ<br><span class="text-green-600 text-xs">r · 4</span></div>
+          <div class="mono font-bold text-green-400">WRITE<br><span class="text-green-600 text-xs">w · 2</span></div>
+          <div class="mono font-bold text-green-400">EXEC<br><span class="text-green-600 text-xs">x · 1</span></div>
+
+          <div class="mono font-bold text-left text-green-200 self-center">Owner <span class="block text-xs text-green-600 font-normal">user</span></div>
+          <label class="perm-cell"><input type="checkbox" data-who="owner" data-bit="r" aria-label="Owner read"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="owner" data-bit="w" aria-label="Owner write"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="owner" data-bit="x" aria-label="Owner execute"></label>
+
+          <div class="mono font-bold text-left text-green-200 self-center">Group</div>
+          <label class="perm-cell"><input type="checkbox" data-who="group" data-bit="r" aria-label="Group read"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="group" data-bit="w" aria-label="Group write"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="group" data-bit="x" aria-label="Group execute"></label>
+
+          <div class="mono font-bold text-left text-green-200 self-center">Others <span class="block text-xs text-green-600 font-normal">everyone</span></div>
+          <label class="perm-cell"><input type="checkbox" data-who="other" data-bit="r" aria-label="Others read"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="other" data-bit="w" aria-label="Others write"></label>
+          <label class="perm-cell"><input type="checkbox" data-who="other" data-bit="x" aria-label="Others execute"></label>
+        </div>
+
+        <div class="mt-5 border-t border-green-900 pt-4">
+          <p class="mono text-xs text-green-500 font-bold tracking-widest">SPECIAL BITS (4TH DIGIT)</p>
+          <div class="flex flex-wrap gap-4 mt-2 text-sm">
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sp-setuid" class="accent-green-500 w-4 h-4"> setuid <span class="mono text-green-600">(4)</span></label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sp-setgid" class="accent-green-500 w-4 h-4"> setgid <span class="mono text-green-600">(2)</span></label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sp-sticky" class="accent-green-500 w-4 h-4"> sticky <span class="mono text-green-600">(1)</span></label>
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-2">
+          <button id="btn-all" class="bg-green-900 hover:bg-green-800 text-green-100 text-sm font-semibold px-3 py-2 rounded-lg">Select all</button>
+          <button id="btn-none" class="bg-green-900 hover:bg-green-800 text-green-100 text-sm font-semibold px-3 py-2 rounded-lg">Clear all</button>
+          <button id="btn-owner" class="bg-green-900 hover:bg-green-800 text-green-100 text-sm font-semibold px-3 py-2 rounded-lg">Owner only (700)</button>
+        </div>
+        <p id="describe" class="text-sm text-green-100/70 mt-4"></p>
+      </div>
+
+      <!-- OUTPUTS -->
+      <div class="lg:col-span-2 space-y-4">
+        <div>
+          <label for="octal-in" class="mono text-xs font-bold text-green-500 tracking-widest">OCTAL (TYPE TO CONVERT BACK)</label>
+          <input id="octal-in" class="mono w-full mt-1 bg-black border-2 border-green-800 focus:border-green-400 rounded-xl px-4 py-3 text-3xl font-extrabold text-green-400 tracking-[.3em] text-center outline-none" maxlength="4" inputmode="numeric" value="755" aria-label="Octal permission">
+          <p id="octal-err" class="text-red-400 text-xs mt-1 hidden">Enter 3 or 4 digits, each 0–7 — for example 755 or 4755.</p>
+        </div>
+        <div>
+          <label for="sym-in" class="mono text-xs font-bold text-green-500 tracking-widest">SYMBOLIC (TYPE TO CONVERT BACK)</label>
+          <input id="sym-in" class="mono w-full mt-1 bg-black border-2 border-green-800 focus:border-green-400 rounded-xl px-4 py-3 text-xl font-bold text-green-300 tracking-[.2em] text-center outline-none" maxlength="10" value="rwxr-xr-x" aria-label="Symbolic permission">
+          <p id="sym-err" class="text-red-400 text-xs mt-1 hidden">Use 9 characters like rwxr-xr-x (a leading -, d or l is fine too).</p>
+        </div>
+        <div id="risk-box" class="rounded-xl border px-4 py-3 text-sm font-semibold"></div>
+        <div>
+          <label for="target-in" class="mono text-xs font-bold text-green-500 tracking-widest">FILE OR FOLDER NAME</label>
+          <input id="target-in" class="mono w-full mt-1 bg-black border border-green-800 focus:border-green-400 rounded-xl px-3 py-2.5 text-green-100 outline-none" value="script.sh" aria-label="File or folder name">
+          <label class="flex items-center gap-2 mt-2 text-sm cursor-pointer"><input type="checkbox" id="recursive" class="accent-green-500 w-4 h-4"> Recursive <span class="mono text-green-500">-R</span> (apply inside folders too)</label>
+        </div>
+        <div class="bg-black border border-green-700 rounded-xl p-4">
+          <p class="mono text-xs text-green-600">$ your command</p>
+          <p id="cmd-out" class="mono text-green-400 font-bold break-all mt-1">chmod 755 script.sh</p>
+          <div class="flex gap-2 mt-3">
+            <button id="copy-cmd" class="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-2.5 rounded-lg">⧉ Copy command</button>
+            <button id="copy-oct" class="bg-green-900 hover:bg-green-800 text-green-100 font-semibold px-3 py-2.5 rounded-lg">Copy 755</button>
+          </div>
+          <p id="copied" class="text-green-400 text-xs mt-2 hidden">Copied to clipboard ✓</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-green-900 p-4 sm:p-6 bg-black/40">
+      <h2 class="mono font-bold text-green-400">Common presets — tap to load</h2>
+      <div id="presets" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3"></div>
+      <div id="warn777" class="hidden mt-4 bg-red-950/70 border-2 border-red-500 text-red-200 rounded-xl px-4 py-3 font-semibold">⚠ WARNING — 777 gives EVERYONE read, write and execute access. Any user or rogue process can change or delete this file. On a server this is an open door. Prefer 755, 775 or 644 unless you truly know why you need 777.</div>
+    </div>
+  </section>
+
+  <section class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
+    <div class="bg-[#071007] border border-green-900 rounded-xl p-4"><p class="mono font-bold text-green-400">4 · 2 · 1</p><p class="text-green-100/70 mt-1">Read is worth 4, write is worth 2, execute is worth 1. Add them per row — that sum is one octal digit.</p></div>
+    <div class="bg-[#071007] border border-green-900 rounded-xl p-4"><p class="mono font-bold text-green-400">Files ≠ folders</p><p class="text-green-100/70 mt-1">Files usually want 644, folders want 755. A folder without execute cannot be opened at all.</p></div>
+    <div class="bg-[#071007] border border-green-900 rounded-xl p-4"><p class="mono font-bold text-green-400">Least privilege</p><p class="text-green-100/70 mt-1">Grant the smallest access that works. You can always loosen a mode later; breaches cannot be undone.</p></div>
+  </section>
+
+  <div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+  <article id="article" class="mt-10 bg-[#071007] border border-green-900 rounded-2xl p-5 sm:p-8 prose-like text-green-50/85 leading-relaxed space-y-4">
+    <h2 class="mono text-2xl font-extrabold text-green-400">Chmod Explained: How Linux File Permissions Actually Work</h2>
+    <p>Every file and folder on a Linux, macOS or Unix system carries a small set of rules that decides who may open it, who may change it and who may run it. The command that changes those rules is called chmod, short for change mode, and the rules themselves are called permissions or the mode. When a website suddenly shows a forbidden error, when a script refuses to run, or when a shared folder will not let a teammate save their work, permissions are almost always the cause — and almost always the fix takes less than a minute once you understand the pattern. Chmodly exists to make that pattern obvious: tick boxes, read the number, copy the command. This guide explains the thinking behind the grid so the numbers stop feeling like magic codes you have to memorise.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Three audiences, three actions</h3>
+    <p>Permissions are organised around three audiences. The owner is the single user account that owns the file, usually whoever created it. The group is a named collection of users — a team, a class, a department — and a file belongs to exactly one group at a time. Others means literally everyone else with access to the machine: every other account, and by extension any process running under those accounts. Against each audience the system checks three possible actions. Read allows a file to be opened and copied, and allows a folder to be listed so you can see the names inside it. Write allows a file to be edited or truncated, and allows files inside a folder to be created, renamed or deleted. Execute allows a file to be run as a program or script, and — in a famous source of confusion — allows a folder to be entered, which means execute on a folder really means traverse or open. A folder with read but no execute shows you names you cannot actually reach, while a folder with execute but no read lets you open files only if you already know their exact names. Keeping the three audiences and three actions separate in your mind is the whole game; everything else is notation.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Where the numbers come from: the 4-2-1 trick</h3>
+    <p>The octal notation that chmod is famous for looks arbitrary until you see the arithmetic. Each action is assigned a power of two: read is 4, write is 2 and execute is 1. For one audience you simply add the values of the actions you want to grant. Read plus execute is 4 plus 1, which is 5. Read plus write is 6. Everything together is 7, nothing at all is 0, and write alone is 2. Because each combination of three switches produces a unique total from 0 to 7, one digit captures an entire row of the grid with no ambiguity. Do that three times — owner, group, others, always in that order — and you have the classic three-digit mode. When someone says a file is 754, they are saying the owner can do everything (7), the group can read and execute (5), and everyone else can only read (4). The grid in Chmodly performs exactly this addition live, and typing a number performs it backwards, lighting up the same boxes, so you can move between thinking in switches and thinking in digits without friction.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Reading the symbolic form: rwxr-xr-x</h3>
+    <p>The other notation you will meet everywhere is the symbolic or letter form, printed by commands such as ls -l. It shows nine characters in three blocks of three. Within each block the positions are always read, write, execute, and a dash means the action is denied. So rw- means read and write but no execute, while r-x means read and execute but no write. A leading tenth character, when present, describes the type of thing you are looking at: a dash for a plain file, d for a directory and l for a symbolic link. Chmodly accepts that leading character when you paste a symbolic string, and it also understands the special letters s and t that appear in the execute positions when setuid, setgid or the sticky bit are involved — a lowercase letter means the special bit and execute are both on, an uppercase letter means the special bit is on but execute is off, a combination that usually signals a mistake worth fixing.</p>
+    <h3 class="mono text-lg font-bold text-green-300">The presets worth remembering</h3>
+    <p>Although 512 combinations are possible, daily life uses a handful. The mode 755 is the workhorse for folders and executable scripts: owner everything, everyone else read and execute. The mode 644 is its partner for ordinary files: owner read and write, everyone else read only. Together they describe the default posture of most web servers, which is why uploading a site so often involves exactly these two numbers. The mode 600 locks a file down to its owner alone and is the right choice for private keys, credential files and personal notes; its folder equivalent, 700, makes a directory completely private. For team work, 775 and 664 extend write access to the group while keeping the rest of the world read-only or out entirely. The mode 444 makes a file read-only for everyone, useful for templates and frozen releases you do not want edited by accident — although remember that the owner of a folder can still delete a read-only file inside it, because deletion is governed by the folder permissions, not the file. Chmodly ships all of these as one-tap presets with a plain-English note on each, so you choose by intent rather than by memory.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Why 777 keeps causing trouble</h3>
+    <p>No mode attracts more warnings than 777, the setting that grants every action to every audience, and Chmodly flags it with an unmissable warning for good reason. Tutorials suggest it constantly because it reliably makes permission errors disappear — of course it does, it removes permission as a concept. The cost is that any account on the machine, and any compromised program running under any account, can rewrite or replace the file. On shared hosting, one neighbour with a vulnerable site can use your world-writable files as a doorway into your own site. On a team server, a stray script can overwrite things nobody intended to share. There is nearly always a narrower fix: if a web server needs to write uploads, give the specific folder group write with 775 and the right group ownership, or use 755 and let the application own its working directory. If a one-off experiment on your own laptop genuinely needs 777, treat it like leaving your house keys in the door — fine for five minutes while you stand there, never as the permanent arrangement, and change it back the moment the test ends.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Special bits: the mysterious fourth digit</h3>
+    <p>Sometimes you will see four digits, such as 4755 or 1777. The leading digit packs three extra switches using the same addition pattern: setuid is 4, setgid is 2 and the sticky bit is 1. Setuid makes an executable run with the permissions of its owner rather than whoever launched it — the classic example is the password-changing program, which must update a protected system file on behalf of ordinary users. Setgid does the same for the group, and on a folder it makes new files inherit that folder group, which quietly solves endless shared-directory headaches. The sticky bit, famous from the system temporary folder, means that inside a shared directory only a file owner can delete their own files, even when everyone has write access to the directory itself. These bits are powerful and narrow; most everyday files need none of them, which is why Chmodly tucks them into their own row, shows the fourth digit only when one is switched on, and still keeps the main grid front and centre.</p>
+    <h3 class="mono text-lg font-bold text-green-300">Applying changes safely: targets, recursion and checking your work</h3>
+    <p>A chmod command names a mode and a target, as in chmod 644 report.pdf. Add the capital flag -R and the change becomes recursive, flowing into a folder and everything beneath it. Recursion is convenient and dangerous in equal measure: it applies the same digits to files and folders alike, so a recursive 755 stamps execute onto innocent text files, and a recursive mistake can lock a whole tree or fling it wide open. Careful administrators often set folders and files separately with the find command instead. Whatever route you take, verify afterwards with ls -l and compare the letters against what you intended — Chmodly helps here too, because pasting the symbolic output back into the calculator should light exactly the boxes you chose. Also remember what chmod does not do: it does not change who owns a file (that is chown), it cannot override a read-only filesystem, and on systems using access control lists or mandatory security frameworks the simple grid is only part of the story. Finally, type target names carefully — a wildcard in the wrong folder is the permission equivalent of sending an email to the whole company.</p>
+    <h3 class="mono text-lg font-bold text-green-300">A calm workflow for permission problems</h3>
+    <p>When something refuses to open or run, resist the urge to reach for the broadest setting. First, find out who you are and who owns the file; most mysteries dissolve at this step, because the process hitting the error is often a server account rather than you. Second, decide the smallest change that expresses the real intention — perhaps the group needs read, or the owner needs execute — and build that mode in the grid. Third, apply it to the smallest target that covers the problem, test immediately, and only widen if the evidence demands it. Keep a note of the original mode before you change anything so you can restore it in seconds. Used this way, chmod stops being a superstition you copy from forum answers and becomes what it was designed to be: a tiny, precise language for saying exactly who may do what. Bookmark Chmodly, tick the boxes, read the sentence it writes about your choice, and copy a command you actually understand.</p>
+
+    <h2 class="mono text-2xl font-extrabold text-green-400 pt-4">Frequently Asked Questions</h2>
+    <div class="space-y-3">
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">What does chmod 755 mean?</summary><p class="mt-2">Chmod 755 gives the owner full read, write and execute access (7), while the group and everyone else get read and execute only (5 and 5). In symbolic form that is rwxr-xr-x. It is the most common setting for folders and executable scripts because the owner can change things while visitors can safely browse and run them.</p></details>
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">Why is chmod 777 dangerous?</summary><p class="mt-2">Chmod 777 grants read, write and execute access to absolutely everyone, shown as rwxrwxrwx. Any account or compromised process on the machine can modify, replace or delete the file, which makes 777 a serious security risk on shared hosting and servers. Almost every problem blamed on permissions can be fixed with 755, 775 or 644 instead.</p></details>
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">How do I convert rwx permissions to a number?</summary><p class="mt-2">Give read a value of 4, write a value of 2 and execute a value of 1, then add the values for each group of three letters. For example rwx adds up to 7, r-x adds up to 5 and r-- adds up to 4. Do this separately for owner, group and others and place the three totals side by side to get the octal mode, such as 754.</p></details>
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">What is the difference between 644 and 755?</summary><p class="mt-2">Chmod 644 (rw-r--r--) is for regular files: the owner can read and write, everyone else can only read, and nobody can execute the file. Chmod 755 (rwxr-xr-x) adds execute for everyone, which folders need so people can open them and scripts need so they can run. A quick rule is files get 644 and folders get 755.</p></details>
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">What do setuid, setgid and the sticky bit do?</summary><p class="mt-2">These are three special bits shown as a fourth leading digit. Setuid (4) runs a program with the file owner rights, setgid (2) runs it with the group rights or makes new files inherit the folder group, and the sticky bit (1) stops people deleting files they do not own inside a shared folder, like /tmp. Together they turn 755 into forms such as 4755, 2755 or 1755.</p></details>
+      <details class="bg-black/40 border border-green-900 rounded-xl p-4"><summary class="font-bold text-green-200">How do I apply permissions to a folder and everything inside it?</summary><p class="mt-2">Add the capital -R flag, for example chmod -R 755 myfolder, and chmod walks through the folder applying the mode to every file and subfolder inside it. Use it carefully: it gives files the same mode as folders, so executable bits can land on ordinary documents. Many people run separate find commands for files and folders when precision matters.</p></details>
+    </div>
+  </article>
+  <footer class="text-center text-green-700 text-sm py-8 mono">Chmodly — tick it, read it, chmod it. Permissions, minus the guesswork.<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+</main>
+
+<script id="lib-chmodly">
+var ChmodlyLib = (function () {
+  'use strict';
+  function emptyBits() {
+    return {
+      owner: { r: false, w: false, x: false },
+      group: { r: false, w: false, x: false },
+      other: { r: false, w: false, x: false },
+      special: { setuid: false, setgid: false, sticky: false }
+    };
+  }
+  function cloneBits(b) {
+    var e = emptyBits();
+    if (!b) return e;
+    ['owner', 'group', 'other'].forEach(function (k) {
+      if (b[k]) { e[k].r = !!b[k].r; e[k].w = !!b[k].w; e[k].x = !!b[k].x; }
+    });
+    if (b.special) { e.special.setuid = !!b.special.setuid; e.special.setgid = !!b.special.setgid; e.special.sticky = !!b.special.sticky; }
+    return e;
+  }
+  function digitFromTriplet(t) { return (t.r ? 4 : 0) + (t.w ? 2 : 0) + (t.x ? 1 : 0); }
+  function tripletFromDigit(d) { return { r: !!(d & 4), w: !!(d & 2), x: !!(d & 1) }; }
+  function specialDigit(s) { return (s.setuid ? 4 : 0) + (s.setgid ? 2 : 0) + (s.sticky ? 1 : 0); }
+  function hasSpecial(b) { return !!(b && b.special && (b.special.setuid || b.special.setgid || b.special.sticky)); }
+  function bitsToOctal(bits, forceFour) {
+    var b = cloneBits(bits);
+    var main = '' + digitFromTriplet(b.owner) + digitFromTriplet(b.group) + digitFromTriplet(b.other);
+    if (forceFour || hasSpecial(b)) return '' + specialDigit(b.special) + main;
+    return main;
+  }
+  function bitsToSymbolic(bits) {
+    var b = cloneBits(bits);
+    function tri(t, specialOn, low, up) {
+      var s = (t.r ? 'r' : '-') + (t.w ? 'w' : '-');
+      if (specialOn) s += t.x ? low : up; else s += t.x ? 'x' : '-';
+      return s;
+    }
+    return tri(b.owner, b.special.setuid, 's', 'S') + tri(b.group, b.special.setgid, 's', 'S') + tri(b.other, b.special.sticky, 't', 'T');
+  }
+  function isValidOctal(str) {
+    if (str === null || str === undefined) return false;
+    var s = String(str).trim();
+    return /^[0-7]{3}$/.test(s) || /^[0-7]{4}$/.test(s);
+  }
+  function octalToBits(str) {
+    if (!isValidOctal(str)) return null;
+    var s = String(str).trim();
+    var b = emptyBits();
+    if (s.length === 4) {
+      var sd = parseInt(s.charAt(0), 10);
+      b.special.setuid = !!(sd & 4); b.special.setgid = !!(sd & 2); b.special.sticky = !!(sd & 1);
+      b.owner = tripletFromDigit(parseInt(s.charAt(1), 10));
+      b.group = tripletFromDigit(parseInt(s.charAt(2), 10));
+      b.other = tripletFromDigit(parseInt(s.charAt(3), 10));
+    } else {
+      b.owner = tripletFromDigit(parseInt(s.charAt(0), 10));
+      b.group = tripletFromDigit(parseInt(s.charAt(1), 10));
+      b.other = tripletFromDigit(parseInt(s.charAt(2), 10));
+    }
+    return b;
+  }
+  function isValidSymbolic(str) { return symbolicToBits(str) !== null; }
+  function symbolicToBits(str) {
+    if (str === null || str === undefined) return null;
+    var s = String(str).trim();
+    if (s.length === 10) {
+      var ft = s.charAt(0);
+      if (ft !== '-' && ft !== 'd' && ft !== 'l' && ft !== 'b' && ft !== 'c' && ft !== 'p' && ft !== 's') return null;
+      s = s.slice(1);
+    }
+    if (s.length !== 9) return null;
+    if (!/^[r-][w-][xXsS-][r-][w-][xXsS-][r-][w-][xXtT-]$/.test(s)) return null;
+    var b = emptyBits();
+    function parseTriplet(sub, specialLow, specialUp) {
+      var t = { r: sub.charAt(0) === 'r', w: sub.charAt(1) === 'w', x: false };
+      var xc = sub.charAt(2); var special = false;
+      if (xc === 'x') t.x = true;
+      else if (xc === specialLow) { t.x = true; special = true; }
+      else if (xc === specialUp) { t.x = false; special = true; }
+      else if (xc === '-') t.x = false;
+      else return null;
+      return { t: t, special: special };
+    }
+    var o = parseTriplet(s.slice(0, 3), 's', 'S');
+    var g = parseTriplet(s.slice(3, 6), 's', 'S');
+    var ot = parseTriplet(s.slice(6, 9), 't', 'T');
+    if (!o || !g || !ot) return null;
+    b.owner = o.t; b.group = g.t; b.other = ot.t;
+    b.special.setuid = o.special; b.special.setgid = g.special; b.special.sticky = ot.special;
+    return b;
+  }
+  function octalToSymbolic(str) { var b = octalToBits(str); return b ? bitsToSymbolic(b) : null; }
+  function symbolicToOctal(str) { var b = symbolicToBits(str); return b ? bitsToOctal(b) : null; }
+  function sanitizeTarget(target) {
+    var t = String(target === null || target === undefined ? '' : target).trim();
+    if (!t) return 'file.txt';
+    return t.replace(/\s+/g, '_');
+  }
+  function buildCommand(octal, target, recursive) {
+    if (!isValidOctal(octal)) return null;
+    var t = sanitizeTarget(target);
+    return 'chmod ' + (recursive ? '-R ' : '') + String(octal).trim() + ' ' + t;
+  }
+  function buildSymbolicCommand(symbolic, target, recursive) {
+    var oct = symbolicToOctal(symbolic);
+    if (!oct) return null;
+    return buildCommand(oct, target, recursive);
+  }
+  function riskLevel(octal) {
+    if (!isValidOctal(octal)) return 'unknown';
+    var s = String(octal).trim();
+    var core = s.length === 4 ? s.slice(1) : s;
+    if (core === '777' || core === '666') return 'danger';
+    var otherDigit = parseInt(core.charAt(2), 10);
+    if (otherDigit & 2) return 'caution';
+    return 'safe';
+  }
+  function riskMessage(octal) {
+    var lvl = riskLevel(octal);
+    if (lvl === 'danger') return 'Danger: everyone can read, write and change this. Avoid 777 and 666 on shared systems.';
+    if (lvl === 'caution') return 'Caution: everyone can write to this. Double-check that strangers really need write access.';
+    if (lvl === 'notice') return 'Note: everyone has some access. Make sure that is intentional.';
+    if (lvl === 'safe') return 'Looks restrained: other users have little or no access.';
+    return '';
+  }
+  function describeTriplet(label, t) {
+    var parts = [];
+    if (t.r) parts.push('read'); if (t.w) parts.push('write'); if (t.x) parts.push('execute');
+    if (!parts.length) return label + ': no access';
+    return label + ': ' + parts.join(', ');
+  }
+  function describeOctal(octal) {
+    var b = octalToBits(octal);
+    if (!b) return null;
+    return [describeTriplet('Owner', b.owner), describeTriplet('Group', b.group), describeTriplet('Others', b.other)].join(' · ');
+  }
+  var PRESETS = [
+    { octal: '755', label: '755 — Standard file / folder', note: 'Owner full, everyone else read + execute. The everyday default for scripts and web folders.' },
+    { octal: '644', label: '644 — Standard document', note: 'Owner can edit, everyone else can only read. Best for HTML, images and config files.' },
+    { octal: '600', label: '600 — Private file', note: 'Only the owner can read and write. Use for keys, secrets and private notes.' },
+    { octal: '700', label: '700 — Private folder', note: 'Only the owner can enter and use the folder. Nobody else can see inside.' },
+    { octal: '444', label: '444 — Read-only for all', note: 'Everyone can read, nobody can write. Good for published or frozen files.' },
+    { octal: '775', label: '775 — Team folder', note: 'Owner and group can do everything, others can read and enter. Built for shared projects.' },
+    { octal: '664', label: '664 — Team document', note: 'Owner and group can read and write, others can only read.' },
+    { octal: '777', label: '777 — Everyone, everything', note: 'WARNING: anyone can read, write, delete and run this. Almost never the right answer.' }
+  ];
+  return {
+    emptyBits: emptyBits, cloneBits: cloneBits, bitsToOctal: bitsToOctal, bitsToSymbolic: bitsToSymbolic,
+    isValidOctal: isValidOctal, octalToBits: octalToBits, isValidSymbolic: isValidSymbolic, symbolicToBits: symbolicToBits,
+    octalToSymbolic: octalToSymbolic, symbolicToOctal: symbolicToOctal, buildCommand: buildCommand,
+    buildSymbolicCommand: buildSymbolicCommand, riskLevel: riskLevel, riskMessage: riskMessage,
+    describeOctal: describeOctal, sanitizeTarget: sanitizeTarget, PRESETS: PRESETS
+  };
+})();
+if (typeof module !== 'undefined' && module.exports) { module.exports = ChmodlyLib; }
+
+</script>
+<script>
+(function(){
+  var L = ChmodlyLib;
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('[data-who]'));
+  var octIn = document.getElementById('octal-in'), symIn = document.getElementById('sym-in');
+  var octErr = document.getElementById('octal-err'), symErr = document.getElementById('sym-err');
+  var targetIn = document.getElementById('target-in'), rec = document.getElementById('recursive');
+  var cmdOut = document.getElementById('cmd-out'), riskBox = document.getElementById('risk-box');
+  var warn = document.getElementById('warn777'), desc = document.getElementById('describe');
+  var sp = { setuid: document.getElementById('sp-setuid'), setgid: document.getElementById('sp-setgid'), sticky: document.getElementById('sp-sticky') };
+  function readBits(){
+    var b = L.emptyBits();
+    boxes.forEach(function(cb){ var who = cb.getAttribute('data-who'); var key = who === 'other' ? 'other' : who; b[key][cb.getAttribute('data-bit')] = cb.checked; });
+    b.special.setuid = sp.setuid.checked; b.special.setgid = sp.setgid.checked; b.special.sticky = sp.sticky.checked;
+    return b;
+  }
+  function writeBits(b){
+    boxes.forEach(function(cb){ var who = cb.getAttribute('data-who'); cb.checked = !!b[who][cb.getAttribute('data-bit')]; });
+    sp.setuid.checked = b.special.setuid; sp.setgid.checked = b.special.setgid; sp.sticky.checked = b.special.sticky;
+  }
+  function render(from){
+    var b = readBits();
+    var oct = L.bitsToOctal(b), sym = L.bitsToSymbolic(b);
+    if (from !== 'octal') octIn.value = oct;
+    if (from !== 'symbolic') symIn.value = sym;
+    document.getElementById('copy-oct').textContent = 'Copy ' + oct;
+    cmdOut.textContent = L.buildCommand(oct, targetIn.value, rec.checked) || 'chmod —';
+    desc.textContent = L.describeOctal(oct) + '.';
+    var lvl = L.riskLevel(oct);
+    warn.classList.toggle('hidden', oct.replace(/^[0-7]/, '') !== '777' && oct !== '777');
+    // show warning exactly for 777 / 4777-style core 777
+    var core = oct.length === 4 ? oct.slice(1) : oct;
+    warn.classList.toggle('hidden', core !== '777');
+    var styles = { danger: 'bg-red-950/70 border-red-500 text-red-200', caution: 'bg-yellow-950/60 border-yellow-600 text-yellow-200', notice: 'bg-yellow-950/40 border-yellow-800 text-yellow-100/90', safe: 'bg-green-950/60 border-green-700 text-green-200' };
+    riskBox.className = 'rounded-xl border px-4 py-3 text-sm font-semibold ' + (styles[lvl] || styles.safe);
+    riskBox.textContent = (lvl === 'danger' ? '⛔ ' : lvl === 'safe' ? '✓ ' : '⚠ ') + L.riskMessage(oct);
+  }
+  boxes.forEach(function(cb){ cb.addEventListener('change', function(){ octErr.classList.add('hidden'); symErr.classList.add('hidden'); render('grid'); }); });
+  Object.keys(sp).forEach(function(k){ sp[k].addEventListener('change', function(){ render('grid'); }); });
+  octIn.addEventListener('input', function(){
+    var v = octIn.value.trim();
+    if (!v) { octErr.classList.remove('hidden'); octErr.textContent = 'Type 3 or 4 octal digits — the grid is waiting.'; return; }
+    var b = L.octalToBits(v);
+    if (!b) { octErr.classList.remove('hidden'); octErr.textContent = 'Enter 3 or 4 digits, each 0–7 — for example 755 or 4755.'; return; }
+    octErr.classList.add('hidden'); writeBits(b); render('octal');
+  });
+  symIn.addEventListener('input', function(){
+    var v = symIn.value.trim();
+    if (!v) { symErr.classList.remove('hidden'); symErr.textContent = 'Type a symbolic mode like rwxr-xr-x.'; return; }
+    var b = L.symbolicToBits(v);
+    if (!b) { symErr.classList.remove('hidden'); return; }
+    symErr.classList.add('hidden'); writeBits(b); render('symbolic');
+  });
+  targetIn.addEventListener('input', function(){ render('grid'); });
+  rec.addEventListener('change', function(){ render('grid'); });
+  document.getElementById('btn-all').addEventListener('click', function(){ var b = L.emptyBits(); ['owner','group','other'].forEach(function(k){ b[k]={r:true,w:true,x:true}; }); writeBits(b); render('grid'); });
+  document.getElementById('btn-none').addEventListener('click', function(){ writeBits(L.emptyBits()); render('grid'); });
+  document.getElementById('btn-owner').addEventListener('click', function(){ var b = L.octalToBits('700'); writeBits(b); render('grid'); });
+  function copyText(t, btn){
+    function done(){ var el = document.getElementById('copied'); el.classList.remove('hidden'); setTimeout(function(){ el.classList.add('hidden'); }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(done); else done();
+  }
+  document.getElementById('copy-cmd').addEventListener('click', function(){ copyText(cmdOut.textContent); });
+  document.getElementById('copy-oct').addEventListener('click', function(){ copyText(octIn.value.trim()); });
+  var presetWrap = document.getElementById('presets');
+  L.PRESETS.forEach(function(p){
+    var btn = document.createElement('button');
+    btn.className = 'text-left bg-black border rounded-xl p-3 hover:border-green-400 ' + (p.octal === '777' ? 'border-red-700' : 'border-green-900');
+    btn.innerHTML = '<span class="mono font-extrabold ' + (p.octal === '777' ? 'text-red-400' : 'text-green-400') + ' text-lg">' + p.octal + '</span><span class="block text-green-100 font-semibold text-sm mt-1">' + p.label.replace(/^[0-9]+ — /, '') + '</span><span class="block text-green-100/60 text-xs mt-1">' + p.note + '</span>';
+    btn.addEventListener('click', function(){ var b = L.octalToBits(p.octal); if (b) { writeBits(b); render('grid'); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
+    presetWrap.appendChild(btn);
+  });
+  writeBits(L.octalToBits('755'));
+  render('init');
+})();
+</script>
+</body>
+</html>
