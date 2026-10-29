@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/commitcraft/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CommitCraft — Conventional Commit Message Generator, Validator & Changelog Tool</title>
+<meta name="description" content="CommitCraft is a free conventional commit message generator, offline spec validator with exact error positions, and changelog generator — a fast commitizen alternative online. No signup, works 100% in your browser.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#14101f; --panel:#1b1529; --panel2:#201a33; --line:#2e2547; --violet:#a78bfa; --mint:#34d399; --red:#f87171; --amber:#fbbf24; }
+  body { background:var(--bg); color:#e8e4f5; font-family:'Inter',system-ui,sans-serif; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  .studio-grid { background-image:linear-gradient(rgba(167,139,250,.055) 1px,transparent 1px),linear-gradient(rgba(167,139,250,.055) 1px,transparent 1px); background-size:30px 30px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; }
+  .panel-glow { box-shadow:0 0 0 1px rgba(167,139,250,.08), 0 24px 60px -28px rgba(0,0,0,.85); }
+  .field { background:#120e1d; border:1px solid var(--line); border-radius:10px; color:#e8e4f5; }
+  .field:focus { border-color:var(--violet); outline:none; box-shadow:0 0 0 2px rgba(167,139,250,.25); }
+  .type-btn { background:#120e1d; border:1px solid var(--line); border-radius:10px; transition:all .15s ease; cursor:pointer; }
+  .type-btn:hover { border-color:var(--violet); transform:translateY(-1px); }
+  .type-btn.active { border-color:var(--violet); background:rgba(167,139,250,.14); box-shadow:0 0 0 1px var(--violet), 0 6px 18px -8px rgba(167,139,250,.6); }
+  .switch { position:relative; width:52px; height:28px; background:#120e1d; border:1px solid var(--line); border-radius:9999px; transition:background .2s; cursor:pointer; flex:none; }
+  .switch::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:9999px; background:#8b849e; transition:all .2s; }
+  .switch.on { background:var(--violet); border-color:var(--violet); }
+  .switch.on::after { left:27px; background:#14101f; }
+  .switch.on-mint { background:var(--mint); border-color:var(--mint); }
+  .switch.on-mint::after { left:27px; background:#14101f; }
+  .btn-primary { background:linear-gradient(135deg,#a78bfa,#7c5cf0); color:#14101f; font-weight:800; transition:transform .08s ease, box-shadow .2s ease; box-shadow:0 8px 24px -8px rgba(167,139,250,.7); }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 12px 28px -8px rgba(167,139,250,.85); }
+  .btn-primary:active { transform:translateY(1px); }
+  .btn-mint { background:linear-gradient(135deg,#34d399,#0ea472); color:#0b1410; font-weight:800; transition:transform .08s ease, box-shadow .2s ease; box-shadow:0 8px 24px -8px rgba(52,211,153,.6); }
+  .btn-mint:hover { transform:translateY(-1px); }
+  .btn-ghost { background:#120e1d; border:1px solid var(--line); color:#cfc8e8; font-weight:600; transition:all .15s ease; }
+  .btn-ghost:hover { border-color:var(--violet); color:#fff; }
+  .badge-free { border:1px solid var(--mint); color:var(--mint); }
+  details.faq { background:var(--panel); border:1px solid var(--line); border-radius:12px; }
+  details.faq summary { cursor:pointer; list-style:none; }
+  details.faq summary::-webkit-details-marker { display:none; }
+  .err-item { border-left:3px solid var(--red); background:rgba(248,113,113,.07); }
+  .warn-item { border-left:3px solid var(--amber); background:rgba(251,191,36,.06); }
+  .ok-item { border-left:3px solid var(--mint); background:rgba(52,211,153,.07); }
+  .chip { display:inline-block; padding:1px 8px; border-radius:9999px; font-size:11px; font-weight:700; }
+  .ana-type { background:rgba(167,139,250,.18); border-bottom:2px solid var(--violet); }
+  .ana-scope { background:rgba(52,211,153,.15); border-bottom:2px solid var(--mint); }
+  .ana-subject { background:rgba(251,191,36,.12); border-bottom:2px solid var(--amber); }
+  .ana-bang { background:rgba(248,113,113,.18); border-bottom:2px solid var(--red); }
+  .ana-misc { background:rgba(139,132,158,.12); border-bottom:2px solid #8b849e; }
+  .hist-item { background:#120e1d; border:1px solid var(--line); border-radius:10px; }
+  ::selection { background:rgba(167,139,250,.35); }
+  @media print { .no-print { display:none !important; } }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 border-b border-[#2e2547] bg-[#14101f]/95 backdrop-blur">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[#a78bfa] text-[#14101f]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="12" r="2.6"/>
+          <path d="M6 8.6v6.8M8.2 7.2l7 3.6M8.2 16.8l7-3.6"/>
+        </svg>
+      </span>
+      <span class="text-xl font-extrabold tracking-tight">Commit<span class="text-[#a78bfa]">Craft</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="text-slate-300 hover:text-[#a78bfa] transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-[#a78bfa] transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- TOP AD -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 pb-8">
+  <div class="pt-8 pb-6 text-center studio-grid rounded-2xl px-4">
+    <div class="inline-flex items-center gap-2 mb-4">
+      <span id="badge-free" class="badge-free mono text-[11px] font-semibold tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">Unlimited Free Usage · No signup</span>
+    </div>
+    <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight">Compose. Validate. <span class="text-[#a78bfa]">Ship.</span></h1>
+    <p class="mt-4 text-slate-400 max-w-2xl mx-auto">CommitCraft is a conventional commit message generator with a <strong class="text-slate-200">100% offline spec validator</strong> that points at exact error positions, an annotated message-anatomy explainer, and a one-click changelog generator. Everything runs in your browser — nothing you type ever leaves this page.</p>
+  </div>
+
+  <!-- ============ STUDIO: COMPOSER ============ -->
+  <section class="panel panel-glow mt-6 p-4 sm:p-6" aria-label="Commit composer studio">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="mono text-xs font-bold text-[#14101f] bg-[#a78bfa] px-2.5 py-1 rounded">01</span>
+      <h2 class="text-xl font-extrabold tracking-tight">Composer Studio</h2>
+      <span class="mono text-[11px] text-slate-500 ml-auto hidden sm:block">type → scope → subject → body → footers</span>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+      <!-- CONTROLS -->
+      <div class="space-y-5">
+        <div>
+          <p class="mono text-xs text-[#a78bfa] font-semibold tracking-wide mb-2">TYPE <span class="text-slate-500">— pick one</span></p>
+          <div id="type-picker" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="input-scope" class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">SCOPE <span class="text-slate-500">(optional)</span></label>
+            <input id="input-scope" type="text" placeholder="api" maxlength="40" class="field mono w-full mt-1.5 px-3 py-2.5 text-sm">
+          </div>
+          <div class="flex items-end gap-5 pb-1">
+            <div class="flex items-center gap-2">
+              <div id="toggle-breaking" class="switch" role="switch" aria-checked="false" tabindex="0" aria-label="Breaking change"></div>
+              <span class="mono text-xs text-slate-300">Breaking<br><span class="text-slate-500">adds !</span></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div id="toggle-gitmoji" class="switch" role="switch" aria-checked="false" tabindex="0" aria-label="Gitmoji"></div>
+              <span class="mono text-xs text-slate-300">Gitmoji<br><span class="text-slate-500">emoji prefix</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-baseline">
+            <label for="input-subject" class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">SUBJECT <span class="text-slate-500">— imperative, ≤72 chars</span></label>
+            <span id="subject-count" class="mono text-xs text-slate-500">0 / 72</span>
+          </div>
+          <input id="input-subject" type="text" placeholder="add OAuth2 login flow" maxlength="120" class="field mono w-full mt-1.5 px-3 py-2.5 text-sm">
+        </div>
+
+        <div>
+          <label for="input-body" class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">BODY <span class="text-slate-500">(optional)</span></label>
+          <textarea id="input-body" rows="3" placeholder="Explain the why, not the what…" class="field mono w-full mt-1.5 px-3 py-2.5 text-sm resize-y"></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <p class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">FOOTERS <span class="text-slate-500">(optional)</span></p>
+            <button id="btn-add-footer" class="btn-ghost mono text-xs px-3 py-1.5 rounded-lg">+ add footer</button>
+          </div>
+          <div id="footer-rows" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- LIVE PREVIEW -->
+      <div class="flex flex-col">
+        <p class="mono text-xs text-[#34d399] font-semibold tracking-wide mb-2">LIVE MESSAGE</p>
+        <div class="panel bg-[#120e1d] p-4 flex-1 min-h-[220px]">
+          <div class="flex items-center justify-between mb-3">
+            <span class="mono text-[11px] text-slate-500">COMMIT_EDITMSG</span>
+            <span id="compose-stats" class="mono text-[11px] text-slate-500"></span>
+          </div>
+          <pre id="compose-preview" class="mono text-sm leading-relaxed text-slate-100 whitespace-pre-wrap break-words"></pre>
+        </div>
+        <div id="compose-health" class="mono text-xs mt-2"></div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button id="btn-copy-message" class="btn-primary mono text-sm px-4 py-2.5 rounded-xl">⧉ Copy message</button>
+          <button id="btn-save-history" class="btn-mint mono text-sm px-4 py-2.5 rounded-xl">♥ Save to history</button>
+          <button id="sync-to-validator" class="btn-ghost mono text-sm px-4 py-2.5 rounded-xl">→ Validate this</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STUDIO: VALIDATOR ============ -->
+  <section class="panel panel-glow mt-6 p-4 sm:p-6" aria-label="Offline commit validator">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="mono text-xs font-bold text-[#14101f] bg-[#34d399] px-2.5 py-1 rounded">02</span>
+      <h2 class="text-xl font-extrabold tracking-tight">Spec Validator <span class="text-slate-500 text-sm font-medium">— 100% offline, exact line:col positions</span></h2>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <label for="validate-input" class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">PASTE ANY COMMIT MESSAGE</label>
+        <textarea id="validate-input" rows="9" placeholder="feat(api): add OAuth2 login flow&#10;&#10Implements the token exchange…&#10&#10Closes: #42" class="field mono w-full mt-1.5 px-3 py-2.5 text-sm resize-y"></textarea>
+        <div class="flex gap-2 mt-3">
+          <button id="btn-validate" class="btn-primary mono text-sm px-4 py-2.5 rounded-xl">Validate now</button>
+          <button id="btn-load-sample" class="btn-ghost mono text-sm px-4 py-2.5 rounded-xl">Load broken sample</button>
+        </div>
+      </div>
+      <div>
+        <p class="mono text-xs text-[#34d399] font-semibold tracking-wide mb-2">VALIDATION REPORT</p>
+        <div id="validate-results" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+          <p class="mono text-xs text-slate-500">Paste a message and press Validate — every problem is reported with its exact line and column.</p>
+        </div>
+        <p class="mono text-xs text-[#a78bfa] font-semibold tracking-wide mt-5 mb-2">MESSAGE ANATOMY</p>
+        <div id="anatomy-view" class="panel bg-[#120e1d] p-4">
+          <p class="mono text-xs text-slate-500">The annotated breakdown of your message appears here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STUDIO: CHANGELOG ============ -->
+  <section class="panel panel-glow mt-6 p-4 sm:p-6" aria-label="Changelog generator">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="mono text-xs font-bold text-[#14101f] bg-[#a78bfa] px-2.5 py-1 rounded">03</span>
+      <h2 class="text-xl font-extrabold tracking-tight">Changelog Forge <span class="text-slate-500 text-sm font-medium">— paste a git log, get grouped markdown</span></h2>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <label for="changelog-input" class="mono text-xs text-[#a78bfa] font-semibold tracking-wide">PASTE COMMITS <span class="text-slate-500">— one per line (git log --oneline) or full messages</span></label>
+        <textarea id="changelog-input" rows="10" placeholder="a1b2c3d feat(auth): add OAuth2 login&#10;e4f5g6h fix(api): handle null tokens&#10;1122334 docs: update readme" class="field mono w-full mt-1.5 px-3 py-2.5 text-sm resize-y"></textarea>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button id="btn-generate-changelog" class="btn-mint mono text-sm px-4 py-2.5 rounded-xl">⚙ Generate changelog</button>
+          <button id="btn-load-changelog-sample" class="btn-ghost mono text-sm px-4 py-2.5 rounded-xl">Load sample log</button>
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <p class="mono text-xs text-[#34d399] font-semibold tracking-wide">CHANGELOG.md</p>
+          <span id="changelog-stats" class="mono text-[11px] text-slate-500"></span>
+        </div>
+        <pre id="changelog-output" class="mono text-xs leading-relaxed text-slate-200 bg-[#120e1d] border border-[#2e2547] rounded-xl p-4 flex-1 min-h-[240px] max-h-[380px] overflow-y-auto whitespace-pre-wrap break-words">Your grouped changelog appears here.</pre>
+        <div class="flex gap-2 mt-3">
+          <button id="btn-copy-changelog" class="btn-primary mono text-sm px-4 py-2.5 rounded-xl">⧉ Copy markdown</button>
+          <button id="btn-download-changelog" class="btn-ghost mono text-sm px-4 py-2.5 rounded-xl">⬇ Download .md</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STUDIO: HISTORY ============ -->
+  <section class="panel panel-glow mt-6 p-4 sm:p-6" aria-label="Message history">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="mono text-xs font-bold text-[#14101f] bg-[#34d399] px-2.5 py-1 rounded">04</span>
+      <h2 class="text-xl font-extrabold tracking-tight">History Vault <span class="text-slate-500 text-sm font-medium">— saved in this browser only</span></h2>
+      <button id="btn-clear-history" class="btn-ghost mono text-xs px-3 py-1.5 rounded-lg ml-auto">Clear all</button>
+    </div>
+    <div id="history-list" class="grid sm:grid-cols-2 gap-3"></div>
+  </section>
+
+  <!-- BOTTOM AD -->
+  <div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+    <div class="mx-auto text-center" style="max-width:300px">
+      <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+      <div class="flex justify-center overflow-hidden">
+        <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEO ARTICLE -->
+  <article id="seo-article" class="mt-10 max-w-3xl mx-auto prose-none">
+    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-4">Conventional Commits: The Complete Guide to Messages Your Future Self Will Thank You For</h2>
+    <p class="text-slate-300 leading-relaxed mb-4">Every developer has opened a <span class="mono text-sm">git log</span> that reads like a crime scene: <em>"fix stuff"</em>, <em>"wip"</em>, <em>"final final v2"</em>, <em>"asdf"</em>. Six months later, nobody — not even the author — can reconstruct what changed or why. Conventional Commits is the industry's answer to that chaos: a lightweight, human-and-machine-readable convention for commit messages that turns your repository history from a junk drawer into a structured changelog, a release-notes generator, and an archaeological record you can actually search. This guide walks through the full specification, the reasoning behind every rule, and how a <strong>conventional commit message generator</strong> like the studio above makes the whole thing effortless.</p>
+    <p class="text-slate-300 leading-relaxed mb-4">The specification itself is short — version 1.0.0 fits on a single page — and it grew out of the commit conventions pioneered by the Angular team. Its core insight is beautifully simple: if every commit message follows a predictable grammar of <strong>type</strong>, optional <strong>scope</strong>, and <strong>subject</strong>, then tools can do the boring work for you. Want to know every breaking change shipped this quarter? Grep for the <span class="mono text-sm">!</span> marker or the <span class="mono text-sm">BREAKING CHANGE:</span> footer. Want release notes? Group commits by type. Want to automate version bumps? A <span class="mono text-sm">feat</span> means a minor release, a <span class="mono text-sm">fix</span> means a patch, and anything breaking means a major. The convention is the contract; the automation is the reward.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Anatomy of a conventional commit</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Every conventional commit has up to three parts. The <strong>header</strong> is mandatory and lives on line one: <span class="mono text-sm">type(optional scope): subject</span>. A <span class="mono text-sm">!</span> immediately before the colon marks a breaking change. The <strong>body</strong> is optional, free-form, and must begin one blank line after the header — it explains the <em>why</em>, the motivation and context that the subject line cannot fit. The <strong>footer</strong> is optional metadata that begins one blank line after the body (or after the header if there is no body): issue references like <span class="mono text-sm">Closes: #42</span>, sign-offs, and the special <span class="mono text-sm">BREAKING CHANGE:</span> footer. A good <strong>git commit message template</strong> enforces this skeleton so you never have to think about the punctuation — you just fill in the meaning. The validator above checks each of these rules and reports violations with exact line and column numbers, which is far more useful than a red squiggle with no address.</p>
+    <p class="text-slate-300 leading-relaxed mb-4">The subject line deserves special attention because it is the most-read line in all of software. Git tooling — <span class="mono text-sm">git log --oneline</span>, GitHub's commit lists, notification emails — truncates or displays only the first line, so the subject carries the whole message in hostile display conditions. The convention therefore asks for a short imperative summary: <em>"add OAuth2 login"</em>, not <em>"Added OAuth2 login"</em> or <em>"adds oauth2 login."</em> Imperative mood completes the sentence <em>"This commit will…"</em>. Keep it under 72 characters so it survives one-line logs, start lowercase, and skip the trailing period. These are style rules rather than spec requirements, which is why CommitCraft reports them as warnings rather than errors — your commit is still valid, just less polished.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">The eleven types, explained with examples</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">The specification defines a fixed vocabulary of types, and learning them is the fastest way to internalize the convention. <span class="mono text-sm">feat</span> introduces a new feature for the user — <span class="mono text-sm">feat(search): add fuzzy matching</span>. <span class="mono text-sm">fix</span> patches a bug — <span class="mono text-sm">fix(cart): prevent negative quantities</span>. <span class="mono text-sm">docs</span> touches documentation only; <span class="mono text-sm">style</span> covers formatting, whitespace, and semicolons — changes that do not alter meaning. <span class="mono text-sm">refactor</span> restructures code without changing behaviour; <span class="mono text-sm">perf</span> improves performance; <span class="mono text-sm">test</span> adds or corrects tests. <span class="mono text-sm">build</span> affects the build system or dependencies, <span class="mono text-sm">ci</span> changes CI configuration, <span class="mono text-sm">chore</span> sweeps up everything else that touches neither source nor tests, and <span class="mono text-sm">revert</span> undoes a previous commit. That is the complete official set — eleven words that cover virtually all real-world changes.</p>
+    <p class="text-slate-300 leading-relaxed mb-4">Choosing between them is usually obvious, but a few pairs cause honest confusion. <span class="mono text-sm">fix</span> versus <span class="mono text-sm">refactor</span>: if user-visible behaviour changed, it is a <span class="mono text-sm">fix</span> (or <span class="mono text-sm">feat</span>); if only the internals moved, it is a <span class="mono text-sm">refactor</span>. <span class="mono text-sm">style</span> versus <span class="mono text-sm">refactor</span>: <span class="mono text-sm">style</span> is cosmetic — formatting, naming of locals, lint fixes — while <span class="mono text-sm">refactor</span> changes structure. <span class="mono text-sm">chore</span> is the honest bucket for dependency bumps, config tweaks, and release housekeeping; it is not a dumping ground for features you were too lazy to classify. When in doubt, ask which release-notes section you would want the change to appear under — that is the type. The type picker in the studio above pairs each type with its gitmoji and a one-line description, so the choice is always one click, never a memory test.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Scopes: the underrated half of the header</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">The scope — the parenthesized noun after the type — names the section of the codebase the commit touches: <span class="mono text-sm">feat(auth)</span>, <span class="mono text-sm">fix(checkout)</span>, <span class="mono text-sm">docs(readme)</span>. It is optional, but teams that use it well get a superpower: per-area history. <span class="mono text-sm">git log --grep="fix(payments)"</span> instantly surfaces every payments bug ever fixed, which is invaluable during incident review. Good scopes are stable nouns that match your architecture — module names, feature areas, or layers — not verbs, not ticket numbers, not the author's name. Keep them lowercase, one word, and consistent: if half the team writes <span class="mono text-sm">(auth)</span> and the other half writes <span class="mono text-sm">(authentication)</span>, the search superpower evaporates. Agree on a scope list in your contributing guide and treat new scopes as a deliberate decision, not a whim.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Breaking changes without the fear</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Breaking changes are where sloppy commit messages cause real damage: a renamed function or a dropped API ships silently, and downstream teams discover it in production. The spec gives you two redundant, grep-friendly signals. The compact one is the <span class="mono text-sm">!</span> before the colon — <span class="mono text-sm">feat(api)!: drop v1 endpoints</span> — visible in every one-line log. The explicit one is the footer: <span class="mono text-sm">BREAKING CHANGE: the /v1 endpoints now return 410; migrate to /v2</span>, which carries the full migration story. Use both together: the bang for visibility, the footer for explanation. The validator detects either signal and the changelog generator collects every breaking commit into its own highlighted section at the top of the release notes, so no breaking change can hide in a wall of features. That is the difference between a breaking change and a breaking surprise.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Footers: the metadata layer</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Footers turn a commit message into structured data. Each footer is a token, a separator, and a value: <span class="mono text-sm">Closes: #42</span>, <span class="mono text-sm">Refs: #108, #109</span>, <span class="mono text-sm">Reviewed-by: Ada</span>, <span class="mono text-sm">Signed-off-by: Grace &lt;<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2b4c594a484e6b4e534a465b474e05484446">[email&#160;protected]</a>&gt;</span>. The spec is precise about the grammar: tokens use hyphens instead of spaces (<span class="mono text-sm">Acked-by</span>, not <span class="mono text-sm">Acked by</span>), and the separator is either a colon followed by a space or a space followed by a hash (<span class="mono text-sm">Refs #42</span> is also legal). The exception is the <span class="mono text-sm">BREAKING CHANGE</span> token, which keeps its space and must be uppercase — <span class="mono text-sm">BREAKING-CHANGE</span> is accepted as a synonym. Footers must come after the body, each separated from it by a blank line, because parsers read the message back-to-front: the last paragraph is footers if every line matches the token pattern. The validator enforces the token grammar, the ordering rule, and non-empty values, catching the classic mistakes — spaced tokens, missing values, footers stranded above the body — before they fossilize into your history.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">From commits to changelogs, automatically</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Here is where the convention pays for itself. Because every commit declares its type, a changelog is just a group-by query: collect all <span class="mono text-sm">feat</span> commits under "Features", all <span class="mono text-sm">fix</span> commits under "Bug Fixes", and so on. Tools like conventional-changelog have done this for years, and the Changelog Forge above brings the same idea to the browser with zero setup — paste the output of <span class="mono text-sm">git log --oneline</span> (hashes are stripped automatically) or a stack of full messages, and you get clean grouped markdown with breaking changes hoisted to the top. Unparseable lines are not dropped; they land in an "Other Changes" section so nothing is silently lost, and the stats line tells you exactly how many commits parsed cleanly. Generate the draft here, paste it into your release notes, and spend the saved hour on the release itself.</p>
+    <p class="text-slate-300 leading-relaxed mb-4">The same structure powers semantic versioning automation. The widely used rule is simple: <span class="mono text-sm">fix</span> commits bump the patch version, <span class="mono text-sm">feat</span> commits bump the minor version, and any breaking change — bang or footer — bumps the major version. CI pipelines built on this rule (semantic-release being the most famous) can cut releases, publish packages, and post changelogs with no human in the loop, because the commit messages already contain every decision the pipeline needs. That automation is only trustworthy if the messages are trustworthy, which is exactly why validation matters: one malformed commit can mistarget a release. Validate at compose time — in this studio — and enforce at commit time with hooks, and the pipeline stays honest.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Commitizen and the case for an online alternative</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Commitizen is the beloved command-line wizard that prompts you for type, scope, and subject and assembles the message. It is excellent — inside a terminal, on a machine where it is installed and configured. But plenty of real workflows live outside that comfort zone: committing from a web IDE, drafting messages on a phone or tablet, contributing to a repository you have not cloned, teaching the convention in a workshop, or just wanting a zero-install tool that works in seconds. A <strong>commitizen alternative online</strong> fills exactly that gap: no npm install, no adapter configuration, no Node version drama — open the page, pick the type, write the subject, copy the message. CommitCraft goes further than a prompt wizard by adding the two things Commitizen never had: an offline validator that pinpoints spec violations with line and column numbers, and a changelog generator that turns yesterday's commits into today's release notes. Use whichever fits the moment; the messages they produce are identical, because both speak the same specification.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Enforcing the convention: commitlint, hooks, and CI</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Conventions survive on enforcement, not enthusiasm. The standard enforcement stack is commitlint — a linter for commit messages with a conventional-commits ruleset — wired into a <span class="mono text-sm">commit-msg</span> git hook via husky, so malformed messages are rejected before they are even created. Add the same lint as a CI check on pull requests to catch the messages that slip past local hooks (web commits, squash merges, rebases). Start in warn mode for two weeks so the team learns the rules from the linter's messages rather than from a blocked Friday deploy, then switch violations to errors. Two rules deserve to be errors from day one: the type must be from the known set, and the subject must not be empty — everything else can begin as a warning. Teams that skip enforcement usually discover six months later that "we use conventional commits" means "three of us do, sometimes," and their changelogs show it.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">A team rollout playbook</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Rolling out the convention to a team is a people problem with a tooling solution. First, agree on your scope vocabulary and write it down — ten to twenty nouns that mirror your architecture. Second, add a <strong>git commit message template</strong> to the repository (<span class="mono text-sm">git config commit.template</span>) so every editor opens with the skeleton pre-filled; it is a small nudge with an outsized effect. Third, install the commitlint + husky stack from the previous section, starting in warn mode. Fourth, run a fifteen-minute workshop: live-compose five commits in the studio above, deliberately break the rules, and watch the validator catch each violation with its exact position — seeing the feedback loop once teaches more than reading the spec twice. Fifth, generate your next release notes from the real commit history with the Changelog Forge and show the team the before-and-after; nothing sells a convention like watching an hour of release-notes drudgery collapse into a copy-paste. Finally, add the changelog step to your release checklist so the convention keeps paying rent every single release.</p>
+    <p class="text-slate-300 leading-relaxed mb-4">Expect two objections. "This slows me down" fades within a week — picking a type from a grid is faster than agonizing over a free-form summary, and the composer above remembers nothing but asks for everything in order. "Our history is already a mess" is true and irrelevant: adopt the convention from today forward, and consider a one-time pass that rewrites nothing but generates the next changelog from whatever parses. Archaeology improves with every commit; perfection on day one was never the goal. What matters is the direction of the history, and every conventional commit is a small, searchable, machine-readable fact about what your software did and why.</p>
+
+    <h3 class="text-xl font-bold mt-8 mb-3 text-[#a78bfa]">Bottom line</h3>
+    <p class="text-slate-300 leading-relaxed mb-4">Conventional Commits is one of those rare practices that is simultaneously a communication discipline, a documentation strategy, and an automation substrate. The spec takes an afternoon to learn; the habit takes a week to form; the payoff compounds for the life of the repository. Compose in the studio, validate before you commit, generate your changelogs from the history you actually have — and the next time someone opens your <span class="mono text-sm">git log</span>, they will find a story instead of a crime scene.</p>
+  </article>
+
+  <!-- FAQS -->
+  <section class="mt-10 max-w-3xl mx-auto">
+    <h2 class="text-2xl font-extrabold tracking-tight mb-4">Frequently Asked Questions</h2>
+    <div class="space-y-3">
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">What is a conventional commit message?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">It is a commit message that follows the Conventional Commits 1.0.0 specification: a header of type, optional scope, and subject (for example "feat(api): add OAuth2 login"), an optional body separated by a blank line, and optional footers for metadata like issue references and breaking-change notes. The predictable grammar lets tools generate changelogs, bump semantic versions, and search history automatically.</p>
+      </details>
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">How is CommitCraft different from Commitizen?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">Commitizen is a command-line wizard you install per project; CommitCraft is a commitizen alternative online that needs no installation and works in any browser, including phones and web IDEs. Beyond composing, CommitCraft adds what Commitizen lacks: a 100% offline validator that reports spec violations with exact line and column positions, an annotated message-anatomy explainer, and a changelog generator that groups pasted commits by type. Both produce identical spec-compliant messages.</p>
+      </details>
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">What are the valid commit types?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">The specification defines eleven types: feat (new feature), fix (bug fix), docs (documentation only), style (formatting, no meaning change), refactor (restructuring without behaviour change), perf (performance improvement), test (adding or correcting tests), build (build system or dependencies), ci (CI configuration), chore (other maintenance), and revert (reverting a previous commit). The type picker in the composer lists all eleven with descriptions and gitmojis.</p>
+      </details>
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">How do I mark a breaking change?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">Two ways, and best practice is both: append "!" immediately before the colon in the header ("feat(api)!: drop v1 endpoints") so it shows in one-line logs, and add a "BREAKING CHANGE:" footer describing what broke and how to migrate. The footer token must be uppercase. CommitCraft's breaking toggle adds the "!" for you, and the validator detects breaking changes from either signal.</p>
+      </details>
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">Does CommitCraft work offline? Is my data private?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">Yes. After the page loads, the composer, validator, anatomy explainer, and changelog generator run entirely in your browser with no network calls — the validator is a pure offline implementation of the spec. Your history is stored in your browser's localStorage only, never sent anywhere, and you can clear it at any time with the "Clear all" button.</p>
+      </details>
+      <details class="faq p-4">
+        <summary class="font-semibold text-slate-100">How does the changelog generator handle a pasted git log?</summary>
+        <p class="text-slate-300 text-sm leading-relaxed mt-2">Paste the output of "git log --oneline" (one commit per line; leading short hashes are stripped automatically) or full multi-line messages separated by blank lines. Each commit is validated and grouped by type into sections like Features, Bug Fixes, and Performance, with breaking changes hoisted into their own section at the top. Lines that do not parse are kept in an "Other Changes" section so nothing is silently dropped, and a stats line reports how many commits parsed cleanly.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer class="mt-12 border-t border-[#2e2547] pt-6 pb-10 text-center">
+    <p class="mono text-xs text-slate-500">CommitCraft · conventional commits studio · composer · validator · changelog · 100% client-side</p>
+  <p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+</main>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a conventional commit message?", "acceptedAnswer": { "@type": "Answer", "text": "A commit message following the Conventional Commits 1.0.0 specification: a header of type, optional scope, and subject (e.g. feat(api): add OAuth2 login), an optional body separated by a blank line, and optional footers for metadata like issue references and breaking-change notes." } },
+    { "@type": "Question", "name": "How is CommitCraft different from Commitizen?", "acceptedAnswer": { "@type": "Answer", "text": "Commitizen is a command-line wizard installed per project; CommitCraft is an online alternative needing no installation. It adds an offline validator with exact line/column error positions, an annotated message-anatomy explainer, and a changelog generator. Both produce identical spec-compliant messages." } },
+    { "@type": "Question", "name": "What are the valid commit types?", "acceptedAnswer": { "@type": "Answer", "text": "Eleven types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, and revert — covering features, bug fixes, documentation, formatting, restructuring, performance, tests, build system, CI config, maintenance, and reverts." } },
+    { "@type": "Question", "name": "How do I mark a breaking change?", "acceptedAnswer": { "@type": "Answer", "text": "Append ! before the colon in the header (feat(api)!: drop v1 endpoints) and add an uppercase BREAKING CHANGE: footer describing the break and migration path. Use both together for visibility and explanation." } },
+    { "@type": "Question", "name": "Does CommitCraft work offline? Is my data private?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. After the page loads, everything runs in the browser with no network calls. History is stored in localStorage only, never sent anywhere, and can be cleared at any time." } },
+    { "@type": "Question", "name": "How does the changelog generator handle a pasted git log?", "acceptedAnswer": { "@type": "Answer", "text": "Paste git log --oneline output or blank-line separated full messages. Commits are validated, grouped by type into sections, with breaking changes hoisted to the top. Unparseable lines are kept under Other Changes so nothing is lost." } }
+  ]
+}
+</script>
+
+<script id="v3-commitcraft-commit-builder-lib">
+'use strict';
+/**
+ * CommitCraft — Conventional Commits composer, validator & changelog engine.
+ * Pure logic only: no DOM access, no browser storage APIs, no network.
+ * Positions are 1-based { line, column } so the UI can point at exact errors.
+ */
+
+var KNOWN_TYPES = ['feat', 'fix', 'build', 'chore', 'ci', 'docs', 'style', 'refactor', 'perf', 'test', 'revert'];
+
+var TYPES = [
+  { type: 'feat',     emoji: '✨', label: 'Features',    desc: 'A new feature for the user' },
+  { type: 'fix',      emoji: '🐛', label: 'Bug Fixes',   desc: 'A bug fix for the user' },
+  { type: 'perf',     emoji: '⚡️', label: 'Performance', desc: 'A code change that improves performance' },
+  { type: 'refactor', emoji: '♻️', label: 'Refactoring',  desc: 'A code change that neither fixes a bug nor adds a feature' },
+  { type: 'docs',     emoji: '📝', label: 'Documentation', desc: 'Documentation only changes' },
+  { type: 'style',    emoji: '💄', label: 'Styles',       desc: 'Changes that do not affect the meaning of the code (white-space, formatting, semi-colons, etc.)' },
+  { type: 'test',     emoji: '✅', label: 'Tests',        desc: 'Adding missing tests or correcting existing tests' },
+  { type: 'build',    emoji: '📦', label: 'Build System', desc: 'Changes that affect the build system or external dependencies' },
+  { type: 'ci',       emoji: '👷', label: 'CI',           desc: 'Changes to CI configuration files and scripts' },
+  { type: 'chore',    emoji: '🔧', label: 'Chores',       desc: 'Other changes that do not modify src or test files' },
+  { type: 'revert',   emoji: '⏪', label: 'Reverts',      desc: 'Reverts a previous commit' }
+];
+
+function typeKnown(t) {
+  return KNOWN_TYPES.indexOf(t) !== -1;
+}
+
+function typeInfo(t) {
+  for (var i = 0; i < TYPES.length; i++) {
+    if (TYPES[i].type === t) return TYPES[i];
+  }
+  return null;
+}
+
+function splitLines(text) {
+  return String(text).split(/\r?\n/);
+}
+
+/**
+ * Parse the header line: <emoji>? <type>[optional scope][!]: <subject>
+ * Returns { errors, warnings, result } where columns are 1-based.
+ */
+function parseHeader(rawLine) {
+  var errors = [];
+  var warnings = [];
+  var result = {
+    emoji: null, type: null, scope: null, breaking: false, subject: null,
+    typeCol: 1, scopeCol: null, bangCol: null, colonCol: null, subjectCol: null
+  };
+
+  var line = rawLine;
+  var prefixLen = 0;
+  // Optional leading gitmoji (emoji run followed by whitespace).
+  var em = line.match(/^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/);
+  if (em && /^\s/.test(line.slice(em[0].length))) {
+    result.emoji = em[0];
+    prefixLen = em[0].length + 1; // emoji + the separating space
+    line = line.slice(prefixLen);
+  }
+
+  var m = line.match(/^[A-Za-z]+/);
+  if (!m) {
+    errors.push({ line: 1, column: 1 + prefixLen, code: 'missing-type',
+      message: 'The message must start with a type, e.g. "feat", "fix" or "docs".' });
+    return { errors: errors, warnings: warnings, result: result };
+  }
+  var type = m[0];
+  result.type = type;
+  result.typeCol = 1 + prefixLen;
+  var pos = type.length; // 0-based index into `line` of the next unconsumed char
+  if (!typeKnown(type)) {
+    errors.push({ line: 1, column: result.typeCol, code: 'unknown-type',
+      message: 'Unknown type "' + type + '". Use one of: ' + KNOWN_TYPES.join(', ') + '.' });
+  }
+
+  // Optional '!' before the scope (lenient: spec puts it after scope, accept both).
+  if (line[pos] === '!') {
+    result.breaking = true;
+    result.bangCol = pos + 1 + prefixLen;
+    pos++;
+  }
+
+  // Optional (scope).
+  if (line[pos] === '(') {
+    var openCol = pos + 1 + prefixLen;
+    var close = line.indexOf(')', pos + 1);
+    if (close === -1) {
+      errors.push({ line: 1, column: openCol, code: 'unclosed-scope',
+        message: 'Unclosed scope parenthesis — add ")" to close the scope.' });
+      pos = line.length;
+    } else {
+      var scope = line.slice(pos + 1, close);
+      result.scope = scope;
+      result.scopeCol = pos + 2 + prefixLen;
+      if (scope.length === 0) {
+        errors.push({ line: 1, column: result.scopeCol, code: 'empty-scope',
+          message: 'Scope must not be empty — write feat(api): … or drop the parentheses.' });
+      } else {
+        var spIdx = scope.search(/\s/);
+        if (spIdx !== -1) {
+          warnings.push({ line: 1, column: result.scopeCol + spIdx, code: 'scope-spaces',
+            message: 'Scope should be a single word without spaces.' });
+        }
+        if (/[A-Z]/.test(scope)) {
+          warnings.push({ line: 1, column: result.scopeCol, code: 'scope-case',
+            message: 'Scope is conventionally lowercase.' });
+        }
+      }
+      pos = close + 1;
+    }
+  }
+
+  // Optional '!' after the scope (the spec position).
+  if (line[pos] === '!') {
+    if (!result.breaking) {
+      result.breaking = true;
+      result.bangCol = pos + 1 + prefixLen;
+    } else {
+      warnings.push({ line: 1, column: pos + 1 + prefixLen, code: 'double-bang',
+        message: 'Only one "!" is needed to mark a breaking change.' });
+    }
+    pos++;
+  }
+
+  // Required ':'.
+  if (line[pos] === ':') {
+    result.colonCol = pos + 1 + prefixLen;
+    pos++;
+  } else {
+    errors.push({ line: 1, column: pos + 1 + prefixLen, code: 'missing-colon',
+      message: 'Missing ":" after the type/scope — expected "type(scope)!: subject".' });
+    if (line[pos] === ' ') pos++; // recovery: skip one space so subject parsing continues
+  }
+
+  // A single space is conventional after the colon.
+  var subjStart = pos;
+  if (line[pos] === ' ') {
+    subjStart = pos + 1;
+  } else if (line[pos] !== undefined) {
+    warnings.push({ line: 1, column: pos + 1 + prefixLen, code: 'colon-space',
+      message: 'Put a space after the colon — "type: subject".' });
+  }
+
+  var subject = line.slice(subjStart);
+  result.subject = subject;
+  result.subjectCol = subjStart + 1 + prefixLen;
+  if (subject.length === 0) {
+    errors.push({ line: 1, column: result.subjectCol, code: 'empty-subject',
+      message: 'The subject must not be empty — describe the change after the colon.' });
+  } else {
+    if (subject.length > 72) {
+      warnings.push({ line: 1, column: 73 + prefixLen, code: 'subject-length',
+        message: 'Subject is ' + subject.length + ' characters — keep it at 72 or under so it fits in one-line git logs.' });
+    }
+    if (/^[A-Z]/.test(subject)) {
+      warnings.push({ line: 1, column: result.subjectCol, code: 'subject-case',
+        message: 'Start the subject with a lowercase letter, in the imperative mood ("add", not "Added").' });
+    }
+    if (/\.$/.test(subject)) {
+      warnings.push({ line: 1, column: result.subjectCol + subject.length - 1, code: 'subject-period',
+        message: 'Do not end the subject with a period.' });
+    }
+  }
+
+  return { errors: errors, warnings: warnings, result: result };
+}
+
+/**
+ * Classify one footer line.
+ * Returns { token, separator, value, breaking, badToken } or null.
+ */
+function parseFooterLine(ln) {
+  // BREAKING CHANGE matched case-insensitively; the uppercase rule is
+  // enforced later so a lowercase token yields a precise 'breaking-token-case' error.
+  var b = ln.match(/^(BREAKING[ -]CHANGE)(: | #)([\s\S]*)$/i);
+  if (b) return { token: b[1], separator: b[2], value: b[3], breaking: true, badToken: false };
+  var f = ln.match(/^([A-Za-z][A-Za-z0-9-]*)(: | #)([\s\S]*)$/);
+  if (f) return { token: f[1], separator: f[2], value: f[3], breaking: false, badToken: false };
+  var bad = ln.match(/^([A-Za-z][A-Za-z0-9- ]+)(: | #)([\s\S]*)$/);
+  if (bad && / /.test(bad[1])) {
+    return { token: bad[1], separator: bad[2], value: bad[3], breaking: false, badToken: true };
+  }
+  return null;
+}
+
+/**
+ * Full Conventional Commits validation with exact error positions.
+ * Returns { valid, errors, warnings, parsed }.
+ * parsed: { type, scope, breaking, subject, body, footers, emoji, breakingNotes }
+ */
+function validateCommit(text) {
+  var errors = [];
+  var warnings = [];
+  var lines = splitLines(text);
+
+  if (String(text).trim() === '') {
+    errors.push({ line: 1, column: 1, code: 'empty',
+      message: 'Commit message is empty.' });
+    return { valid: false, errors: errors, warnings: warnings, parsed: null };
+  }
+
+  var h = parseHeader(lines[0]);
+  errors = errors.concat(h.errors);
+  warnings = warnings.concat(h.warnings);
+  var r = h.result;
+
+  // Split the remainder into paragraphs (blocks separated by blank lines).
+  var blocks = [];
+  var cur = null;
+  for (var i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') { cur = null; continue; }
+    if (!cur) { cur = { startLine: i + 1, lines: [] }; blocks.push(cur); }
+    cur.lines.push(lines[i]);
+  }
+
+  // Header must be a single line; anything on line 2 means the blank separator is missing.
+  if (lines.length > 1 && lines[1].trim() !== '') {
+    errors.push({ line: 2, column: 1, code: 'body-separator',
+      message: 'Separate the body from the header with a blank line.' });
+  }
+
+  var breaking = !!r.breaking;
+  var bodyParts = [];
+  var footers = [];
+  var breakingNotes = [];
+  var seenFooter = false;
+
+  blocks.forEach(function (block) {
+    var first = parseFooterLine(block.lines[0]);
+    if (first) {
+      // Footer block.
+      seenFooter = true;
+      block.lines.forEach(function (ln, idx) {
+        var lnNo = block.startLine + idx;
+        var info = idx === 0 ? first : parseFooterLine(ln);
+        if (info && !info.continuation) {
+          if (info.badToken) {
+            errors.push({ line: lnNo, column: 1, code: 'footer-token-spaces',
+              message: 'Footer token "' + info.token + '" must use "-" instead of spaces, e.g. "' +
+                info.token.trim().replace(/\s+/g, '-') + '".' });
+          } else if (info.breaking) {
+            if (info.token !== 'BREAKING CHANGE' && info.token !== 'BREAKING-CHANGE') {
+              errors.push({ line: lnNo, column: 1, code: 'breaking-token-case',
+                message: 'The BREAKING CHANGE footer token must be uppercase.' });
+            }
+            if (info.value.trim() === '') {
+              errors.push({ line: lnNo, column: info.token.length + info.separator.length + 1, code: 'footer-empty-value',
+                message: 'BREAKING CHANGE needs a description of what broke.' });
+            } else {
+              breakingNotes.push(info.value.trim());
+            }
+            breaking = true;
+            footers.push({ token: info.token, separator: info.separator, value: info.value, line: lnNo, breaking: true });
+          } else {
+            if (info.value.trim() === '') {
+              errors.push({ line: lnNo, column: info.token.length + info.separator.length + 1, code: 'footer-empty-value',
+                message: 'Footer "' + info.token + '" needs a value after the separator.' });
+            }
+            footers.push({ token: info.token, separator: info.separator, value: info.value, line: lnNo, breaking: false });
+          }
+        } else {
+          // Continuation line of a multi-line footer value (e.g. long BREAKING CHANGE text).
+          if (footers.length > 0) {
+            footers[footers.length - 1].value += '\n' + ln;
+            if (footers[footers.length - 1].breaking) breakingNotes[breakingNotes.length - 1] += '\n' + ln;
+          }
+        }
+      });
+    } else {
+      // Body block.
+      if (seenFooter) {
+        errors.push({ line: block.startLine, column: 1, code: 'footer-order',
+          message: 'Footers must come after the body — this paragraph looks like body text placed after footers.' });
+      }
+      bodyParts.push(block.lines.join('\n'));
+    }
+  });
+
+  var parsed = {
+    emoji: r.emoji,
+    type: r.type,
+    scope: r.scope && r.scope.length ? r.scope : null,
+    breaking: breaking,
+    subject: r.subject,
+    body: bodyParts.join('\n\n'),
+    footers: footers,
+    breakingNotes: breakingNotes
+  };
+
+  return { valid: errors.length === 0, errors: errors, warnings: warnings, parsed: parsed };
+}
+
+/**
+ * Compose a commit message from parts.
+ * parts: { type, scope, breaking, gitmoji, subject, body, footers: [{token, value}] }
+ */
+function composeMessage(parts) {
+  parts = parts || {};
+  var type = typeKnown(parts.type) ? parts.type : 'feat';
+  var info = typeInfo(type);
+  var scope = String(parts.scope || '').trim();
+  var subject = String(parts.subject || '').trim();
+  var header = (parts.gitmoji && info ? info.emoji + ' ' : '') +
+    type +
+    (scope ? '(' + scope + ')' : '') +
+    (parts.breaking ? '!' : '') +
+    ': ' + subject;
+  var out = [header];
+  var body = String(parts.body || '').trim();
+  if (body) out.push('', body);
+  var footers = parts.footers || [];
+  var flines = [];
+  footers.forEach(function (f) {
+    var token = String(f.token || '').trim();
+    var value = String(f.value || '').trim();
+    if (token && value) flines.push(token + ': ' + value);
+  });
+  if (flines.length) out.push('', flines.join('\n'));
+  return out.join('\n');
+}
+
+/**
+ * Split pasted text into individual commits.
+ * Accepts git log --oneline style (one commit per line, optional hash prefix)
+ * or blank-line separated full messages. Never throws.
+ * Returns [{ raw, result }] where result is validateCommit(raw).
+ */
+function parseCommitList(text) {
+  var str = String(text);
+  var lines = splitLines(str);
+  var nonEmpty = lines.filter(function (l) { return l.trim() !== ''; });
+  if (nonEmpty.length === 0) return [];
+
+  var hashRe = /^[0-9a-f]{7,40}\s+/;
+  var raws = [];
+  // A blank line anywhere means full messages separated by blank lines.
+  // Otherwise every non-empty line is one commit (git log --oneline style).
+  var blockMode = /\n[ \t]*\n/.test(str);
+  if (!blockMode) {
+    lines.forEach(function (l) {
+      if (l.trim() !== '') raws.push(l.replace(hashRe, ''));
+    });
+  } else {
+    // Paragraphs; a new commit starts at a paragraph whose first line looks
+    // like a header — other paragraphs continue the current commit (its body).
+    var paras = [];
+    var pp = [];
+    lines.forEach(function (l) {
+      if (l.trim() === '') { if (pp.length) { paras.push(pp); pp = []; } }
+      else pp.push(l);
+    });
+    if (pp.length) paras.push(pp);
+    var headerStart = function (l) {
+      return /^([^\x00-\x7F]+\s+)?[A-Za-z]+(\([^)\n]*\))?!?:/.test(l);
+    };
+    var cur = null;
+    paras.forEach(function (para) {
+      if (headerStart(para[0]) || cur === null) {
+        if (cur !== null) raws.push(cur);
+        cur = para.join('\n');
+      } else {
+        cur += '\n\n' + para.join('\n');
+      }
+    });
+    if (cur !== null) raws.push(cur);
+  }
+  return raws.map(function (raw) {
+    return { raw: raw, result: validateCommit(raw) };
+  });
+}
+
+var CHANGELOG_ORDER = ['breaking', 'feat', 'fix', 'perf', 'refactor', 'docs', 'style', 'test', 'build', 'ci', 'chore', 'revert', 'other'];
+
+var SECTION_META = {
+  breaking: { title: 'Breaking Changes', emoji: '⚠️' },
+  feat:     { title: 'Features',         emoji: '✨' },
+  fix:      { title: 'Bug Fixes',        emoji: '🐛' },
+  perf:     { title: 'Performance',      emoji: '⚡️' },
+  refactor: { title: 'Refactoring',      emoji: '♻️' },
+  docs:     { title: 'Documentation',    emoji: '📝' },
+  style:    { title: 'Styles',           emoji: '💄' },
+  test:     { title: 'Tests',            emoji: '✅' },
+  build:    { title: 'Build System',     emoji: '📦' },
+  ci:       { title: 'CI',               emoji: '👷' },
+  chore:    { title: 'Chores',           emoji: '🔧' },
+  revert:   { title: 'Reverts',          emoji: '⏪' },
+  other:    { title: 'Other Changes',    emoji: '🔀' }
+};
+
+/**
+ * Group a parsed commit list into a changelog.
+ * Returns { markdown, sections, total, validCount, unparseable, breakingCount }.
+ * sections: [{ key, title, emoji, entries: [{ scope, subject, note, raw }] }]
+ */
+function generateChangelog(text) {
+  var commits = parseCommitList(text);
+  var buckets = {};
+  CHANGELOG_ORDER.forEach(function (k) { buckets[k] = []; });
+
+  var validCount = 0;
+  var unparseable = 0;
+  var breakingCount = 0;
+
+  commits.forEach(function (c) {
+    var res = c.result;
+    if (res.valid && res.parsed && typeKnown(res.parsed.type)) {
+      validCount++;
+      var p = res.parsed;
+      var entry = {
+        scope: p.scope,
+        subject: p.subject,
+        note: p.breakingNotes.length ? p.breakingNotes[0] : null,
+        raw: c.raw
+      };
+      if (p.breaking) {
+        breakingCount++;
+        buckets.breaking.push(entry);
+      }
+      buckets[p.type].push(entry);
+    } else {
+      unparseable++;
+      buckets.other.push({ scope: null, subject: null, note: null, raw: c.raw });
+    }
+  });
+
+  var sections = [];
+  CHANGELOG_ORDER.forEach(function (k) {
+    if (buckets[k].length) {
+      sections.push({
+        key: k,
+        title: SECTION_META[k].title,
+        emoji: SECTION_META[k].emoji,
+        entries: buckets[k]
+      });
+    }
+  });
+
+  var md = ['# Changelog', '', '_Grouped automatically from conventional commit messages._', ''];
+  sections.forEach(function (s) {
+    md.push('## ' + s.emoji + ' ' + s.title, '');
+    s.entries.forEach(function (e) {
+      if (e.subject) {
+        var line = '- ' + (e.scope ? '**' + e.scope + ':** ' : '') + e.subject;
+        if (s.key === 'breaking' && e.note) line += ' — ' + e.note.split('\n')[0];
+        md.push(line);
+      } else {
+        md.push('- ' + e.raw.split('\n')[0]);
+      }
+    });
+    md.push('');
+  });
+  if (!sections.length) md.push('_No commits found — paste a git log to generate a changelog._', '');
+
+  return {
+    markdown: md.join('\n'),
+    sections: sections,
+    total: commits.length,
+    validCount: validCount,
+    unparseable: unparseable,
+    breakingCount: breakingCount
+  };
+}
+
+/**
+ * Annotated message-anatomy breakdown for the explainer UI.
+ * Returns [{ kind, label, line, column, length, text, note }].
+ */
+function explainAnatomy(text) {
+  var parts = [];
+  var lines = splitLines(text);
+  if (String(text).trim() === '') return parts;
+
+  var h = parseHeader(lines[0]);
+  var r = h.result;
+  var push = function (kind, label, column, length, note) {
+    parts.push({
+      kind: kind,
+      label: label,
+      line: 1,
+      column: column,
+      length: length,
+      text: lines[0].substr(column - 1, length),
+      note: note
+    });
+  };
+
+  if (r.emoji) {
+    push('gitmoji', 'Gitmoji', 1, r.emoji.length,
+      'Optional emoji prefix. Toggle gitmoji in the composer to add the emoji for the chosen type.');
+  }
+  if (r.type) {
+    var info = typeInfo(r.type);
+    push('type', 'Type', r.typeCol, r.type.length,
+      info ? 'The change category — ' + info.desc + '.' : 'Unknown type. Pick one of the 11 spec types.');
+  }
+  if (r.scope !== null && r.scopeCol) {
+    push('scope', 'Scope', r.scopeCol, Math.max(r.scope.length, 1),
+      'Optional noun naming the affected section of the codebase, e.g. api, auth, ui.');
+  }
+  if (r.bangCol) {
+    push('bang', 'Breaking mark', r.bangCol, 1,
+      'The "!" flags a breaking change. Pair it with a BREAKING CHANGE footer describing the break.');
+  }
+  if (r.colonCol) {
+    push('colon', 'Colon', r.colonCol, 1,
+      'The colon separates the type/scope prefix from the human-readable subject.');
+  }
+  if (r.subject !== null && r.subjectCol) {
+    push('subject', 'Subject', r.subjectCol, Math.max(r.subject.length, 1),
+      'Short imperative summary of the change. Keep it at 72 characters or under, lowercase, no trailing period.');
+  }
+
+  // Body / footer regions below the header.
+  var blocks = [];
+  var cur = null;
+  for (var i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') { cur = null; continue; }
+    if (!cur) { cur = { startLine: i + 1, lines: [] }; blocks.push(cur); }
+    cur.lines.push(lines[i]);
+  }
+  if (blocks.length === 0 && lines.length > 1 && lines[1].trim() === '') {
+    parts.push({ kind: 'separator', label: 'Blank line', line: 2, column: 1, length: 0, text: '',
+      note: 'The blank line after the header separates it from the body and footers.' });
+  }
+  blocks.forEach(function (block, bi) {
+    var isFooter = !!parseFooterLine(block.lines[0]);
+    if (bi === 0 && lines.length > 1 && lines[1].trim() !== '') {
+      parts.push({ kind: 'separator-missing', label: 'Missing blank line', line: block.startLine, column: 1,
+        length: block.lines[0].length, text: block.lines[0],
+        note: 'There should be a blank line between the header and the body.' });
+    }
+    parts.push({
+      kind: isFooter ? 'footer' : 'body',
+      label: isFooter ? 'Footer' : 'Body',
+      line: block.startLine,
+      column: 1,
+      length: block.lines[0].length,
+      text: block.lines.join('\n'),
+      note: isFooter
+        ? 'Metadata: issue references (Refs, Closes), sign-offs, and BREAKING CHANGE notes. Token, separator, value.'
+        : 'Longer explanation of the change: motivation, context, and contrast with previous behaviour.'
+    });
+  });
+
+  return parts;
+}
+
+// Exports for Node tests.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    KNOWN_TYPES: KNOWN_TYPES,
+    TYPES: TYPES,
+    CHANGELOG_ORDER: CHANGELOG_ORDER,
+    SECTION_META: SECTION_META,
+    typeKnown: typeKnown,
+    typeInfo: typeInfo,
+    parseHeader: parseHeader,
+    parseFooterLine: parseFooterLine,
+    validateCommit: validateCommit,
+    composeMessage: composeMessage,
+    parseCommitList: parseCommitList,
+    generateChangelog: generateChangelog,
+    explainAnatomy: explainAnatomy
+  };
+}
+
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  };
+
+  var state = { type: 'feat', breaking: false, gitmoji: false };
+
+  // ---------- type picker ----------
+  function renderTypePicker() {
+    var box = $('type-picker');
+    box.innerHTML = '';
+    TYPES.forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'type-btn p-2.5 text-left' + (state.type === t.type ? ' active' : '');
+      b.setAttribute('data-type', t.type);
+      b.title = t.desc;
+      b.innerHTML = '<div class="text-lg leading-none">' + t.emoji + '</div>' +
+        '<div class="mono text-xs font-bold text-[#a78bfa] mt-1.5">' + esc(t.type) + '</div>' +
+        '<div class="text-[10px] text-slate-500 leading-tight mt-0.5">' + esc(t.label) + '</div>';
+      b.addEventListener('click', function () {
+        state.type = t.type;
+        var btns = box.querySelectorAll('.type-btn');
+        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+        b.classList.add('active');
+        updatePreview();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  // ---------- toggles ----------
+  function wireToggle(id, key, mintClass) {
+    var el = $(id);
+    var flip = function () {
+      state[key] = !state[key];
+      el.classList.toggle('on', state[key]);
+      if (mintClass) el.classList.toggle(mintClass, state[key]);
+      el.setAttribute('aria-checked', state[key] ? 'true' : 'false');
+      updatePreview();
+    };
+    el.addEventListener('click', flip);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+    });
+  }
+
+  // ---------- footer rows ----------
+  function addFooterRow(token, value) {
+    var wrap = document.createElement('div');
+    wrap.className = 'flex gap-2';
+    wrap.innerHTML =
+      '<input type="text" class="field mono flex-none w-32 px-3 py-2 text-sm footer-token" placeholder="Closes" maxlength="40">' +
+      '<input type="text" class="field mono flex-1 px-3 py-2 text-sm footer-value" placeholder="#42">' +
+      '<button type="button" class="btn-ghost mono text-sm px-3 rounded-lg footer-del" title="Remove footer">×</button>';
+    if (token) wrap.querySelector('.footer-token').value = token;
+    if (value) wrap.querySelector('.footer-value').value = value;
+    wrap.querySelector('.footer-del').addEventListener('click', function () {
+      wrap.remove();
+      updatePreview();
+    });
+    var inputs = wrap.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++) inputs[i].addEventListener('input', updatePreview);
+    $('footer-rows').appendChild(wrap);
+  }
+
+  function readFooters() {
+    var out = [];
+    var rows = $('footer-rows').querySelectorAll('.flex');
+    for (var i = 0; i < rows.length; i++) {
+      out.push({
+        token: rows[i].querySelector('.footer-token').value,
+        value: rows[i].querySelector('.footer-value').value
+      });
+    }
+    return out;
+  }
+
+  // ---------- composer preview ----------
+  function currentMessage() {
+    return composeMessage({
+      type: state.type,
+      scope: $('input-scope').value,
+      breaking: state.breaking,
+      gitmoji: state.gitmoji,
+      subject: $('input-subject').value,
+      body: $('input-body').value,
+      footers: readFooters()
+    });
+  }
+
+  function updatePreview() {
+    var msg = currentMessage();
+    $('compose-preview').textContent = msg;
+    var subj = $('input-subject').value;
+    var count = $('subject-count');
+    count.textContent = subj.length + ' / 72';
+    count.className = 'mono text-xs ' + (subj.length > 72 ? 'text-[#fbbf24] font-bold' : 'text-slate-500');
+    var v = validateCommit(msg);
+    var health = $('compose-health');
+    var lines = msg.split('\n').length;
+    $('compose-stats').textContent = lines + ' line' + (lines === 1 ? '' : 's') + ' · ' + msg.length + ' chars';
+    if (v.valid && v.warnings.length === 0) {
+      health.innerHTML = '<span class="text-[#34d399]">✓ valid conventional commit — ready to ship</span>';
+    } else if (v.valid) {
+      health.innerHTML = '<span class="text-[#fbbf24]">⚠ valid, but ' + v.warnings.length + ' style warning' +
+        (v.warnings.length === 1 ? '' : 's') + ' — see the validator below</span>';
+    } else {
+      health.innerHTML = '<span class="text-[#f87171]">✗ ' + v.errors.length + ' spec error' +
+        (v.errors.length === 1 ? '' : 's') + ' — see the validator below</span>';
+    }
+  }
+
+  ['input-scope', 'input-subject', 'input-body'].forEach(function (id) {
+    $(id).addEventListener('input', updatePreview);
+  });
+  $('btn-add-footer').addEventListener('click', function () { addFooterRow('', ''); });
+
+  function copyText(t, btn, label) {
+    var done = function () {
+      var old = btn.textContent;
+      btn.textContent = '✓ copied';
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { fallbackCopy(t); done(); });
+    } else { fallbackCopy(t); done(); }
+  }
+  function fallbackCopy(t) {
+    var ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  $('btn-copy-message').addEventListener('click', function () {
+    copyText(currentMessage(), $('btn-copy-message'));
+  });
+  $('sync-to-validator').addEventListener('click', function () {
+    $('validate-input').value = currentMessage();
+    runValidation();
+    $('validate-input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // ---------- validator ----------
+  var KIND_STYLE = {
+    gitmoji: 'ana-misc', type: 'ana-type', scope: 'ana-scope', bang: 'ana-bang',
+    colon: 'ana-misc', subject: 'ana-subject', separator: 'ana-misc',
+    'separator-missing': 'ana-bang', body: 'ana-scope', footer: 'ana-type'
+  };
+  var KIND_LABEL = {
+    gitmoji: 'gitmoji', type: 'type', scope: 'scope', bang: 'breaking !', colon: ':',
+    subject: 'subject', separator: 'blank line', 'separator-missing': 'missing blank',
+    body: 'body', footer: 'footer'
+  };
+
+  function renderAnatomy(text) {
+    var view = $('anatomy-view');
+    if (String(text).trim() === '') {
+      view.innerHTML = '<p class="mono text-xs text-slate-500">The annotated breakdown of your message appears here.</p>';
+      return;
+    }
+    var parts = explainAnatomy(text);
+    var headParts = parts.filter(function (p) { return p.line === 1; });
+    var tailParts = parts.filter(function (p) { return p.line !== 1; });
+    var html = '<div class="mono text-sm leading-loose break-words">';
+    headParts.forEach(function (p) {
+      var cls = KIND_STYLE[p.kind] || 'ana-misc';
+      html += '<span class="' + cls + ' rounded px-0.5" title="' + esc(p.note) + '">' + esc(p.text) + '</span>';
+    });
+    html += '</div><div class="mt-3 space-y-2">';
+    headParts.forEach(function (p) {
+      html += '<div class="flex gap-2 items-start text-xs">' +
+        '<span class="chip mono ' + (KIND_STYLE[p.kind] || 'ana-misc') + ' text-slate-200 flex-none mt-0.5">' + esc(KIND_LABEL[p.kind] || p.kind) + '</span>' +
+        '<span class="text-slate-400 leading-relaxed">' + esc(p.note) + '</span></div>';
+    });
+    tailParts.forEach(function (p) {
+      var tone = p.kind === 'separator-missing' ? 'text-[#f87171]' : (p.kind === 'footer' ? 'text-[#a78bfa]' : 'text-[#34d399]');
+      html += '<div class="flex gap-2 items-start text-xs">' +
+        '<span class="chip mono bg-[#120e1d] border border-[#2e2547] ' + tone + ' flex-none mt-0.5">L' + p.line + ' ' + esc(p.label.toLowerCase()) + '</span>' +
+        '<span class="text-slate-400 leading-relaxed">' + esc(p.note) + '</span></div>';
+    });
+    html += '</div>';
+    view.innerHTML = html;
+  }
+
+  function runValidation() {
+    var text = $('validate-input').value;
+    var box = $('validate-results');
+    if (String(text).trim() === '') {
+      box.innerHTML = '<p class="mono text-xs text-slate-500">Paste a message and press Validate — every problem is reported with its exact line and column.</p>';
+      renderAnatomy('');
+      return;
+    }
+    var v = validateCommit(text);
+    var html = '';
+    if (v.valid && v.warnings.length === 0) {
+      html += '<div class="ok-item rounded-lg p-3"><p class="mono text-sm text-[#34d399] font-bold">✓ Valid conventional commit</p>' +
+        '<p class="text-xs text-slate-400 mt-1">Type: ' + esc(v.parsed.type) +
+        (v.parsed.scope ? ' · scope: ' + esc(v.parsed.scope) : '') +
+        (v.parsed.breaking ? ' · <span class="text-[#f87171] font-bold">BREAKING CHANGE</span>' : '') +
+        ' · footers: ' + v.parsed.footers.length + '</p></div>';
+    } else {
+      if (v.valid) {
+        html += '<div class="ok-item rounded-lg p-3"><p class="mono text-sm text-[#34d399] font-bold">✓ Valid conventional commit</p></div>';
+      }
+      v.errors.forEach(function (e) {
+        html += '<div class="err-item rounded-lg p-3"><p class="mono text-xs"><span class="chip bg-[#f87171] text-[#14101f]">ERROR</span> ' +
+          '<span class="text-slate-300 font-bold">line ' + e.line + ', col ' + e.column + '</span></p>' +
+          '<p class="text-sm text-slate-300 mt-1">' + esc(e.message) + '</p></div>';
+      });
+      v.warnings.forEach(function (w) {
+        html += '<div class="warn-item rounded-lg p-3"><p class="mono text-xs"><span class="chip bg-[#fbbf24] text-[#14101f]">WARNING</span> ' +
+          '<span class="text-slate-300 font-bold">line ' + w.line + ', col ' + w.column + '</span></p>' +
+          '<p class="text-sm text-slate-300 mt-1">' + esc(w.message) + '</p></div>';
+      });
+    }
+    box.innerHTML = html;
+    renderAnatomy(text);
+  }
+
+  var validateTimer = null;
+  $('validate-input').addEventListener('input', function () {
+    clearTimeout(validateTimer);
+    validateTimer = setTimeout(runValidation, 350);
+  });
+  $('btn-validate').addEventListener('click', runValidation);
+  $('btn-load-sample').addEventListener('click', function () {
+    $('validate-input').value =
+      'Feature(auth) Added login!!\n' +
+      'this adds oauth without a blank line\n' +
+      '\n' +
+      'Acked by: Ada\n' +
+      'BREAKING CHANGE:';
+    runValidation();
+  });
+
+  // ---------- changelog ----------
+  $('btn-generate-changelog').addEventListener('click', function () {
+    var text = $('changelog-input').value;
+    var g = generateChangelog(text);
+    $('changelog-output').textContent = g.markdown;
+    $('changelog-stats').textContent = g.total + ' commits · ' + g.validCount + ' parsed · ' +
+      g.unparseable + ' other' + (g.breakingCount ? ' · ⚠ ' + g.breakingCount + ' breaking' : '');
+  });
+  $('btn-load-changelog-sample').addEventListener('click', function () {
+    $('changelog-input').value =
+      'a1b2c3d feat(auth): add OAuth2 login flow\n' +
+      'e4f5a6b fix(api): handle null refresh tokens\n' +
+      '77aa991 feat(api)!: drop v1 endpoints\n' +
+      '90bc123 docs: update readme with setup steps\n' +
+      '44de556 perf(search): index trigrams for fuzzy match\n' +
+      '12ef789 chore: bump dependencies\n' +
+      'random line that is not a commit';
+  });
+  $('btn-copy-changelog').addEventListener('click', function () {
+    copyText($('changelog-output').textContent, $('btn-copy-changelog'));
+  });
+  $('btn-download-changelog').addEventListener('click', function () {
+    var blob = new Blob([$('changelog-output').textContent], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'CHANGELOG.md';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+
+  // ---------- history (localStorage) ----------
+  var HKEY = 'commitcraft-history-v1';
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(HKEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveHistory(arr) {
+    try { localStorage.setItem(HKEY, JSON.stringify(arr.slice(0, 60))); } catch (e) {}
+  }
+  function renderHistory() {
+    var list = $('history-list');
+    var arr = loadHistory();
+    if (!arr.length) {
+      list.innerHTML = '<p class="mono text-xs text-slate-500 sm:col-span-2">No saved messages yet — compose one above and hit "Save to history". Stored only in this browser.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    arr.forEach(function (item, idx) {
+      var d = document.createElement('div');
+      d.className = 'hist-item p-3';
+      var dt = new Date(item.ts);
+      d.innerHTML =
+        '<pre class="mono text-xs text-slate-200 whitespace-pre-wrap break-words max-h-24 overflow-hidden">' + esc(item.msg) + '</pre>' +
+        '<div class="flex items-center gap-2 mt-2">' +
+        '<span class="mono text-[10px] text-slate-500">' + esc(dt.toLocaleString()) + '</span>' +
+        '<span class="flex-1"></span>' +
+        '<button class="btn-ghost mono text-[11px] px-2.5 py-1 rounded-lg" data-act="restore">Restore</button>' +
+        '<button class="btn-ghost mono text-[11px] px-2.5 py-1 rounded-lg" data-act="copy">Copy</button>' +
+        '<button class="btn-ghost mono text-[11px] px-2.5 py-1 rounded-lg" data-act="del">✕</button>' +
+        '</div>';
+      var btns = d.querySelectorAll('button');
+      btns[0].addEventListener('click', function () { restoreToComposer(item.msg); });
+      btns[1].addEventListener('click', function () { copyText(item.msg, btns[1]); });
+      btns[2].addEventListener('click', function () {
+        var a2 = loadHistory();
+        a2.splice(idx, 1);
+        saveHistory(a2);
+        renderHistory();
+      });
+      list.appendChild(d);
+    });
+  }
+  function restoreToComposer(msg) {
+    var v = validateCommit(msg);
+    if (v.valid && v.parsed) {
+      var p = v.parsed;
+      state.type = typeKnown(p.type) ? p.type : 'feat';
+      state.breaking = !!p.breaking;
+      state.gitmoji = !!p.emoji;
+      renderTypePicker();
+      $('toggle-breaking').classList.toggle('on', state.breaking);
+      $('toggle-breaking').setAttribute('aria-checked', state.breaking ? 'true' : 'false');
+      $('toggle-gitmoji').classList.toggle('on', state.gitmoji);
+      $('toggle-gitmoji').setAttribute('aria-checked', state.gitmoji ? 'true' : 'false');
+      $('input-scope').value = p.scope || '';
+      $('input-subject').value = p.subject || '';
+      $('input-body').value = p.body || '';
+      $('footer-rows').innerHTML = '';
+      p.footers.forEach(function (f) { addFooterRow(f.token, f.value.split('\n')[0]); });
+    } else {
+      $('validate-input').value = msg;
+      runValidation();
+    }
+    updatePreview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  $('btn-save-history').addEventListener('click', function () {
+    var msg = currentMessage().trim();
+    if (!msg || !$('input-subject').value.trim()) return;
+    var arr = loadHistory();
+    arr.unshift({ msg: msg, ts: Date.now() });
+    saveHistory(arr);
+    renderHistory();
+    var btn = $('btn-save-history');
+    var old = btn.textContent;
+    btn.textContent = '♥ saved';
+    setTimeout(function () { btn.textContent = old; }, 1400);
+  });
+  $('btn-clear-history').addEventListener('click', function () {
+    saveHistory([]);
+    renderHistory();
+  });
+
+  // ---------- init ----------
+  renderTypePicker();
+  addFooterRow('Closes', '');
+  updatePreview();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
