@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>package.json Generator: Scripts &amp; Dependencies – PkgJson</title>
+<meta name="description" content="Free package.json generator: set name and version, edit scripts, add dependencies with versions, and preview live JSON to copy or download free.">
+<link rel="canonical" href="https://dev.fixoraa.tech/pkgjson/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="package.json Generator: Scripts &amp; Dependencies – PkgJson">
+<meta property="og:description" content="Free package.json generator: set name and version, edit scripts, add dependencies with versions, and preview live JSON to copy or download free.">
+<meta property="og:url" content="https://dev.fixoraa.tech/pkgjson/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "PkgJson",
+      "url": "https://dev.fixoraa.tech/pkgjson/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Free package.json generator: set name and version, edit scripts, add dependencies with versions, and preview live JSON to copy or download free.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is package.json for?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "package.json is the manifest of a Node.js project: it declares the name, version, scripts (npm commands) and dependencies. npm and every CI system read it before installing, building or publishing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between dependencies and devDependencies?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "dependencies are needed at runtime by your running code; devDependencies are needed only to build or test (TypeScript, Jest, ESLint). Production installs skip devDependencies, so runtime imports must be real dependencies."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What do ^ and ~ mean in versions?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "^4.18.0 (caret) allows minor and patch updates; ~4.18.0 (tilde) allows only patch updates; 4.18.0 exact pins the version. Caret is the npm default and usually the right choice."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I put comments in package.json?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No \u2014 package.json must be strict JSON: no comments and no trailing commas. Use a separate README or config comments instead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the private field do?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "private: true makes npm publish refuse, protecting internal projects from accidental publication. Public packages should also set license, repository and keywords."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I commit package-lock.json?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A lockfile (package-lock.json) records the exact installed versions so npm ci reproduces the same tree everywhere. Always commit it for applications."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#FFF6EC; --surface:#FFFFFF; --accent:#4d7c0f; --accent-ink:#FFFFFF;
+  --ink:#2B1608; --muted:#7C5B45; --line:#F0DAC2;
+  --display:'Fira Code',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.pj-wrap{max-width:1020px;margin:0 auto;padding:8px 4px;font-family:Inter,system-ui,sans-serif;color:#2B1608}.pj-head{text-align:center;padding:32px 14px 18px}.pj-logo{font-size:42px}.pj-h1{font-family:'Fira Code',monospace;font-size:clamp(1.7rem,4vw,2.4rem);margin:12px 0 8px}.pj-tag{color:#7C5B45;font-size:1rem;max-width:540px;margin:0 auto}.pj-bento{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}.pj-card{background:#fff;border:1px solid #F0DAC2;border-radius:18px;padding:22px;box-shadow:0 14px 40px -30px rgba(77,124,15,.35)}.pj-card.wide{grid-column:span 2}.pj-h2{font-family:'Fira Code',monospace;font-size:1.05rem;margin:0 0 16px;color:#4d7c0f}.pj-field{display:grid;gap:7px;font-size:.84rem;font-weight:600;color:#7C5B45;margin-bottom:12px}.pj-field input{border:1.5px solid #EBD3B4;border-radius:10px;padding:11px 13px;font-size:.95rem;min-height:46px;width:100%;box-sizing:border-box;color:#2B1608;font-family:'Fira Code',monospace}.pj-field input:focus{outline:2px solid #4d7c0f;border-color:#4d7c0f}.pj-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pj-list{display:grid;gap:8px;margin-bottom:12px}.pj-item{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center}.pj-item input{border:1.5px solid #EBD3B4;border-radius:10px;padding:10px 12px;font-family:'Fira Code',monospace;font-size:.88rem;min-height:44px;width:100%;box-sizing:border-box;color:#2B1608}.pj-rm{background:#FDECEA;color:#B3261E;border:1px solid #F5C6C2;border-radius:10px;min-width:44px;min-height:44px;cursor:pointer;font-size:1rem}.pj-add{background:transparent;color:#4d7c0f;border:1.5px dashed #4d7c0f;border-radius:10px;padding:11px;font-weight:700;cursor:pointer;min-height:46px;width:100%}.pj-pre{background:#2B1608;color:#F5D9BC;border-radius:12px;padding:18px;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.6;overflow-x:auto;white-space:pre;margin:0;max-height:420px;overflow-y:auto}.pj-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.pj-btn{background:#4d7c0f;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer;min-height:48px;font-family:'Fira Code',monospace}.pj-btn:hover{background:#a33609}.pj-btn2{background:#fff;color:#4d7c0f;border:1.5px solid #4d7c0f;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer;min-height:48px}.pj-hint{font-size:.8rem;color:#7C5B45;margin-top:10px;line-height:1.6}@media(max-width:760px){.pj-bento{grid-template-columns:1fr}.pj-card.wide{grid-column:span 1}.pj-row{grid-template-columns:1fr}.pj-card{padding:18px 14px}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="PkgJson home">
+      <span class="fx-logo-tile" aria-hidden="true">📦</span>
+      <span class="fx-brand">PkgJson</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-play-cards" aria-label="PkgJson tool">
+<div class='pj-wrap'>
+  <div class='pj-head'><div class='pj-logo'>📦</div><h1 class='pj-h1'>package.json Generator</h1><p class='pj-tag'>A valid manifest for every new project, in one minute.</p></div>
+  <div class='pj-bento'>
+    <div class='pj-card'>
+      <h2 class='pj-h2'>Package info</h2>
+      <div class='pj-row'><div class='pj-field'>Name<input id='pj-name' value='my-app' spellcheck='false'></div><div class='pj-field'>Version<input id='pj-ver' value='1.0.0' spellcheck='false'></div></div>
+      <div class='pj-field'>Description<input id='pj-desc' value='' placeholder='A short description' spellcheck='false'></div>
+      <div class='pj-field'>License<input id='pj-lic' value='MIT' spellcheck='false'></div>
+      <label class='pj-field' style='flex-direction:row;align-items:center;gap:10px;display:flex;cursor:pointer;min-height:44px'><input type='checkbox' id='pj-priv' style='width:20px;height:20px;accent-color:#4d7c0f'> Private (block npm publish)</label>
+    </div>
+    <div class='pj-card'>
+      <h2 class='pj-h2'>Scripts</h2>
+      <div class='pj-list' id='pj-scripts'></div>
+      <button class='pj-add' id='pj-addscript' type='button'>+ Add script</button>
+    </div>
+    <div class='pj-card'>
+      <h2 class='pj-h2'>Dependencies</h2>
+      <div class='pj-list' id='pj-deps'></div>
+      <button class='pj-add' id='pj-adddep' type='button'>+ Add dependency</button>
+      <p class='pj-hint'>Use ^ for compatible updates (default), ~ for patch-only, or an exact version to pin.</p>
+    </div>
+    <div class='pj-card'>
+      <h2 class='pj-h2'>Live preview</h2>
+      <pre class='pj-pre' id='pj-pre'></pre>
+      <div class='pj-actions'><button class='pj-btn' id='pj-copy' type='button'>Copy JSON</button><button class='pj-btn2' id='pj-dl' type='button'>Download package.json</button></div>
+    </div>
+  </div>
+</div>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>What package.json Actually Does</h2>
+<p>Every Node.js project has a package.json at its root, and it is far more than metadata. It is the project's identity card (name, version, description), its instruction manual (scripts), and its bill of materials (dependencies) — the three things npm, yarn, pnpm and every CI system read before doing anything. A malformed package.json breaks installs, publishes and deploys, which is why generating it correctly matters more than it looks.</p>
+<p>The file must be valid JSON — no comments, no trailing commas — and certain fields have strict rules. The name must be lowercase, URL-safe, and under 214 characters; scoped names like @myorg/mypackage are allowed. The version must be valid semver (major.minor.patch). Get these right and the entire npm ecosystem just works; get them wrong and you will debug cryptic errors at the worst possible moment.</p>
+<h2>Scripts: Your Project's Command Palette</h2>
+<p>The scripts field maps short commands to shell invocations, turning npm run test into a full test pipeline. A healthy project usually has a small, conventional set: start launches the app, dev starts it with reloading, build compiles or bundles, test runs the suite, and lint checks style. Newcomers to a codebase read scripts first — they are the fastest way to learn how a project is built, tested and shipped.</p>
+<h3>Scripts worth standardising</h3>
+<ul>
+<li><strong>start:</strong> node index.js — what production runs.</li>
+<li><strong>dev:</strong> nodemon index.js or vite — the local development loop.</li>
+<li><strong>build:</strong> tsc, vite build, or esbuild — produces deployable output.</li>
+<li><strong>test:</strong> jest, vitest, or mocha — the whole suite in one command.</li>
+<li><strong>lint / format:</strong> eslint . and prettier --write . — keep the codebase clean.</li>
+<li><strong>prepare:</strong> runs automatically on install — ideal for building before publish.</li>
+</ul>
+<h2>Dependencies vs DevDependencies</h2>
+<p>Dependencies are what your code needs at runtime — express, react, lodash. DevDependencies are what you need to build and test it — typescript, jest, eslint. The distinction matters at deploy time: production installs use npm install --production (or --omit=dev), which skips devDependencies, so anything your running app imports must be a real dependency. A surprisingly common production crash is importing a package that was accidentally saved as a devDependency.</p>
+<p>The version specifiers next to each dependency are a contract about updates. ^4.18.0 (caret) allows minor and patch updates — the default and usually right. ~4.18.0 (tilde) allows only patch updates — safer for finicky libraries. 4.18.0 pinned exactly — reproducible but frozen. Understanding these three symbols prevents the two classic failures: mysterious breakage after a fresh install (too loose) and missing security patches (too tight).</p>
+<h3>The lockfile completes the picture</h3>
+<p>package.json declares intentions; package-lock.json records the exact resolved tree. Always commit the lockfile for applications — it is what makes npm ci reproducible across machines and CI. Libraries traditionally omit it, since consumers resolve their own trees. Either way, the version ranges in package.json are the policy, and the lockfile is the snapshot.</p>
+<h2>Fields Beyond the Basics</h2>
+<p>As projects grow, a few more fields earn their place. type: module switches the project to ES modules (import syntax) instead of CommonJS. main (or exports) declares the entry point consumers import. engines documents the Node version required — engines: {node: >=18} stops teammates from running your code on ancient runtimes. files whitelists what gets published to npm, keeping test fixtures and config out of the tarball. And bin turns your package into a CLI command when installed globally.</p>
+<h3>Private vs publishable</h3>
+<p>Set private: true for anything that must never hit the npm registry — it makes npm publish refuse outright, a one-line insurance policy against the most embarrassing mistake in open source. Public packages additionally want repository, bugs, homepage, license and keywords fields so the registry page looks professional and the package is discoverable.</p>
+<h2>Common package.json Mistakes</h2>
+<ul>
+<li><strong>Trailing commas or comments:</strong> invalid JSON — the single most common syntax error.</li>
+<li><strong>Uppercase or spaced names:</strong> npm rejects them at publish time.</li>
+<li><strong>Runtime imports in devDependencies:</strong> crashes production installs that omit dev deps.</li>
+<li><strong>Missing start script:</strong> platforms like Heroku, Railway and Render run npm start by default.</li>
+<li><strong>Wildcard versions (*):</strong> installs become non-reproducible and can break overnight.</li>
+<li><strong>Editing versions by hand in node_modules:</strong> changes vanish on the next install — fix the manifest instead.</li>
+</ul>
+<h2>Versioning Sanely with Semver</h2>
+<p>Semantic versioning is a promise: patch bumps fix bugs, minor bumps add features without breaking, major bumps may break. Consumers rely on this promise when they write ^1.2.3. Breaking it — shipping a breaking change in a minor release — is how libraries earn distrust. When in doubt about whether a change breaks, it breaks: bump the major.</p>
+<h2>How This Generator Helps</h2>
+<p>PkgJson gives you a bento of focused cards: package identity, an add/remove scripts editor, a dependency adder that attaches versions, and a live JSON preview that updates as you type. Copy it or download it — what you see is byte-for-byte valid package.json, ready to drop into a new project.</p>
+<h2>Publishing to npm</h2>
+<p>Turning a project into a published package takes five fields and one command. Set name (scoped like @myorg/mypackage if it is yours), version, description, license and repository — then npm publish. Before that, add a files whitelist so only dist ships (not src or tests), and run npm pack to inspect the tarball that will upload. The prepublishOnly script is the ideal hook for building: it runs on publish but not on install, so putting your build there guarantees you never ship unbuilt code. For scoped private packages, configure your registry and access via .npmrc — and remember that private: true in this generator blocks accidental public publishes entirely.</p>
+<h2>Monorepos and Workspaces</h2>
+<p>When one repository holds many packages, npm, pnpm and yarn workspaces let a root package.json declare workspaces and install all dependencies in one pass with hoisting. Each workspace keeps its own package.json — generated the same way as any other — while the root orchestrates scripts across them. Versioning strategies split here: fixed versioning bumps everything together, independent versioning lets each package follow semver on its own. Changesets or similar tooling automate the changelog-and-bump workflow. If your project is growing a second package, reach for workspaces before you reach for a second repository.</p>
+<h2>Keeping Dependencies Healthy</h2>
+<p>A package.json is a living document. Run npm outdated monthly to see what has drifted, and npm audit to surface known vulnerabilities — then update deliberately, not blindly. Pin exact versions for zero-surprise deploys of critical services, or use caret ranges plus a lockfile for the standard balance. Prune unused dependencies; every unused package is attack surface and install time. And document why each major dependency exists — future you, onboarding onto this project in a year, will be grateful. The dependency card in this generator is the right place to start that habit: add each package consciously, with its version policy stated.</p>
+<h3>Scripts as documentation</h3>
+<p>Treat scripts as the project's README for machines: the scripts list should tell a newcomer everything. Standard names (start, dev, build, test, lint) mean any developer can be productive in minutes. Complex pipelines belong in scripts, not in wiki pages — a deploy script that runs build, test and migrate in order beats a five-step manual every time. Keep scripts small and composed: test:unit and test:e2e called from test is clearer than one giant command. Your future CI config will thank you.</p>
+<h2>Security Hygiene for Dependencies</h2>
+<p>Every dependency is code you did not write running with your privileges. Keep the list short, prefer well-maintained packages with many dependents, and pin versions for anything security-sensitive. Run the audit command in continuous integration and fail builds on high-severity issues. Review lockfile diffs in pull requests the way you review code — a compromised transitive dependency has been the entry point for real supply-chain attacks. The generator's dependency card is where this discipline starts: each addition should be a conscious, reviewed decision rather than a reflex.</p>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>What is package.json for?</summary><p>package.json is the manifest of a Node.js project: it declares the name, version, scripts (npm commands) and dependencies. npm and every CI system read it before installing, building or publishing.</p></details>
+<details><summary>What is the difference between dependencies and devDependencies?</summary><p>dependencies are needed at runtime by your running code; devDependencies are needed only to build or test (TypeScript, Jest, ESLint). Production installs skip devDependencies, so runtime imports must be real dependencies.</p></details>
+<details><summary>What do ^ and ~ mean in versions?</summary><p>^4.18.0 (caret) allows minor and patch updates; ~4.18.0 (tilde) allows only patch updates; 4.18.0 exact pins the version. Caret is the npm default and usually the right choice.</p></details>
+<details><summary>Can I put comments in package.json?</summary><p>No — package.json must be strict JSON: no comments and no trailing commas. Use a separate README or config comments instead.</p></details>
+<details><summary>What does the private field do?</summary><p>private: true makes npm publish refuse, protecting internal projects from accidental publication. Public packages should also set license, repository and keywords.</p></details>
+<details><summary>Should I commit package-lock.json?</summary><p>A lockfile (package-lock.json) records the exact installed versions so npm ci reproduces the same tree everywhere. Always commit it for applications.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">PkgJson</div>
+    <p>PkgJson builds a valid package.json with scripts and dependencies, live preview included.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function pkgJson(input){input=input||{};var out={name:input.name||'my-package',version:input.version||'1.0.0'};if(input.description)out.description=input.description;if(input.license)out.license=input.license;if(input.private)out.private=true;out.scripts=input.scripts||{};out.dependencies=input.deps||{};return out;}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){function row(listId,k,v,kph,vph){var d=document.createElement('div');d.className='pj-item';d.innerHTML="<input placeholder='"+kph+"' value='"+k.replace(/'/g,'')+"'><input placeholder='"+vph+"' value='"+v.replace(/'/g,'')+"'><button type='button' class='pj-rm' title='Remove'>×</button>";d.querySelector('.pj-rm').addEventListener('click',function(){d.remove();render();});var ins=d.querySelectorAll('input');ins[0].addEventListener('input',render);ins[1].addEventListener('input',render);document.getElementById(listId).appendChild(d);}function readPairs(listId){var o={};document.querySelectorAll('#'+listId+' .pj-item').forEach(function(d){var ins=d.querySelectorAll('input');var k=ins[0].value.trim(),v=ins[1].value.trim();if(k)o[k]=v;});return o;}function current(){return pkgJson({name:document.getElementById('pj-name').value.trim(),version:document.getElementById('pj-ver').value.trim(),description:document.getElementById('pj-desc').value.trim(),license:document.getElementById('pj-lic').value.trim(),private:document.getElementById('pj-priv').checked,scripts:readPairs('pj-scripts'),deps:readPairs('pj-deps')});}function render(){document.getElementById('pj-pre').textContent=JSON.stringify(current(),null,2);}document.getElementById('pj-addscript').addEventListener('click',function(){row('pj-scripts','','','test','jest');render();});document.getElementById('pj-adddep').addEventListener('click',function(){row('pj-deps','','','express','^4.18.0');render();});['pj-name','pj-ver','pj-desc','pj-lic'].forEach(function(id){document.getElementById(id).addEventListener('input',render);});document.getElementById('pj-priv').addEventListener('change',render);row('pj-scripts','start','node index.js','name','command');row('pj-scripts','test','jest','name','command');row('pj-deps','express','^4.18.0','package','version');document.getElementById('pj-copy').addEventListener('click',function(){if(navigator.clipboard)navigator.clipboard.writeText(JSON.stringify(current(),null,2));var b=document.getElementById('pj-copy');b.textContent='Copied!';setTimeout(function(){b.textContent='Copy JSON';},1500);});document.getElementById('pj-dl').addEventListener('click',function(){var blob=new Blob([JSON.stringify(current(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='package.json';document.body.appendChild(a);a.click();a.remove();});render();});}
+</script>
+</body>
+</html>
