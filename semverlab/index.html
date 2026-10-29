@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SemVerCheck — SemVer Checker: Validate, Compare &amp; Bump Versions</title>
+<meta name="description" content="Free SemVer checker: validate semantic versions, compare precedence, and bump major, minor, or patch correctly.">
+<link rel="canonical" href="https://dev.fixoraa.tech/semverlab/">
+<link rel="preconnect" href="https://www.highrevenueformat.com">
+<link rel="preconnect" href="https://peacefulbicycle.com">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"SemVerCheck","url":"https://dev.fixoraa.tech/semverlab/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","description":"Free SemVer checker: validate semantic versions, compare precedence, and bump major, minor, or patch correctly.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Semantic Versioning?","acceptedAnswer":{"@type":"Answer","text":"A versioning contract: MAJOR.MINOR.PATCH. Major rises for incompatible changes, minor for backwards-compatible additions, patch for backwards-compatible fixes."}},
+{"@type":"Question","name":"Is 1.0.0-alpha less than 1.0.0?","acceptedAnswer":{"@type":"Answer","text":"Yes. A prerelease version always sorts before the release it precedes, so 1.0.0-alpha < 1.0.0."}},
+{"@type":"Question","name":"Does build metadata affect precedence?","acceptedAnswer":{"@type":"Answer","text":"No. 1.0.0+build.1 and 1.0.0+build.2 are equal in precedence; build metadata is ignored when comparing."}},
+{"@type":"Question","name":"Can version numbers have leading zeroes?","acceptedAnswer":{"@type":"Answer","text":"No. SemVer forbids leading zeroes in numeric parts: 01.2.3 is invalid, while 1.2.3 is valid."}},
+{"@type":"Question","name":"What happens at major version zero?","acceptedAnswer":{"@type":"Answer","text":"0.x.y is for initial development, where anything may change. The public API is considered stable only from 1.0.0 onwards."}},
+{"@type":"Question","name":"How do I bump correctly?","acceptedAnswer":{"@type":"Answer","text":"Major: reset minor and patch to zero (1.2.3 to 2.0.0). Minor: reset patch to zero (1.2.3 to 1.3.0). Patch: only the patch rises (1.2.3 to 1.2.4)."}}]}</script>
+<style>:root{--bg:#fdfcf9;--card:#ffffff;--headbg:#fdfcf8;--accent:#334155;--muted:#475569;--line:#e2ddd0;--focus:#e2e8f0;--result-bg:#f8fafc;--badge-bg:#f1f5f9;--badge-fg:#1e293b;--bodyfont:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--headfont:Georgia,'Times New Roman',serif;--markr:50%;--band:#ffffff;--bench:#ffffff;--note:#ffffff;--ink:#1e293b;}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+.text-center{text-align:center}.block{display:block}.flex{display:flex}
+.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.shrink-0{flex-shrink:0}
+.scale-\[0\.44\]{transform:scale(0.44)}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:0.18em}
+.uppercase{text-transform:uppercase}.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:0.375rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--bodyfont);line-height:1.6}
+a{color:var(--accent)}button{cursor:pointer;font-family:inherit}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+header.site{border-bottom:1px solid var(--line);background:var(--headbg)}
+.head-in{display:flex;align-items:center;gap:14px;padding:14px 0;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.mark{width:44px;height:44px;border-radius:var(--markr);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;background:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.brand{font-family:var(--headfont);font-size:24px;font-weight:800;letter-spacing:-.02em}
+.nav{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-block;text-decoration:none;font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;border:1.5px solid var(--accent);color:var(--accent);background:#fff}
+.btn.solid{background:var(--accent);color:#fff}
+.badge{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;padding:5px 11px;border-radius:999px;background:var(--badge-bg);color:var(--badge-fg)}
+h1{font-family:var(--headfont);line-height:1.15}
+.toolcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 8px 30px rgba(0,0,0,.05)}
+label{font-weight:700;font-size:14px;display:block;margin:14px 0 5px}
+input,select,textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px;font-size:16px;background:#fff;color:#1e293b;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--focus);border-color:var(--accent)}
+.primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:13px 22px;font-size:16px;font-weight:800;margin-top:18px}
+.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--accent);border-radius:12px;padding:10px 16px;font-weight:700}
+.result{margin-top:20px;padding:18px 20px;border-radius:14px;background:var(--result-bg);border:1px solid var(--line)}
+.result b{font-size:20px}.big{font-size:30px;font-weight:800;font-family:var(--headfont)}
+.muted{color:var(--muted);font-size:14px}.small{font-size:13px}
+.row{display:grid;gap:16px}.row2{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr 1fr}
+.hist{margin-top:14px;font-size:14px}.hist div{padding:6px 0;border-bottom:1px dashed var(--line)}
+.presetbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:var(--ink)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+article{max-width:760px;margin:0 auto;padding:10px 0 30px}article h2{font-family:var(--headfont);margin-top:34px}
+article h3{margin-top:24px}section.faqs{max-width:760px;margin:0 auto;padding-bottom:30px}
+.faq{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;background:var(--card)}
+.faq b{display:block;margin-bottom:4px}
+footer.site{border-top:1px solid var(--line);background:var(--headbg);padding:26px 0 34px;margin-top:10px}
+.foot-in{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+@media(max-width:640px){.row2,.row3{grid-template-columns:1fr}.toolcard{padding:18px 15px}.brand{font-size:20px}.big{font-size:25px}.head-in{padding:12px 0}}
+</style></head>
+<body><header class="site"><div class="wrap head-in">
+<a class="logo" href="https://fixoraa.tech"><span class="mark" >V</span><span class="brand">SemVerCheck</span></a>
+<nav class="nav"><span class="badge">Unlimited Free Usage</span>
+<a class="btn" href="https://fixoraa.tech">Home</a><a class="btn solid" href="https://fixoraa.tech">More Tools</a></nav></div></header><div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div><main><section class="wrap" style="padding:44px 20px 8px;max-width:660px"><h1 style="font-size:42px;margin:0 0 10px">Validate, compare, and bump semantic versions — with prerelease and build-metadata rules handled correctly.</h1><p style="font-size:18px" class="muted">MAJOR.MINOR.PATCH. Prereleases sort before their release; build metadata is ignored in precedence.</p></section>
+<section class="wrap" style="padding:16px 20px 34px;max-width:660px"><div class="toolcard" style="border:0;box-shadow:none;padding:0"><section id="tool"><h2 style="margin-top:0">Semantic version checker</h2>
+<p class="muted">Validate, compare, and bump version numbers the SemVer way.</p>
+<label for="svV">Version to check</label><input id="svV" type="text" value="1.2.3" placeholder="e.g. 2.0.0-beta.1+build.5">
+<button class="primary" onclick="svCheck()">Check this version</button>
+<div class="result" id="svOut" style="display:none"></div>
+<div style="margin-top:20px"><b>Compare two versions</b><div class="row row2"><div><label for="svA">Version A</label><input id="svA" type="text" value="2.0.0"></div><div><label for="svB">Version B</label><input id="svB" type="text" value="1.9.9"></div></div>
+<button class="ghost" onclick="svCmp()">Compare</button><div class="result" id="svCmpOut" style="display:none"></div></div>
+<div style="margin-top:20px"><b>Bump a version</b><label for="svBase">Base version</label><input id="svBase" type="text" value="1.2.3">
+<div class="presetbar"><button class="chip" onclick="svBump('major')">Major &rarr; 2.0.0</button><button class="chip" onclick="svBump('minor')">Minor &rarr; 1.3.0</button><button class="chip" onclick="svBump('patch')">Patch &rarr; 1.2.4</button></div>
+<div class="result" id="svBumpOut" style="display:none"></div></div>
+<script>
+function svParse(v){var m=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:[0-9A-Za-z-]+\.)*[0-9A-Za-z-]+))?(?:\+([0-9A-Za-z-\.]+))?$/.exec(v.trim());if(!m)return null;return{major:+m[1],minor:+m[2],patch:+m[3],pre:m[4]||null,build:m[5]||null};}
+function svCmpFn(a,b){if(a.major!==b.major)return a.major-b.major;if(a.minor!==b.minor)return a.minor-b.minor;if(a.patch!==b.patch)return a.patch-b.patch;if(a.pre===b.pre)return 0;if(!a.pre)return 1;if(!b.pre)return -1;var pa=a.pre.split('.'),pb=b.pre.split('.');for(var i=0;i<Math.max(pa.length,pb.length);i++){if(pa[i]===undefined)return -1;if(pb[i]===undefined)return 1;var na=/^\d+$/.test(pa[i]),nb=/^\d+$/.test(pb[i]);if(na&&nb){if(+pa[i]!==+pb[i])return +pa[i]-+pb[i];}else if(na)return -1;else if(nb)return 1;else if(pa[i]!==pb[i])return pa[i]<pb[i]?-1:1;}return 0;}
+function svCheck(){var v=document.getElementById('svV').value,p=svParse(v),out=document.getElementById('svOut');out.style.display='block';
+if(!p){out.innerHTML='<b>Not valid SemVer</b><p class="small">A valid version looks like MAJOR.MINOR.PATCH, e.g. 1.2.3, optionally with -prerelease and +build.</p>';return;}
+out.innerHTML='<div class="small">RESULT</div><div class="big">Valid SemVer</div><table><tr><th>Major</th><td>'+p.major+'</td></tr><tr><th>Minor</th><td>'+p.minor+'</td></tr><tr><th>Patch</th><td>'+p.patch+'</td></tr><tr><th>Prerelease</th><td>'+(p.pre||'none (stable release)')+'</td></tr><tr><th>Build metadata</th><td>'+(p.build||'none')+'</td></tr></table>';}
+function svCmp(){var a=svParse(document.getElementById('svA').value),b=svParse(document.getElementById('svB').value),out=document.getElementById('svCmpOut');out.style.display='block';
+if(!a||!b){out.innerHTML='<b>Check your input</b><p class="small">Both versions must be valid SemVer.</p>';return;}
+var c=svCmpFn(a,b);out.innerHTML='<div class="small">RESULT</div><div class="big">'+(c>0?'A is newer':c<0?'B is newer':'Both versions are equal')+'</div><p class="small">Build metadata is ignored when comparing precedence.</p>';}
+function svBump(kind){var p=svParse(document.getElementById('svBase').value),out=document.getElementById('svBumpOut');out.style.display='block';
+if(!p){out.innerHTML='<b>Check your input</b><p class="small">Enter a valid base version first.</p>';return;}
+var r=kind==='major'?(p.major+1)+'.0.0':kind==='minor'?p.major+'.'+(p.minor+1)+'.0':p.major+'.'+p.minor+'.'+(p.patch+1);
+out.innerHTML='<div class="small">BUMPED ('+kind+')</div><div class="big">'+r+'</div>';}
+</script></section></div></section></main><div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div><article><h2>About this semver checker</h2><p>Version numbers look trivial until they go wrong, and then they go wrong in ways that break software for thousands of people. Semantic Versioning, usually shortened to SemVer, is the agreement that stops that happening: a version number is not a marketing label but a contract, with three numbers that each promise something specific about compatibility. A semantic version checker takes a version string and tells you whether it follows the rules, what each part means, how two versions compare, and what the next version should be after a given kind of change. For anyone who publishes a library, maintains an API, or merely tries to understand why an update broke their project, that contract is essential knowledge.</p><p>The SemVer format is MAJOR.MINOR.PATCH, three non-negative integers separated by dots, with no leading zeroes, optionally followed by a prerelease tag after a hyphen and build metadata after a plus sign. The rules for incrementing are the heart of the system: increase the major number when you make an incompatible change, increase the minor number when you add functionality in a backwards-compatible way, and increase the patch number for backwards-compatible bug fixes. A prerelease version, such as 2.0.0-beta.1, signals that the release is not yet stable and may change, and it always sorts before the release it precedes, so 1.0.0-alpha is less than 1.0.0. Build metadata, such as +build.5, is ignored when comparing precedence, which surprises many people the first time they meet it.</p><p>Using the tool covers the three jobs version numbers actually do. The checker parses a version and reports whether it is valid SemVer, breaking it into major, minor, patch, prerelease, and build parts, so an invalid string fails with an explanation rather than silently passing. The comparison panel takes two versions and tells you which is newer, applying the full precedence rules, including the prerelease ordering that simple string comparison gets wrong. The bump panel takes a base version and produces the next major, minor, or patch version, resetting the lower numbers correctly, which is the step most often fumbled by hand. Together they turn version arithmetic from a source of arguments into a mechanical check.</p><p>The comparison rules deserve a worked example, because they contain the subtleties. Comparing 2.0.0 with 1.9.9, the major numbers decide immediately: 2 beats 1, so 2.0.0 is newer regardless of the minor and patch numbers, which is why a major bump is such a strong signal. Comparing 1.0.0-alpha with 1.0.0, the prerelease rule decides: a version with a prerelease tag is always less than the same version without one, so the alpha sorts first. Comparing 1.0.0-alpha.1 with 1.0.0-alpha.beta, numeric identifiers sort before alphanumeric ones, and numeric identifiers compare numerically, so alpha.1 comes first. And comparing 1.0.0+build.1 with 1.0.0+build.2, the answer is that they are equal in precedence, because build metadata is explicitly ignored, a rule that exists so build numbers can vary freely without implying a new release.</p><p>Bumping correctly is a discipline as much as an arithmetic operation, and the common mistakes are worth naming. Bumping the minor number without resetting the patch to zero produces versions like 1.3.4 after 1.2.3, which implies a history that never happened. Bumping the major number for a new feature overstates the break and forces every consumer to review a change that would not have hurt them. Failing to bump the major number for a breaking change is the worst error of all, because consumers who trusted the contract will upgrade automatically and break. The tool's bump buttons exist to make the correct operation the easy one: choose the kind of change, and the reset happens automatically, exactly as the specification requires.</p><p>The ecosystem around SemVer is what gives it its power. Package managers use version ranges, such as caret and tilde ranges, to decide which updates are safe to install automatically, and those ranges only make sense if publishers honour the contract. Continuous integration pipelines check that a release's version has actually increased, changelogs are organised by version with breaking changes called out at the top, and dependency dashboards flag major bumps for human review precisely because they may break things. When a project follows SemVer honestly, its consumers can automate with confidence; when it does not, every update becomes a manual review, and the cost is paid across the whole ecosystem. The checker on this page is a small part of that discipline, but it is the part that catches errors before they are published.</p><p>A few practical habits complete the picture. Start new projects at 0.1.0 or 1.0.0 deliberately: in SemVer, major version zero is explicitly for initial development, where anything may change, and the 1.0.0 release is a public promise that the API is stable. Tag releases in version control with the exact version string, and make the changelog entry for that version part of the release process rather than an afterthought. Never re-release the same version number with different contents, because consumers cache by version and will receive inconsistent artifacts. And when in doubt about whether a change breaks compatibility, bump the major number: it is always safer to overstate a break than to hide one. Version numbers are promises, and this tool exists to help you keep them.</p><p>A second worked example, comparing prerelease chains, shows the full subtlety of the precedence rules. Consider 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-alpha.beta, 1.0.0-beta, 1.0.0-beta.2, 1.0.0-beta.11, and 1.0.0-rc.1, which is the exact example sequence from the SemVer specification, in ascending order. Notice that beta.2 comes before beta.11, because numeric identifiers compare numerically rather than as text, so 2 is less than 11 even though the string 11 sorts before 2 alphabetically. Notice too that alpha.1 comes before alpha.beta, because numeric identifiers always sort before alphanumeric ones. A naive string comparison gets both of these wrong, which is why a dedicated checker matters even for something that looks as simple as ordering version strings.</p><p>The specification itself is a model of careful technical writing. Semantic Versioning 2.0.0 was authored by Tom Preston-Werner, the co-founder of GitHub, and it has been adopted by the package managers of nearly every major language, from npm to Cargo to Composer, because it solves a coordination problem that no single project could solve alone. Its success also illustrates a limit: SemVer is a social contract, not a law of nature, and it only works when publishers are honest about breaking changes. Tools like this checker can verify the form of a version, but they cannot verify the honesty of the change behind it, which is why changelogs, tests, and the judgement of maintainers remain irreplaceable.</p><p>A final practical note: when you publish a release, write the changelog entry in the same commit as the version bump, and make the bump itself a deliberate decision recorded in the release notes. Future maintainers will thank you, because the version number alone cannot explain why it changed. The same discipline applies to dependencies: pin the versions you ship with, review major bumps by hand, and let minor and patch updates flow automatically, since that division of labour is exactly what the contract was designed to enable. Treat every major release as a deliberate promise to your users, and document the breaking changes prominently so nobody upgrades by surprise.</p></article><section class="faqs"><h2>Frequently asked questions</h2><div class="faq"><b>What is Semantic Versioning?</b><p style="margin:0">A versioning contract: MAJOR.MINOR.PATCH. Major rises for incompatible changes, minor for backwards-compatible additions, patch for backwards-compatible fixes.</p></div><div class="faq"><b>Is 1.0.0-alpha less than 1.0.0?</b><p style="margin:0">Yes. A prerelease version always sorts before the release it precedes, so 1.0.0-alpha &lt; 1.0.0.</p></div><div class="faq"><b>Does build metadata affect precedence?</b><p style="margin:0">No. 1.0.0+build.1 and 1.0.0+build.2 are equal in precedence; build metadata is ignored when comparing.</p></div><div class="faq"><b>Can version numbers have leading zeroes?</b><p style="margin:0">No. SemVer forbids leading zeroes in numeric parts: 01.2.3 is invalid, while 1.2.3 is valid.</p></div><div class="faq"><b>What happens at major version zero?</b><p style="margin:0">0.x.y is for initial development, where anything may change. The public API is considered stable only from 1.0.0 onwards.</p></div><div class="faq"><b>How do I bump correctly?</b><p style="margin:0">Major: reset minor and patch to zero (1.2.3 to 2.0.0). Minor: reset patch to zero (1.2.3 to 1.3.0). Patch: only the patch rises (1.2.3 to 1.2.4).</p></div></section><footer class="site"><div class="wrap foot-in"><div style="max-width:520px">
+<div class="brand" style="font-size:19px">SemVerCheck</div><p class="muted" style="margin:6px 0">A free semver checker for everyone, no signup needed.</p></div>
+<div><a class="btn" href="https://fixoraa.tech">Home</a> <a class="btn" href="https://fixoraa.tech">More Tools</a>
+<p class="small" style="margin-top:12px">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free tools, no signup, no paywall.</p></div></div></footer></body></html>
