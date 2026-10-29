@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeyForge — API Key Generator: Secure Random Keys in Your Browser</title>
+<meta name="description" content="Free API key generator: secure random keys with prefix, format, and length options, generated in your browser, never sent anywhere.">
+<link rel="canonical" href="https://dev.fixoraa.tech/apikeygen/">
+<link rel="preconnect" href="https://www.highrevenueformat.com">
+<link rel="preconnect" href="https://peacefulbicycle.com">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"KeyForge","url":"https://dev.fixoraa.tech/apikeygen/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","description":"Free API key generator: secure random keys with prefix, format, and length options, generated in your browser, never sent anywhere.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are these API keys really random?","acceptedAnswer":{"@type":"Answer","text":"Yes. They are generated with the browser's cryptographic random number generator (crypto.getRandomValues), not a predictable random function, and nothing is sent to any server."}},
+{"@type":"Question","name":"How long should an API key be?","acceptedAnswer":{"@type":"Answer","text":"32 characters from a mixed alphabet is a strong default (about 190 bits of entropy). Use 64 characters for high-value production credentials."}},
+{"@type":"Question","name":"What is a key prefix for?","acceptedAnswer":{"@type":"Answer","text":"Prefixes like sk-live- or sk-test- make keys recognisable in logs and configs and prevent accidentally using a test key in production."}},
+{"@type":"Question","name":"What does URL-safe base64 mean?","acceptedAnswer":{"@type":"Answer","text":"It uses letters, digits, hyphen, and underscore, so the key survives in URLs and headers without escaping, unlike keys containing plus, slash, or equals."}},
+{"@type":"Question","name":"Should I store API keys in source code?","acceptedAnswer":{"@type":"Answer","text":"Never. Use environment variables or a secrets manager, and assume any key committed to a public repository is compromised and must be rotated."}},
+{"@type":"Question","name":"Can I recover a key if I lose it?","acceptedAnswer":{"@type":"Answer","text":"No. This page does not store keys, and most platforms show a key only once. Copy keys into your secrets store immediately after generating them."}}]}</script>
+<style>:root{--bg:#eef6f4;--card:#ffffff;--headbg:#f2f9f7;--accent:#0f766e;--muted:#475569;--line:#c8e2db;--focus:#99f6e4;--result-bg:#f0fdfa;--badge-bg:#ccfbf1;--badge-fg:#134e4a;--bodyfont:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;--headfont:Georgia,'Times New Roman',serif;--markr:12px;--band:#ffffff;--bench:#ffffff;--note:#ffffff;--ink:#1e293b;}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+.text-center{text-align:center}.block{display:block}.flex{display:flex}
+.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.shrink-0{flex-shrink:0}
+.scale-\[0\.44\]{transform:scale(0.44)}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:0.18em}
+.uppercase{text-transform:uppercase}.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:0.375rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--bodyfont);line-height:1.6}
+a{color:var(--accent)}button{cursor:pointer;font-family:inherit}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+header.site{border-bottom:1px solid var(--line);background:var(--headbg)}
+.head-in{display:flex;align-items:center;gap:14px;padding:14px 0;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.mark{width:44px;height:44px;border-radius:var(--markr);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;background:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.brand{font-family:var(--headfont);font-size:24px;font-weight:800;letter-spacing:-.02em}
+.nav{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-block;text-decoration:none;font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;border:1.5px solid var(--accent);color:var(--accent);background:#fff}
+.btn.solid{background:var(--accent);color:#fff}
+.badge{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;padding:5px 11px;border-radius:999px;background:var(--badge-bg);color:var(--badge-fg)}
+h1{font-family:var(--headfont);line-height:1.15}
+.toolcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 8px 30px rgba(0,0,0,.05)}
+label{font-weight:700;font-size:14px;display:block;margin:14px 0 5px}
+input,select,textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px;font-size:16px;background:#fff;color:#1e293b;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--focus);border-color:var(--accent)}
+.primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:13px 22px;font-size:16px;font-weight:800;margin-top:18px}
+.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--accent);border-radius:12px;padding:10px 16px;font-weight:700}
+.result{margin-top:20px;padding:18px 20px;border-radius:14px;background:var(--result-bg);border:1px solid var(--line)}
+.result b{font-size:20px}.big{font-size:30px;font-weight:800;font-family:var(--headfont)}
+.muted{color:var(--muted);font-size:14px}.small{font-size:13px}
+.row{display:grid;gap:16px}.row2{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr 1fr}
+.hist{margin-top:14px;font-size:14px}.hist div{padding:6px 0;border-bottom:1px dashed var(--line)}
+.presetbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:var(--ink)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+article{max-width:760px;margin:0 auto;padding:10px 0 30px}article h2{font-family:var(--headfont);margin-top:34px}
+article h3{margin-top:24px}section.faqs{max-width:760px;margin:0 auto;padding-bottom:30px}
+.faq{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;background:var(--card)}
+.faq b{display:block;margin-bottom:4px}
+footer.site{border-top:1px solid var(--line);background:var(--headbg);padding:26px 0 34px;margin-top:10px}
+.foot-in{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+@media(max-width:640px){.row2,.row3{grid-template-columns:1fr}.toolcard{padding:18px 15px}.brand{font-size:20px}.big{font-size:25px}.head-in{padding:12px 0}}
+</style></head>
+<body><header class="site"><div class="wrap head-in">
+<a class="logo" href="https://fixoraa.tech"><span class="mark" >K</span><span class="brand">KeyForge</span></a>
+<nav class="nav"><span class="badge">Unlimited Free Usage</span>
+<a class="btn" href="https://fixoraa.tech">Home</a><a class="btn solid" href="https://fixoraa.tech">More Tools</a></nav></div></header><div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div><main><section class="wrap" style="padding:30px 20px 6px"><h1 style="font-size:34px;margin:0 0 6px">Secure random API keys with prefixes and formats — generated in your browser, never sent to a server.</h1><p class="muted">Entropy grows with length times alphabet size: a 32-character mixed key carries about 190 bits. Keys are generated with crypto.getRandomValues.</p></section>
+<section class="wrap" style="padding:14px 20px 30px"><div class="toolcard"><section id="tool"><h2 style="margin-top:0">API key generator</h2>
+<p class="muted">Secure random keys, generated entirely in your browser. Nothing leaves this page.</p>
+<div class="row row2"><div><label for="akLen">Key length (characters)</label><input id="akLen" type="number" min="8" max="128" value="32"></div>
+<div><label for="akCount">How many keys</label><input id="akCount" type="number" min="1" max="20" value="5"></div></div>
+<label for="akPrefix">Prefix (optional, e.g. sk-live-)</label><input id="akPrefix" type="text" value="sk-" placeholder="sk-">
+<div style="margin-top:12px"><label><input type="checkbox" id="akSym" checked style="width:auto"> Include symbols</label>
+<label><input type="checkbox" id="akAmb" style="width:auto"> Exclude ambiguous characters (0, O, l, 1)</label></div>
+<label for="akFmt">Format</label><select id="akFmt"><option value="mix">Mixed letters + digits (+ symbols)</option><option value="hex">Hexadecimal only</option><option value="b64">URL-safe base64 style</option></select>
+<button class="primary" onclick="akGen()">Generate keys</button>
+<div class="result" id="akOut" style="display:none"></div>
+<div style="margin-top:14px"><button class="ghost" onclick="akCopy()">Copy all keys</button></div>
+<p class="small muted">Keys are generated with your browser's cryptographic random number generator. They are never sent anywhere, and they are not stored.</p>
+<script>
+function akGen(){var len=parseInt(document.getElementById('akLen').value),count=parseInt(document.getElementById('akCount').value),pre=document.getElementById('akPrefix').value,sym=document.getElementById('akSym').checked,amb=document.getElementById('akAmb').checked,fmt=document.getElementById('akFmt').value;var out=document.getElementById('akOut');
+if(!(len>=8&&len<=128)||!(count>=1&&count<=20)){out.style.display='block';out.innerHTML='<b>Check your input</b><p class="small">Length must be 8 to 128, and count 1 to 20.</p>';return;}
+var chars;if(fmt==='hex')chars='0123456789abcdef';else if(fmt==='b64')chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';else{chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';if(sym)chars+='!@#$%^&*_-+=';}
+if(amb)chars=chars.replace(/[0Ol1]/g,'');
+var buf=new Uint8Array(4096);crypto.getRandomValues(buf);var keys=[],bi=0;
+for(var i=0;i<count;i++){var s='';while(s.length<len){if(bi>=buf.length){crypto.getRandomValues(buf);bi=0;}s+=chars[buf[bi++]%chars.length];}keys.push(pre+s);}
+out.style.display='block';out.innerHTML='<div class="small">YOUR KEYS (click one to copy it)</div>'+keys.map(function(k){return '<div style="font-family:monospace;word-break:break-all;padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.innerText)">'+k+'</div>';}).join('')+'<p class="small">Entropy per key: about '+(Math.log2(chars.length)*len).toFixed(0)+' bits. Store keys safely; they cannot be recovered from this page.</p>';
+out.dataset.keys=keys.join('\n');}
+function akCopy(){var out=document.getElementById('akOut');if(out.dataset.keys&&navigator.clipboard)navigator.clipboard.writeText(out.dataset.keys);}
+</script></section></div></section></main><div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div><article><h2>About this API key generator</h2><p>An API key is a password that software uses to talk to other software, and a good one has exactly the qualities a good human password has, except that nobody needs to remember it. An API key generator creates long, random strings that are hard to guess, hard to collide with, and easy to paste into a configuration file or a dashboard, all without sending anything to a server. The keys on this page are generated inside your own browser using its cryptographic random number generator, which means they never cross the network, are never logged, and cannot be recovered if you lose them, which is precisely the security property you want from a key generator.</p><p>The security of a key comes down to entropy, the number of bits of genuine unpredictability it contains. A 32-character key drawn from upper and lower case letters plus digits has about 190 bits of entropy, which is so far beyond brute-force guessing that the age of the universe is not enough time to try a meaningful fraction of the possibilities. Shorter keys, keys drawn from a small alphabet, or keys built from words and dates are all dramatically weaker, and the difference is not gradual: every additional character multiplies the search space by the alphabet size, so length is the single most powerful lever you have. This tool shows the estimated entropy for the keys it generates, so the trade-off between a key you can paste easily and a key that is genuinely strong is visible rather than guessed.</p><p>Using the tool is a matter of four choices. Set the length, with 32 characters a sensible default and 64 for high-value credentials. Set how many keys you need, since many setups want a separate key for development, staging, and production rather than one key shared everywhere. Add a prefix, such as sk- or test-, which makes keys recognisable in logs and configuration files and prevents accidental use of a test key in production. Then choose the alphabet: mixed letters and digits with symbols for maximum strength, hexadecimal for systems that expect hex, or URL-safe base64 style for keys that must survive being pasted into URLs and headers without encoding problems. The ambiguous-character option removes lookalikes like zero, capital O, and lowercase L, which matters when a human might ever need to read or type the key.</p><p>A generated key is only as safe as the habits around it, and the habits are worth stating plainly. Never commit a real key to a public repository, never paste one into a chat message or a screenshot, and never reuse one key across unrelated services, because a leak in one place then compromises everywhere else. Store keys in environment variables or a secrets manager, not in source code, and give each key the smallest permissions it needs, so that a leaked key can do limited damage. Rotate keys on a schedule and immediately after any suspected exposure, and revoke the old key rather than merely deleting it from your notes. If a key ever appears in a repository, assume it is compromised and rotate it, because automated scanners harvest exposed keys within minutes.</p><p>Prefixes and formats deserve a little more attention than they usually get, because they prevent an entire class of operational mistakes. A prefix like sk-live- versus sk-test- makes it obvious at a glance which environment a key belongs to, and many platforms use prefixes to route and validate keys before any database lookup. Hexadecimal keys are easy to validate and store, but they carry only four bits of entropy per character, so they need to be longer for the same strength. URL-safe base64 uses a larger alphabet and avoids characters that need escaping in URLs, which is why it is the default choice for tokens that travel in headers and query strings. The format option in this tool exists so the key you generate is not merely strong but also shaped correctly for the system that will consume it.</p><p>Developers often ask whether they should generate keys here or in their own backend, and the honest answer is both, for different purposes. A browser generator is ideal for creating keys to paste into a dashboard, for test and development credentials, and for one-off integrations, precisely because nothing leaves the page. A production system that issues keys to its own users should generate them server-side, store only a hashed copy, and show the key to the user exactly once, following the same pattern used by major platforms. In both cases the principles are identical: use a cryptographic random source, never a simple random function or a timestamp, make keys long, give them prefixes, scope their permissions, and plan for rotation. A key generated carelessly is worse than no key at all, because it creates an illusion of security while leaving the door effectively open.</p><p>One final caution rounds out the picture. A generated key has no value until it is stored safely, and the most common key disaster is not guessing but loss: a developer generates a key, closes the tab, and discovers that the platform will never show it again. Copy your keys immediately, paste them into your secrets store, and confirm they work before closing the page. Keep a note of which key belongs to which service, without storing the key itself in that note. Treat every key as a credential with an owner and an expiry plan, and the small discipline of generating, storing, and rotating keys properly will quietly protect every integration you build.</p><p>A worked example makes the entropy arithmetic tangible. Suppose you generate a 16-character key from lowercase letters and digits only, an alphabet of 36 characters. Its entropy is 16 times log base 2 of 36, which is about 82.7 bits, which sounds large but is within reach of a well-funded attacker with specialised hardware over a long campaign. Extend the same key to 32 characters and the entropy doubles to about 165 bits, and add uppercase letters and symbols to reach a 72-character alphabet, and 32 characters gives about 197 bits, which is beyond any conceivable brute-force search. The lesson is simple and cheap to apply: length first, alphabet second, and never a short key for anything that matters.</p><p>The worst key disasters in industry history were not caused by guessing at all, but by exposure. Keys committed to public code repositories have been harvested by automated scanners within minutes of publication, and several major breaches began with a credential found in a public repository, a shared document, or a screenshot. The defences are procedural rather than mathematical: secret scanning on repositories, short-lived keys that expire automatically, separate keys per environment so that revoking one does not halt everything, and a rotation plan rehearsed before it is needed. A generator can only give you a strong key; keeping it secret is a habit, and it is the habit, more than the algorithm, that determines whether the key actually protects anything.</p><p>A final practical note: when a platform offers to generate a key for you, prefer its built-in generator for production credentials, and use this tool for test keys, local development, and integrations where you control the secret store. Either way, copy the key immediately and confirm it works before closing the page.</p></article><section class="faqs"><h2>Frequently asked questions</h2><div class="faq"><b>Are these API keys really random?</b><p style="margin:0">Yes. They are generated with the browser&#x27;s cryptographic random number generator (crypto.getRandomValues), not a predictable random function, and nothing is sent to any server.</p></div><div class="faq"><b>How long should an API key be?</b><p style="margin:0">32 characters from a mixed alphabet is a strong default (about 190 bits of entropy). Use 64 characters for high-value production credentials.</p></div><div class="faq"><b>What is a key prefix for?</b><p style="margin:0">Prefixes like sk-live- or sk-test- make keys recognisable in logs and configs and prevent accidentally using a test key in production.</p></div><div class="faq"><b>What does URL-safe base64 mean?</b><p style="margin:0">It uses letters, digits, hyphen, and underscore, so the key survives in URLs and headers without escaping, unlike keys containing plus, slash, or equals.</p></div><div class="faq"><b>Should I store API keys in source code?</b><p style="margin:0">Never. Use environment variables or a secrets manager, and assume any key committed to a public repository is compromised and must be rotated.</p></div><div class="faq"><b>Can I recover a key if I lose it?</b><p style="margin:0">No. This page does not store keys, and most platforms show a key only once. Copy keys into your secrets store immediately after generating them.</p></div></section><footer class="site"><div class="wrap foot-in"><div style="max-width:520px">
+<div class="brand" style="font-size:19px">KeyForge</div><p class="muted" style="margin:6px 0">A free API key generator for everyone, no signup needed.</p></div>
+<div><a class="btn" href="https://fixoraa.tech">Home</a> <a class="btn" href="https://fixoraa.tech">More Tools</a>
+<p class="small" style="margin-top:12px">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free tools, no signup, no paywall.</p></div></div></footer></body></html>
