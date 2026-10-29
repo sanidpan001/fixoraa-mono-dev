@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/curlsmith/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CurlSmith — Visual API Request Builder & Curl Command Generator</title>
+<meta name="description" content="CurlSmith is a free visual curl command builder and API request builder online. Build requests in a form, reverse-parse any curl command, and export to fetch, Axios, Python, Go and PHP.">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#0f1b2d; }
+  .pane { background:#16273f; border:1px solid rgba(148,163,184,.14); border-radius:1rem; }
+  .pane-hd { border-bottom:1px solid rgba(148,163,184,.12); }
+  .codebox { background:#0b1526; border:1px solid rgba(56,189,248,.18); border-radius:.75rem; }
+  .field { background:#0b1526; border:1px solid rgba(148,163,184,.2); border-radius:.6rem; color:#e2e8f0; }
+  .field:focus { outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.25); }
+  .tabbtn { border:1px solid rgba(148,163,184,.2); border-radius:.6rem; color:#cbd5e1; }
+  .tabbtn.active { background:#38bdf8; border-color:#38bdf8; color:#0f1b2d; font-weight:700; }
+  .expbtn.active { background:#f472b6; border-color:#f472b6; color:#0f1b2d; font-weight:700; }
+  .btn-primary { background:#38bdf8; color:#0f1b2d; font-weight:700; border-radius:.6rem; }
+  .btn-primary:hover { background:#7dd3fc; }
+  .btn-accent { background:#f472b6; color:#0f1b2d; font-weight:700; border-radius:.6rem; }
+  .btn-accent:hover { background:#f9a8d4; }
+  .btn-ghost { border:1px solid rgba(148,163,184,.25); color:#e2e8f0; border-radius:.6rem; }
+  .btn-ghost:hover { border-color:#38bdf8; color:#38bdf8; }
+  .preset-chip { border:1px solid rgba(244,114,182,.4); color:#f9a8d4; border-radius:9999px; }
+  .preset-chip:hover { background:rgba(244,114,182,.12); }
+  .faq summary { cursor:pointer; }
+  .glow-line { height:3px; background:linear-gradient(90deg,#38bdf8,#f472b6,#38bdf8); border-radius:9999px; }
+  ::selection { background:#38bdf8; color:#0f1b2d; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a curl command builder and who is it for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A curl command builder is a visual tool that lets you assemble an HTTP API request — method, URL, headers, query parameters, body and authentication — in a friendly form instead of memorising curl's command-line flags. It is for backend developers, frontend developers, QA engineers, students and anyone who tests APIs. CurlSmith generates a correct, copy-paste-ready curl command from your form, so you never have to look up whether the flag is -H or --header again."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I convert a curl command to Python with CurlSmith?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paste your curl command into the Reverse Parse box and click Parse. CurlSmith reverse-parses it into the visual form — method, headers, query string, body and auth are all extracted. Then open the Python export tab: you get clean requests-library code with the URL, headers and payload wired up, ready to paste into your project. The same one-click flow works for JavaScript fetch, Axios, Go and PHP."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I paste an existing curl command and edit it visually?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — that is CurlSmith's two-way workflow. Paste any curl command (for example one copied from browser DevTools or API docs) into the reverse parser. It tokenises the command like a real shell, understands -X, -H, -d, --data-urlencode, --json, -u, -b, -G and quoted strings, then loads everything into the form panes where you can tweak headers, swap the body or change auth before regenerating the command."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is CurlSmith free, and do my API keys leave my browser?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CurlSmith is free with unlimited usage — no signup, no paywall, no watermark. Everything runs 100% in your browser: parsing, building, variable substitution and code export are pure client-side JavaScript. Your tokens, API keys and request bodies never touch a server, which makes it safe to use with production credentials."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are {{VARIABLE}} placeholders and share links?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{VARIABLE}} placeholders let you write a request template once — for example https://{{HOST}}/users with an Authorization header of Bearer {{TOKEN}} — and fill in real values per environment in the Variables panel. Share links encode your entire request into the URL hash, so you can send a teammate a link that opens CurlSmith with your exact request pre-loaded."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which export formats does CurlSmith support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CurlSmith exports to five targets in one click: JavaScript fetch, Axios, Python (requests), Go (net/http) and PHP (cURL). Each export preserves the method, URL with query parameters, all enabled headers, authentication and the request body, with JSON bodies emitted as structured data where the target language supports it."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body id="top" class="text-slate-200 antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-50 border-b border-white/10" style="background:rgba(15,27,45,.92);backdrop-filter:blur(10px)">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg font-black text-lg" style="background:linear-gradient(135deg,#38bdf8,#f472b6);color:#0f1b2d">$</span>
+      <span class="text-xl font-extrabold tracking-tight text-white">Curl<span style="color:#38bdf8">Smith</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="text-slate-300 hover:text-white">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-white">More Tools</a>
+    </nav>
+  </div>
+  <div class="glow-line"></div>
+</header>
+
+<main>
+<!-- ============ TOP AD ============ -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOOL ============ -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="flex flex-wrap items-center gap-3 mb-2">
+    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full" style="background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.45);color:#7dd3fc">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+      Unlimited Free Usage
+    </span>
+    <span class="text-xs text-slate-400">No signup · No paywall · 100% in-browser</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Visual <span style="color:#38bdf8">curl command builder</span> with reverse parsing</h1>
+  <p class="mt-2 text-slate-400 max-w-3xl">Build API requests in a visual form and get a perfect curl command — or paste any curl command and watch it reverse-parse into the form. Then export to fetch, Axios, Python, Go or PHP in one click.</p>
+
+  <!-- URL bar -->
+  <div class="pane mt-6 p-4">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <select id="cs-method" class="field px-3 py-2.5 font-mono font-bold sm:w-36" aria-label="HTTP method"></select>
+      <input id="cs-url" type="text" spellcheck="false" placeholder="https://api.example.com/v1/users?page=2" class="field flex-1 px-4 py-2.5 font-mono text-sm" aria-label="Request URL">
+    </div>
+    <div id="cs-validate" class="mt-2 text-sm"></div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <button id="cs-copy-curl" class="btn-primary px-4 py-2 text-sm">Copy curl</button>
+      <button id="cs-share-btn" class="btn-accent px-4 py-2 text-sm">Share link</button>
+      <button id="cs-reverse-sample" class="btn-ghost px-4 py-2 text-sm">Load sample</button>
+      <button id="cs-clear-all" class="btn-ghost px-4 py-2 text-sm">Clear</button>
+    </div>
+    <div id="cs-share-wrap" class="mt-3 hidden">
+      <label class="text-xs text-slate-400 block mb-1">Shareable URL (request encoded in the hash):</label>
+      <div class="flex gap-2">
+        <input id="cs-share-link" readonly class="field flex-1 px-3 py-2 font-mono text-xs" aria-label="Shareable link">
+        <button id="cs-copy-share" class="btn-ghost px-3 py-2 text-sm">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-5 gap-4 mt-4">
+    <!-- LEFT: builder panes -->
+    <div class="lg:col-span-3 flex flex-col gap-4">
+      <div class="pane">
+        <div class="pane-hd px-4 pt-4 pb-3 flex flex-wrap gap-2">
+          <button class="tabbtn active px-4 py-1.5 text-sm" data-tab="headers">Headers</button>
+          <button class="tabbtn px-4 py-1.5 text-sm" data-tab="query">Query Params</button>
+          <button class="tabbtn px-4 py-1.5 text-sm" data-tab="body">Body</button>
+          <button class="tabbtn px-4 py-1.5 text-sm" data-tab="auth">Auth</button>
+        </div>
+        <div class="p-4">
+          <div id="cs-panel-headers" data-panel="headers">
+            <div id="cs-headers-list" class="flex flex-col gap-2"></div>
+            <button id="cs-add-header" class="btn-ghost mt-3 px-3 py-1.5 text-sm">+ Add header</button>
+          </div>
+          <div id="cs-panel-query" data-panel="query" class="hidden">
+            <div id="cs-query-list" class="flex flex-col gap-2"></div>
+            <button id="cs-add-query" class="btn-ghost mt-3 px-3 py-1.5 text-sm">+ Add param</button>
+            <p class="text-xs text-slate-500 mt-2">Enabled params are appended to the URL when the curl command is generated.</p>
+          </div>
+          <div id="cs-panel-body" data-panel="body" class="hidden">
+            <label class="text-xs text-slate-400 block mb-1">Body type</label>
+            <select id="cs-body-type" class="field px-3 py-2 text-sm mb-2">
+              <option value="none">No body</option>
+              <option value="json">JSON</option>
+              <option value="form">Form (x-www-form-urlencoded)</option>
+              <option value="raw">Raw</option>
+              <option value="text">Text</option>
+              <option value="xml">XML</option>
+            </select>
+            <textarea id="cs-body-input" rows="6" spellcheck="false" class="field w-full px-3 py-2 font-mono text-sm" placeholder='{"name": "Ada", "role": "admin"}'></textarea>
+          </div>
+          <div id="cs-panel-auth" data-panel="auth" class="hidden">
+            <label class="text-xs text-slate-400 block mb-1">Auth type</label>
+            <select id="cs-auth-type" class="field px-3 py-2 text-sm mb-3">
+              <option value="none">No auth</option>
+              <option value="bearer">Bearer token</option>
+              <option value="basic">Basic auth</option>
+              <option value="apikey">API key</option>
+            </select>
+            <div id="cs-auth-fields" class="flex flex-col gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div class="pane p-4">
+        <h2 class="text-sm font-bold text-white mb-1">Auth &amp; header presets</h2>
+        <p class="text-xs text-slate-500 mb-3">One click applies a battle-tested header/auth set.</p>
+        <div id="cs-presets" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Variables -->
+      <div class="pane p-4">
+        <h2 class="text-sm font-bold text-white mb-1"><span style="color:#f472b6">{{VARIABLE}}</span> environment fill</h2>
+        <p class="text-xs text-slate-500 mb-3">Write <code class="text-pink-300 font-mono">{{HOST}}</code>, <code class="text-pink-300 font-mono">{{TOKEN}}</code> anywhere (URL, headers, body…), then fill values here to preview the resolved command.</p>
+        <div id="cs-vars-list" class="flex flex-col gap-2"></div>
+        <p id="cs-vars-empty" class="text-xs text-slate-500">No variables detected yet — try the sample request.</p>
+        <button id="cs-vars-apply" class="btn-accent mt-3 px-4 py-2 text-sm">Preview resolved curl</button>
+        <pre id="cs-vars-preview" class="codebox mt-3 p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap hidden"></pre>
+      </div>
+    </div>
+
+    <!-- RIGHT: output panes -->
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <div class="pane">
+        <div class="pane-hd px-4 py-3 flex items-center justify-between">
+          <h2 class="text-sm font-bold text-white">Generated <span style="color:#38bdf8">curl</span></h2>
+          <span class="text-[10px] uppercase tracking-widest text-slate-500">live</span>
+        </div>
+        <div class="p-4">
+          <pre id="cs-curl-output" class="codebox p-3 font-mono text-xs text-emerald-300 overflow-x-auto whitespace-pre-wrap min-h-[120px]"></pre>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="pane-hd px-4 pt-4 pb-3 flex flex-wrap gap-2" id="cs-export-tabs">
+          <button class="tabbtn expbtn active px-3 py-1.5 text-xs" data-export="fetch">fetch</button>
+          <button class="tabbtn expbtn px-3 py-1.5 text-xs" data-export="axios">Axios</button>
+          <button class="tabbtn expbtn px-3 py-1.5 text-xs" data-export="python">Python</button>
+          <button class="tabbtn expbtn px-3 py-1.5 text-xs" data-export="go">Go</button>
+          <button class="tabbtn expbtn px-3 py-1.5 text-xs" data-export="php">PHP</button>
+        </div>
+        <div class="p-4">
+          <pre id="cs-export-output" class="codebox p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap min-h-[160px]"></pre>
+          <button id="cs-copy-export" class="btn-primary mt-3 px-4 py-2 text-sm w-full">Copy code</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVERSE PARSE -->
+  <div class="pane mt-4 p-4" style="border-color:rgba(244,114,182,.3)">
+    <h2 class="text-sm font-bold text-white mb-1">Reverse mode — <span style="color:#f472b6">paste curl, get the form</span></h2>
+    <p class="text-xs text-slate-500 mb-3">Paste any curl command (DevTools, docs, Stack Overflow). CurlSmith tokenises it like a real shell and loads method, headers, query, body and auth into the panes above.</p>
+    <textarea id="cs-reverse-input" rows="4" spellcheck="false" class="field w-full px-3 py-2 font-mono text-xs" placeholder="curl -X POST https://api.example.com/v1/users -H &quot;Content-Type: application/json&quot; -d '{&quot;name&quot;:&quot;Ada&quot;}'"></textarea>
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <button id="cs-reverse-parse" class="btn-accent px-5 py-2 text-sm">Parse into form</button>
+      <span id="cs-reverse-msg" class="text-sm"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BOTTOM AD ============ -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEO ARTICLE ============ -->
+<article class="mx-auto max-w-4xl px-4 sm:px-6 py-10 text-slate-300 leading-relaxed">
+<h2 class="text-2xl font-extrabold text-white mb-4">The Visual Curl Command Builder Developers Actually Enjoy Using</h2>
+<p class="mb-4">If you work with APIs, you live in curl. It is the lingua franca of HTTP: API docs ship curl snippets, browser DevTools let you "Copy as cURL", and every backend framework's README shows a curl example before anything else. Yet writing curl by hand is a small exercise in frustration. Was it <code class="font-mono text-sky-300">-H</code> or <code class="font-mono text-sky-300">--header</code>? Do JSON bodies need single or double quotes? How do you attach a bearer token without leaking it into your shell history? A visual <strong>curl command builder</strong> removes that friction entirely: you fill in a friendly form — method, URL, headers, query parameters, body, authentication — and the tool assembles a correct, properly quoted, copy-paste-ready curl command for you.</p>
+<p class="mb-4">CurlSmith was built around one observation: developers constantly move in <em>both</em> directions. Sometimes you start from an idea ("I need to POST this JSON to that endpoint") and want the command. Sometimes you start from a command — copied from documentation, a teammate's message, or the Network tab — and want to understand or modify it. Most online tools only do the first half. CurlSmith is a true two-way <strong>api request builder online</strong>: the form generates curl, and the reverse parser reads curl back into the form. That round-trip is what makes it a daily driver rather than a one-off snippet generator.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Why a form beats the command line for composing requests</h3>
+<p class="mb-4">The command line is unbeatable for replaying a known request, but it is a poor editor. Consider adding three headers, two query parameters and a JSON body to an existing command: you are juggling quote styles, escaping inner double quotes, and hoping you did not break the shell tokenisation. In a visual builder, each concern gets its own pane. Headers are rows with name and value fields. Query parameters are rows that get appended to the URL automatically. The body is a proper textarea with a type selector (JSON, form-encoded, raw, text, XML). Authentication is a dedicated panel with purpose-built fields for bearer tokens, basic credentials and API keys, so you never hand-format an <code class="font-mono text-sky-300">Authorization</code> header again. The generated command updates live as you type, which turns request composition into a fast feedback loop: tweak a header, glance at the command, copy it when it looks right.</p>
+<p class="mb-4">Quoting is where hand-written curl most often breaks, and it is where a builder earns its keep. A JSON body like <code class="font-mono text-sky-300">{"message": "it's done"}</code> contains both quote styles; naive single-quoting fails on the apostrophe, naive double-quoting fails on the JSON quotes. CurlSmith's shell quoter picks the safe strategy per value — single quotes when possible, escaped double quotes when necessary — so the generated command survives pasting into bash, zsh and most POSIX-compatible shells. Header values with spaces, URLs with query strings, and tokens with special characters all get the same treatment. You stop thinking about quoting entirely, which is exactly the point.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Reverse parsing: from pasted curl back to an editable form</h3>
+<p class="mb-4">The reverse direction is CurlSmith's signature feature. Paste any curl command into the reverse box and the parser goes to work. It is not a regex hack: it includes a real shell-style tokenizer that understands single quotes, double quotes with backslash escapes, line continuations with trailing backslashes, and even <code class="font-mono text-sky-300">$'...'</code> ANSI-C quoting. On top of that sits a flag parser that recognises <code class="font-mono text-sky-300">-X</code> / <code class="font-mono text-sky-300">--request</code> for the method, <code class="font-mono text-sky-300">-H</code> / <code class="font-mono text-sky-300">--header</code> for headers, the whole <code class="font-mono text-sky-300">-d</code> / <code class="font-mono text-sky-300">--data</code> / <code class="font-mono text-sky-300">--data-raw</code> / <code class="font-mono text-sky-300">--data-binary</code> family for bodies, <code class="font-mono text-sky-300">--json</code> (which implies the right content type), <code class="font-mono text-sky-300">--data-urlencode</code>, <code class="font-mono text-sky-300">-u</code> for basic auth, <code class="font-mono text-sky-300">-b</code> for cookies, <code class="font-mono text-sky-300">-A</code> for the user agent, <code class="font-mono text-sky-300">-G</code> for query-string mode, and <code class="font-mono text-sky-300">--url</code>.</p>
+<p class="mb-4">After tokenising, CurlSmith normalises the request the way a thoughtful developer would. The query string is split out of the URL into editable parameter rows. An <code class="font-mono text-sky-300">Authorization: Bearer ...</code> header is recognised and moved into the Auth panel as a structured bearer credential. A <code class="font-mono text-sky-300">-u user:pass</code> flag becomes a basic-auth entry. The body is sniffed: valid JSON is labelled JSON, <code class="font-mono text-sky-300">key=value&amp;key=value</code> payloads are labelled form data, and the declared Content-Type header gets the final say. If the command used <code class="font-mono text-sky-300">-d</code> without an explicit method, the method becomes POST, mirroring what curl itself does. Anything the parser cannot represent — file-based <code class="font-mono text-sky-300">@file</code> uploads, exotic flags — is reported in plain language instead of being silently dropped. Paste, parse, tweak, regenerate: a command you did not write becomes a request you fully understand.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">From curl to Python, JavaScript, Go and PHP in one click</h3>
+<p class="mb-4">A curl command is a great interchange format, but sooner or later the request has to live in real code. That is why CurlSmith is also a <strong>curl to python converter</strong> and more: every request you build or parse can be exported to five languages with one click. The Python export targets the ubiquitous <code class="font-mono text-sky-300">requests</code> library and is smart about payloads — JSON bodies are emitted via <code class="font-mono text-sky-300">json.loads</code> into the <code class="font-mono text-sky-300">json=</code> parameter so you get structured data, not a fragile string. The JavaScript <code class="font-mono text-sky-300">fetch</code> export uses modern async/await, the Axios export follows Axios's config-object conventions, the Go export uses <code class="font-mono text-sky-300">net/http</code> with proper header handling and body readers, and the PHP export uses the cURL extension with the standard <code class="font-mono text-sky-300">curl_setopt</code> calls. Headers, query parameters, auth and bodies are preserved across every target, and disabled rows are excluded so your experiments do not leak into production code.</p>
+<p class="mb-4">This matters most in team workflows. A backend developer prototypes an endpoint with curl, pastes it into CurlSmith, and hands the frontend developer a share link (more on that below). The frontend developer opens the link, sees the exact request in the visual form, and exports it to fetch. Nobody retypes a header; nobody mis-copies a token. The translation step that used to be a source of subtle bugs — "did you include the Content-Type?" — disappears because the export is generated, not transcribed.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Templates with {{VARIABLE}} placeholders</h3>
+<p class="mb-4">Real API work is rarely about a single request; it is about the same request against many environments. CurlSmith supports <code class="font-mono text-pink-300">{{VARIABLE}}</code> placeholders anywhere in the request: the URL (<code class="font-mono text-pink-300">https://{{HOST}}/v1/{{RESOURCE}}</code>), header values (<code class="font-mono text-pink-300">Bearer {{TOKEN}}</code>), query parameters, the body, even auth fields. The Variables panel automatically detects every placeholder you have used and gives you a fill-in form. Type the values once, hit preview, and you get the fully resolved curl command — your template stays intact for the next environment. It is a lightweight take on the environment systems in heavyweight API clients, without accounts, workspaces or sync servers. Combined with the share-link feature, it is also a clean way to distribute a request template to a team while keeping secrets out of the shared text: share the template with <code class="font-mono text-pink-300">{{TOKEN}}</code>, and each person fills in their own.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Share links and the auth preset library</h3>
+<p class="mb-4">Every request in CurlSmith can be turned into a shareable URL. The entire request — method, URL, headers, params, body, auth configuration — is serialised to JSON, encoded, and placed in the URL hash. Send the link to a colleague and CurlSmith opens with your exact request pre-loaded, ready to inspect, modify or export. Because the data lives in the fragment, it is never sent to any server; the link works even offline once the page is loaded, and nothing about your request is logged anywhere.</p>
+<p class="mb-4">The preset library covers the repetitive setup that every API developer does dozens of times a week: a JSON API preset (Content-Type and Accept headers), bearer token auth, GitHub's API headers, OpenAI's API shape, basic auth, API-key headers, form POSTs and a browser-like header set. One click applies a preset without clobbering what you have already typed — existing headers are never duplicated. Presets are starting points, not cages: after applying one, every field remains editable.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Practical tips for better API requests</h3>
+<p class="mb-4">A few habits make any request builder more effective. First, keep the method honest: use GET for retrieval, POST for creation, PUT or PATCH for updates, DELETE for removal. CurlSmith's method dropdown covers the full set, and its validator will warn you if you attach a body to a GET — technically allowed, but widely ignored by servers and proxies. Second, prefer query parameters over string-concatenated URLs when a value might contain spaces or reserved characters; the builder keeps them as structured rows until generation time. Third, be deliberate with Content-Type: JSON APIs expect <code class="font-mono text-sky-300">application/json</code>, HTML form submissions expect <code class="font-mono text-sky-300">application/x-www-form-urlencoded</code>, and file uploads expect <code class="font-mono text-sky-300">multipart/form-data</code> with a boundary curl normally generates for you. CurlSmith's body-type selector and the <code class="font-mono text-sky-300">--json</code> reverse-parse path both keep the header and the payload in agreement.</p>
+<p class="mb-4">Fourth, treat secrets with respect even in a client-side tool. CurlSmith never transmits your data, but your shell history, screenshots and shared links are still your responsibility: prefer <code class="font-mono text-pink-300">{{TOKEN}}</code> placeholders in anything you share, and rotate any credential that has ever appeared in a chat log. Fifth, when debugging a failing request, reverse-parse the exact command from your logs rather than retyping it — transcription errors are the number one cause of "but it works in curl" mysteries, and the parser eliminates them. Finally, export early: the moment a request works, generate the code for your stack and commit it. A working snippet in version control beats a working command in a terminal buffer every time.</p>
+<h3 class="text-xl font-bold text-white mt-8 mb-3">Who CurlSmith is for</h3>
+<p class="mb-4">Backend developers use it to prototype endpoints before writing client code. Frontend developers use it to convert backend-provided curl snippets into fetch or Axios calls without manual translation. QA engineers use it to build regression requests with variables for staging versus production. Students learning HTTP use it to see the relationship between the abstract parts of a request and the concrete command that performs it — toggling a header and watching the command change is a better teacher than any diagram. Technical writers use it to verify that the curl examples in documentation actually parse and to generate equivalent snippets for SDK docs. And anyone who has ever stared at a 400-error wondering whether the bug is in the payload or the quoting uses it to take quoting off the suspect list permanently.</p>
+<p class="mb-4">As an <strong>api request builder online</strong>, CurlSmith deliberately stays lightweight. There is no account to create, no workspace to configure, no collection to maintain. It does one job — the faithful two-way translation between human-friendly request forms and machine-precise curl commands, plus one-click code export — and it does it entirely in your browser. Whether you need a quick <strong>curl command builder</strong> for a one-off test, a reliable <strong>curl to python converter</strong> for a script, or a shareable request template for your team, the workflow is the same: build or paste, tweak, copy, ship.</p>
+</article>
+
+<!-- ============ FAQs ============ -->
+<section class="mx-auto max-w-4xl px-4 sm:px-6 pb-12">
+  <h2 class="text-2xl font-extrabold text-white mb-5">Frequently asked questions</h2>
+  <div class="flex flex-col gap-3">
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">What is a curl command builder and who is it for?</summary>
+      <p class="mt-2 text-sm text-slate-400">A curl command builder is a visual tool that lets you assemble an HTTP API request — method, URL, headers, query parameters, body and authentication — in a friendly form instead of memorising curl's command-line flags. It is for backend developers, frontend developers, QA engineers, students and anyone who tests APIs. CurlSmith generates a correct, copy-paste-ready curl command from your form, so you never have to look up whether the flag is -H or --header again.</p>
+    </details>
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">How do I convert a curl command to Python with CurlSmith?</summary>
+      <p class="mt-2 text-sm text-slate-400">Paste your curl command into the Reverse Parse box and click Parse. CurlSmith reverse-parses it into the visual form — method, headers, query string, body and auth are all extracted. Then open the Python export tab: you get clean requests-library code with the URL, headers and payload wired up, ready to paste into your project. The same one-click flow works for JavaScript fetch, Axios, Go and PHP.</p>
+    </details>
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">Can I paste an existing curl command and edit it visually?</summary>
+      <p class="mt-2 text-sm text-slate-400">Yes — that is CurlSmith's two-way workflow. Paste any curl command (for example one copied from browser DevTools or API docs) into the reverse parser. It tokenises the command like a real shell, understands -X, -H, -d, --data-urlencode, --json, -u, -b, -G and quoted strings, then loads everything into the form panes where you can tweak headers, swap the body or change auth before regenerating the command.</p>
+    </details>
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">Is CurlSmith free, and do my API keys leave my browser?</summary>
+      <p class="mt-2 text-sm text-slate-400">CurlSmith is free with unlimited usage — no signup, no paywall, no watermark. Everything runs 100% in your browser: parsing, building, variable substitution and code export are pure client-side JavaScript. Your tokens, API keys and request bodies never touch a server, which makes it safe to use with production credentials.</p>
+    </details>
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">What are {{VARIABLE}} placeholders and share links?</summary>
+      <p class="mt-2 text-sm text-slate-400">{{VARIABLE}} placeholders let you write a request template once — for example https://{{HOST}}/users with an Authorization header of Bearer {{TOKEN}} — and fill in real values per environment in the Variables panel. Share links encode your entire request into the URL hash, so you can send a teammate a link that opens CurlSmith with your exact request pre-loaded.</p>
+    </details>
+    <details class="faq pane p-4">
+      <summary class="font-semibold text-white">Which export formats does CurlSmith support?</summary>
+      <p class="mt-2 text-sm text-slate-400">CurlSmith exports to five targets in one click: JavaScript fetch, Axios, Python (requests), Go (net/http) and PHP (cURL). Each export preserves the method, URL with query parameters, all enabled headers, authentication and the request body, with JSON bodies emitted as structured data where the target language supports it.</p>
+    </details>
+  </div>
+</section>
+</main>
+
+<footer class="border-t border-white/10 py-8">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
+    <span><span class="font-bold text-slate-300">CurlSmith</span> — build curl visually, parse it back, ship code.</span>
+    <span>Free forever · Runs entirely in your browser</span>
+  </div>
+<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+
+<script id="v3-curlsmith-api-request-builder-lib">
+/* ============================================================
+   CurlSmith — pure request-builder logic.
+   Two-way curl builder <-> parser, export generators, share
+   encoding and {{VARIABLE}} substitution.
+
+   Pure functions only: NO document / window / navigator access,
+   no network, no storage. Safe to eval in Node tests.
+   ============================================================ */
+
+var CS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+
+/* ---------------- request model ---------------- */
+
+function csEmptyAuth() {
+  return { type: 'none', token: '', username: '', password: '', keyName: 'X-API-Key', keyValue: '', keyIn: 'header' };
+}
+
+function csEmptyRequest() {
+  return {
+    method: 'GET',
+    url: '',
+    fragment: '',
+    headers: [],      // [{name, value, enabled}]
+    query: [],        // [{name, value, enabled}]
+    bodyType: 'none', // none | json | form | raw | text | xml
+    body: '',
+    auth: csEmptyAuth()
+  };
+}
+
+function csNormalize(r) {
+  var req = csEmptyRequest();
+  if (!r || typeof r !== 'object') return req;
+  if (typeof r.method === 'string' && r.method) req.method = r.method.toUpperCase();
+  if (typeof r.url === 'string') req.url = r.url;
+  if (typeof r.fragment === 'string') req.fragment = r.fragment;
+  if (Array.isArray(r.headers)) {
+    r.headers.forEach(function (h) {
+      if (h && typeof h === 'object') {
+        req.headers.push({
+          name: String(h.name == null ? '' : h.name),
+          value: String(h.value == null ? '' : h.value),
+          enabled: h.enabled !== false
+        });
+      }
+    });
+  }
+  if (Array.isArray(r.query)) {
+    r.query.forEach(function (q) {
+      if (q && typeof q === 'object') {
+        req.query.push({
+          name: String(q.name == null ? '' : q.name),
+          value: String(q.value == null ? '' : q.value),
+          enabled: q.enabled !== false
+        });
+      }
+    });
+  }
+  if (typeof r.bodyType === 'string' && r.bodyType) req.bodyType = r.bodyType;
+  if (typeof r.body === 'string') req.body = r.body;
+  if (r.auth && typeof r.auth === 'object') {
+    var a = csEmptyAuth();
+    ['type', 'token', 'username', 'password', 'keyName', 'keyValue', 'keyIn'].forEach(function (k) {
+      if (r.auth[k] !== undefined && r.auth[k] !== null) a[k] = String(r.auth[k]);
+    });
+    if (['none', 'bearer', 'basic', 'apikey'].indexOf(a.type) < 0) a.type = 'none';
+    if (['header', 'query'].indexOf(a.keyIn) < 0) a.keyIn = 'header';
+    req.auth = a;
+  }
+  return req;
+}
+
+/* ---------------- shell tokenizer ---------------- */
+
+function csAnsiEscape(ch) {
+  if (ch === 'n') return '\n';
+  if (ch === 't') return '\t';
+  if (ch === 'r') return '\r';
+  if (ch === '0') return '\0';
+  if (ch === 'a') return '\x07';
+  return ch;
+}
+
+// Splits a command line the way a POSIX shell would: single quotes are
+// literal, double quotes honour backslash escapes, backslash-newline is a
+// line continuation, $'...' is ANSI-C quoting.
+function csTokenize(input) {
+  var src = String(input == null ? '' : input).replace(/\\\r\n|\\\n|\\\r/g, ' ');
+  var tokens = [];
+  var i = 0, n = src.length, cur = null;
+  function end() { if (cur !== null) { tokens.push(cur); cur = null; } }
+  while (i < n) {
+    var c = src[i];
+    if (cur === null) {
+      if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { i++; continue; }
+      cur = '';
+      continue;
+    }
+    if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { end(); i++; continue; }
+    if (c === '$' && src[i + 1] === "'") {
+      i += 2;
+      while (i < n) {
+        var e = src[i];
+        if (e === "'") { i++; break; }
+        if (e === '\\' && i + 1 < n) { cur += csAnsiEscape(src[i + 1]); i += 2; }
+        else { cur += e; i++; }
+      }
+      continue;
+    }
+    if (c === "'") {
+      i++;
+      while (i < n && src[i] !== "'") { cur += src[i]; i++; }
+      i++; // closing quote (or end of input)
+      continue;
+    }
+    if (c === '"') {
+      i++;
+      while (i < n && src[i] !== '"') {
+        if (src[i] === '\\' && i + 1 < n) {
+          var nx = src[i + 1];
+          if (nx === 'n') cur += '\n';
+          else if (nx === 't') cur += '\t';
+          else if (nx === 'r') cur += '\r';
+          else cur += nx;
+          i += 2;
+        } else { cur += src[i]; i++; }
+      }
+      i++;
+      continue;
+    }
+    if (c === '\\' && i + 1 < n) { cur += src[i + 1]; i += 2; continue; }
+    cur += c; i++;
+  }
+  end();
+  return tokens;
+}
+
+/* ---------------- curl -> request (reverse parse) ---------------- */
+
+function csDetectBodyType(body) {
+  var t = String(body == null ? '' : body).trim();
+  if (!t) return 'none';
+  var first = t.charAt(0), last = t.charAt(t.length - 1);
+  if ((first === '{' && last === '}') || (first === '[' && last === ']')) {
+    try { JSON.parse(t); return 'json'; } catch (e) { /* fall through */ }
+  }
+  if (/^[A-Za-z0-9_.\-]+=[^&]*(&[A-Za-z0-9_.\-]+=[^&]*)*$/.test(t)) return 'form';
+  if (first === '<') return 'xml';
+  return 'raw';
+}
+
+function csBodyTypeFromContentType(ct) {
+  var v = String(ct || '').toLowerCase();
+  if (v.indexOf('json') >= 0) return 'json';
+  if (v.indexOf('x-www-form-urlencoded') >= 0) return 'form';
+  if (v.indexOf('xml') >= 0) return 'xml';
+  if (v.indexOf('text/') === 0) return 'text';
+  return null;
+}
+
+// Moves "?a=1&b=2" out of req.url into req.query, keeps the #fragment.
+function csSplitQuery(req) {
+  var u = String(req.url || ''), frag = '';
+  var hi = u.indexOf('#');
+  if (hi >= 0) { frag = u.slice(hi); u = u.slice(0, hi); }
+  req.fragment = frag;
+  var qi = u.indexOf('?');
+  if (qi >= 0) {
+    req.url = u.slice(0, qi);
+    u.slice(qi + 1).split('&').forEach(function (pair) {
+      if (!pair) return;
+      var ei = pair.indexOf('=');
+      if (ei < 0) req.query.push({ name: pair, value: '', enabled: true });
+      else req.query.push({ name: pair.slice(0, ei), value: pair.slice(ei + 1), enabled: true });
+    });
+  } else {
+    req.url = u;
+  }
+}
+
+// "Authorization: Bearer xyz" becomes structured auth so the form can edit it.
+function csDetectAuth(req) {
+  for (var i = 0; i < req.headers.length; i++) {
+    var h = req.headers[i];
+    if (/^authorization$/i.test(h.name)) {
+      var m = /^\s*Bearer\s+(.+?)\s*$/i.exec(h.value);
+      if (m) {
+        var a = csEmptyAuth();
+        a.type = 'bearer';
+        a.token = m[1];
+        req.auth = a;
+        req.headers.splice(i, 1);
+        return;
+      }
+    }
+  }
+}
+
+function csParseCurl(input) {
+  var text = String(input == null ? '' : input).trim();
+  if (!text) return { ok: false, error: 'Paste a curl command first.' };
+  var tokens = csTokenize(text);
+  if (!tokens.length) return { ok: false, error: 'Nothing to parse.' };
+  if (!/^curl(\.exe)?$/i.test(tokens[0])) {
+    return { ok: false, error: 'This does not look like a curl command — it should start with "curl".' };
+  }
+  var req = csEmptyRequest();
+  var notes = [];
+  var bodyParts = [];
+  var explicitMethod = false;
+  var getFlag = false;
+  var positional = [];
+  var OPTS_WITH_VALUE = {
+    '-X': 'method', '--request': 'method',
+    '-H': 'header', '--header': 'header',
+    '-d': 'data', '--data': 'data', '--data-raw': 'data',
+    '--data-ascii': 'data', '--data-binary': 'data',
+    '--data-urlencode': 'urlencode', '--json': 'json',
+    '-u': 'user', '--user': 'user',
+    '-b': 'cookie', '--cookie': 'cookie',
+    '--url': 'url',
+    '-A': 'agent', '--user-agent': 'agent',
+    '-e': 'referer', '--referer': 'referer',
+    '--max-time': 'skip', '--connect-timeout': 'skip', '--retry': 'skip',
+    '-o': 'skip', '--output': 'skip'
+  };
+  var BOOL_FLAGS = {
+    '-G': 1, '--get': 1, '-k': 1, '--insecure': 1, '--compressed': 1,
+    '-L': 1, '--location': 1, '-i': 1, '--include': 1, '-s': 1,
+    '--silent': 1, '-S': 1, '--show-error': 1, '-v': 1, '--verbose': 1,
+    '-f': 1, '--fail': 1, '-N': 1, '--no-buffer': 1
+  };
+  function addHeader(name, value) { req.headers.push({ name: name, value: value, enabled: true }); }
+  function setContentType(ct) {
+    var found = false;
+    req.headers.forEach(function (h) { if (/^content-type$/i.test(h.name)) { h.value = ct; found = true; } });
+    if (!found) addHeader('Content-Type', ct);
+  }
+
+  var i = 1;
+  while (i < tokens.length) {
+    var t = tokens[i], opt = t, val = null;
+    if (t.charAt(0) === '-' && t.charAt(1) === '-') {
+      var eq = t.indexOf('=');
+      if (eq > 2) { opt = t.slice(0, eq); val = t.slice(eq + 1); }
+    }
+    var kind = OPTS_WITH_VALUE[opt];
+    if (kind === undefined) {
+      if (t.charAt(0) === '-' && t.length > 1) {
+        if (opt === '-G' || opt === '--get') getFlag = true;
+        else if (!BOOL_FLAGS[opt]) notes.push('Ignored option: ' + opt);
+        i++; continue;
+      }
+      positional.push(t); i++; continue;
+    }
+    if (val === null) {
+      i++;
+      if (i >= tokens.length) return { ok: false, error: 'Option ' + opt + ' needs a value.' };
+      val = tokens[i];
+    }
+    switch (kind) {
+      case 'method':
+        req.method = String(val).toUpperCase(); explicitMethod = true; break;
+      case 'header': {
+        var c = val.indexOf(':');
+        if (c < 0) { notes.push('Skipped malformed header: ' + val); }
+        else {
+          var hn = val.slice(0, c).trim(), hv = val.slice(c + 1).trim();
+          if (hv === '') notes.push('Skipped empty header: ' + hn + ' (curl uses that form to remove a header)');
+          else addHeader(hn, hv);
+        }
+        break;
+      }
+      case 'data':
+        if (val.charAt(0) === '@') notes.push('File-based data (' + val + ') was skipped — paste the content instead.');
+        else bodyParts.push(val);
+        break;
+      case 'urlencode': {
+        if (val.charAt(0) === '@') { notes.push('File-based --data-urlencode was skipped.'); break; }
+        var e2 = val.indexOf('=');
+        if (e2 < 0) req.query.push({ name: val, value: '', enabled: true });
+        else req.query.push({ name: val.slice(0, e2), value: val.slice(e2 + 1), enabled: true });
+        break;
+      }
+      case 'json':
+        if (val.charAt(0) === '@') { notes.push('File-based --json data was skipped.'); break; }
+        setContentType('application/json');
+        if (!req.headers.some(function (h) { return /^accept$/i.test(h.name); })) addHeader('Accept', 'application/json');
+        bodyParts.push(val);
+        break;
+      case 'user': {
+        var au = csEmptyAuth(); au.type = 'basic';
+        var u2 = val.indexOf(':');
+        if (u2 < 0) au.username = val; else { au.username = val.slice(0, u2); au.password = val.slice(u2 + 1); }
+        req.auth = au; break;
+      }
+      case 'cookie': addHeader('Cookie', val); break;
+      case 'url': req.url = val; break;
+      case 'agent': addHeader('User-Agent', val); break;
+      case 'referer': addHeader('Referer', val); break;
+      case 'skip': break;
+    }
+    i++;
+  }
+
+  var urlStr = req.url || positional[0] || '';
+  if (positional.length > 1) notes.push('Extra argument ignored: ' + positional.slice(1).join(' '));
+  if (!urlStr) {
+    return { ok: false, error: 'No URL found in the curl command. A curl request needs a URL like https://api.example.com/things.' };
+  }
+  req.url = urlStr;
+
+  if (getFlag && bodyParts.length) {
+    // curl -G appends -d data to the query string.
+    bodyParts.join('&').split('&').forEach(function (pair) {
+      if (!pair) return;
+      var e3 = pair.indexOf('=');
+      if (e3 < 0) req.query.push({ name: pair, value: '', enabled: true });
+      else req.query.push({ name: pair.slice(0, e3), value: pair.slice(e3 + 1), enabled: true });
+    });
+    bodyParts = [];
+  }
+  if (bodyParts.length) {
+    req.body = bodyParts.join('&');
+    req.bodyType = csDetectBodyType(req.body);
+    var cth = null;
+    req.headers.forEach(function (h) { if (/^content-type$/i.test(h.name)) cth = h.value; });
+    if (cth) { var mapped = csBodyTypeFromContentType(cth); if (mapped) req.bodyType = mapped; }
+    if (!explicitMethod && (req.method === 'GET' || req.method === 'HEAD')) req.method = 'POST';
+  } else {
+    req.bodyType = 'none'; req.body = '';
+  }
+  csSplitQuery(req);
+  csDetectAuth(req);
+  return { ok: true, request: req, notes: notes };
+}
+
+/* ---------------- request -> curl (build) ---------------- */
+
+function csShellQuote(s) {
+  s = String(s == null ? '' : s);
+  if (s === '') return "''";
+  if (/^[A-Za-z0-9_@%+=:,\/.\-]+$/.test(s)) return s;
+  if (s.indexOf("'") < 0) return "'" + s + "'";
+  return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`').replace(/\n/g, '\\n') + '"';
+}
+
+function csEnabledPairs(list) {
+  return (list || []).filter(function (p) { return p.enabled !== false && String(p.name) !== ''; });
+}
+
+function csFullUrl(req) {
+  req = csNormalize(req);
+  var pairs = csEnabledPairs(req.query).slice();
+  var a = req.auth || {};
+  if (a.type === 'apikey' && a.keyIn === 'query' && a.keyName) {
+    // Drop any copy the parser split out of the URL so we do not duplicate it.
+    pairs = pairs.filter(function (p) { return !(p.name === a.keyName && p.value === a.keyValue); });
+    pairs.push({ name: a.keyName, value: a.keyValue, enabled: true });
+  }
+  var url = req.url;
+  if (pairs.length) {
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + pairs.map(function (p) {
+      return p.value === '' ? p.name : p.name + '=' + p.value;
+    }).join('&');
+  }
+  return url + (req.fragment || '');
+}
+
+// Headers with auth materialised. forCurl=true keeps basic auth as -u instead of an Authorization header.
+function csEffectiveHeaders(req, forCurl) {
+  req = csNormalize(req);
+  var out = csEnabledPairs(req.headers).map(function (h) { return { name: h.name, value: h.value, enabled: true }; });
+  var a = req.auth || {};
+  function hasAuthHeader() { return out.some(function (h) { return /^authorization$/i.test(h.name); }); }
+  if (a.type === 'bearer' && a.token && !hasAuthHeader()) {
+    out.push({ name: 'Authorization', value: 'Bearer ' + a.token, enabled: true });
+  } else if (a.type === 'basic' && !forCurl && (a.username || a.password) && !hasAuthHeader()) {
+    out.push({ name: 'Authorization', value: 'Basic ' + csBase64Encode(csUtf8Encode(a.username + ':' + a.password), false), enabled: true });
+  } else if (a.type === 'apikey' && a.keyIn === 'header' && a.keyName && a.keyValue) {
+    if (!out.some(function (h) { return h.name.toLowerCase() === a.keyName.toLowerCase(); })) {
+      out.push({ name: a.keyName, value: a.keyValue, enabled: true });
+    }
+  }
+  return out;
+}
+
+function csBuildCurl(req) {
+  req = csNormalize(req);
+  var lines = ['curl -X ' + req.method + ' ' + csShellQuote(csFullUrl(req))];
+  csEffectiveHeaders(req, true).forEach(function (h) {
+    lines.push('  -H ' + csShellQuote(h.name + ': ' + h.value));
+  });
+  var a = req.auth || {};
+  if (a.type === 'basic' && (a.username || a.password)) {
+    lines.push('  -u ' + csShellQuote(a.username + ':' + a.password));
+  }
+  if (req.bodyType !== 'none' && req.body) {
+    lines.push('  -d ' + csShellQuote(req.body));
+  }
+  return lines.join(' \\\n');
+}
+
+/* ---------------- code exports ---------------- */
+
+function csJsString(s) {
+  return '"' + String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+}
+
+function csPyString(s) {
+  return "'" + String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'";
+}
+
+function csGoString(s) {
+  return '"' + String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+}
+
+function csPhpString(s) {
+  return "'" + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+}
+
+function csToFetch(req) {
+  req = csNormalize(req);
+  var L = [];
+  L.push('const response = await fetch(' + csJsString(csFullUrl(req)) + ', {');
+  L.push('  method: ' + csJsString(req.method) + ',');
+  var headers = csEffectiveHeaders(req, false);
+  if (headers.length) {
+    L.push('  headers: {');
+    headers.forEach(function (h) { L.push('    ' + csJsString(h.name) + ': ' + csJsString(h.value) + ','); });
+    L.push('  },');
+  }
+  if (req.bodyType !== 'none' && req.body) L.push('  body: ' + csJsString(req.body) + ',');
+  L.push('});', '', 'const data = await response.text();', 'console.log(data);');
+  return L.join('\n');
+}
+
+function csToAxios(req) {
+  req = csNormalize(req);
+  var L = [];
+  L.push('const response = await axios({');
+  L.push('  method: ' + csJsString(req.method.toLowerCase()) + ',');
+  L.push('  url: ' + csJsString(csFullUrl(req)) + ',');
+  var headers = csEffectiveHeaders(req, false);
+  if (headers.length) {
+    L.push('  headers: {');
+    headers.forEach(function (h) { L.push('    ' + csJsString(h.name) + ': ' + csJsString(h.value) + ','); });
+    L.push('  },');
+  }
+  if (req.bodyType !== 'none' && req.body) {
+    var dataExpr = csJsString(req.body);
+    if (req.bodyType === 'json') {
+      try { dataExpr = JSON.stringify(JSON.parse(req.body), null, 2).split('\n').join('\n    '); }
+      catch (e) { /* keep string form */ }
+    }
+    L.push('  data: ' + dataExpr + ',');
+  }
+  L.push('});', '', 'console.log(response.data);');
+  return L.join('\n');
+}
+
+function csToPython(req) {
+  req = csNormalize(req);
+  var L = [];
+  L.push('import requests', '', 'url = ' + csPyString(csFullUrl(req)), '');
+  var headers = csEffectiveHeaders(req, false);
+  if (headers.length) {
+    L.push('headers = {');
+    headers.forEach(function (h) { L.push('    ' + csPyString(h.name) + ': ' + csPyString(h.value) + ','); });
+    L.push('}', '');
+  } else {
+    L.push('headers = {}', '');
+  }
+  var opts = 'headers=headers';
+  if (req.bodyType !== 'none' && req.body) {
+    if (req.bodyType === 'json') {
+      L.push('import json', '', 'payload = json.loads(' + csPyString(req.body) + ')', '');
+      opts += ', json=payload';
+    } else {
+      L.push('data = ' + csPyString(req.body), '');
+      opts += ', data=data';
+    }
+  }
+  L.push('response = requests.request(' + csPyString(req.method) + ', url, ' + opts + ')', '', 'print(response.text)');
+  return L.join('\n');
+}
+
+function csToGo(req) {
+  req = csNormalize(req);
+  var body = (req.bodyType !== 'none' && req.body) ? req.body : '';
+  var bodyExpr = 'nil';
+  if (body) {
+    if (/^[\x20-\x7E\r\n\t]*$/.test(body) && body.indexOf('`') < 0) bodyExpr = 'strings.NewReader(`' + body + '`)';
+    else bodyExpr = 'strings.NewReader(' + csGoString(body) + ')';
+  }
+  var L = [];
+  L.push('package main', '', 'import (', '\t"fmt"', '\t"io"', '\t"net/http"', '\t"strings"', ')', '',
+    'func main() {', '\turl := ' + csGoString(csFullUrl(req)));
+  if (body) L.push('\tpayload := ' + bodyExpr);
+  L.push('\treq, err := http.NewRequest(' + csGoString(req.method) + ', url, ' + (body ? 'payload' : 'nil') + ')',
+    '\tif err != nil {', '\t\tpanic(err)', '\t}');
+  csEffectiveHeaders(req, false).forEach(function (h) {
+    L.push('\treq.Header.Add(' + csGoString(h.name) + ', ' + csGoString(h.value) + ')');
+  });
+  L.push('', '\tclient := &http.Client{}', '\tresp, err := client.Do(req)', '\tif err != nil {', '\t\tpanic(err)', '\t}',
+    '\tdefer resp.Body.Close()', '\tbody, _ := io.ReadAll(resp.Body)', '\tfmt.Println(string(body))', '}');
+  return L.join('\n');
+}
+
+function csToPhp(req) {
+  req = csNormalize(req);
+  var L = [];
+  L.push('<?php', '$ch = curl_init();', '');
+  L.push('curl_setopt($ch, CURLOPT_URL, ' + csPhpString(csFullUrl(req)) + ');');
+  L.push('curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);');
+  L.push('curl_setopt($ch, CURLOPT_CUSTOMREQUEST, ' + csPhpString(req.method) + ');');
+  var headers = csEffectiveHeaders(req, false);
+  if (headers.length) {
+    L.push('curl_setopt($ch, CURLOPT_HTTPHEADER, [');
+    headers.forEach(function (h) { L.push("    " + csPhpString(h.name + ': ' + h.value) + ','); });
+    L.push(']);');
+  }
+  if (req.bodyType !== 'none' && req.body) L.push('curl_setopt($ch, CURLOPT_POSTFIELDS, ' + csPhpString(req.body) + ');');
+  L.push('', '$response = curl_exec($ch);', 'curl_close($ch);', '', 'echo $response;');
+  return L.join('\n');
+}
+
+/* ---------------- base64 / utf8 (no btoa dependency) ---------------- */
+
+var CS_B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+function csUtf8Encode(str) {
+  var bytes = [], i = 0;
+  str = String(str == null ? '' : str);
+  while (i < str.length) {
+    var c = str.charCodeAt(i);
+    if (c < 0x80) { bytes.push(c); i++; }
+    else if (c < 0x800) { bytes.push(0xC0 | (c >> 6), 0x80 | (c & 0x3F)); i++; }
+    else if (c >= 0xD800 && c <= 0xDBFF && i + 1 < str.length) {
+      var lo = str.charCodeAt(i + 1);
+      if (lo >= 0xDC00 && lo <= 0xDFFF) {
+        var cp = 0x10000 + ((c - 0xD800) << 10) + (lo - 0xDC00);
+        bytes.push(0xF0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3F), 0x80 | ((cp >> 6) & 0x3F), 0x80 | (cp & 0x3F));
+        i += 2;
+      } else { bytes.push(0xEF, 0xBF, 0xBD); i++; }
+    } else { bytes.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F)); i++; }
+  }
+  return bytes;
+}
+
+function csUtf8Decode(bytes) {
+  var out = '', i = 0;
+  while (i < bytes.length) {
+    var b = bytes[i];
+    if (b < 0x80) { out += String.fromCharCode(b); i++; }
+    else if ((b & 0xE0) === 0xC0) { out += String.fromCharCode(((b & 0x1F) << 6) | (bytes[i + 1] & 0x3F)); i += 2; }
+    else if ((b & 0xF0) === 0xE0) {
+      out += String.fromCharCode(((b & 0x0F) << 12) | ((bytes[i + 1] & 0x3F) << 6) | (bytes[i + 2] & 0x3F)); i += 3;
+    } else {
+      var cp = ((b & 0x07) << 18) | ((bytes[i + 1] & 0x3F) << 12) | ((bytes[i + 2] & 0x3F) << 6) | (bytes[i + 3] & 0x3F);
+      cp -= 0x10000;
+      out += String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
+      i += 4;
+    }
+  }
+  return out;
+}
+
+function csBase64Encode(bytes, urlSafe) {
+  var alpha = urlSafe ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'.split('') : CS_B64.split('');
+  var out = '', i;
+  for (i = 0; i < bytes.length; i += 3) {
+    var b0 = bytes[i], b1 = i + 1 < bytes.length ? bytes[i + 1] : 0, b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+    var n = (b0 << 16) | (b1 << 8) | b2;
+    out += alpha[(n >> 18) & 63] + alpha[(n >> 12) & 63];
+    out += (i + 1 < bytes.length) ? alpha[(n >> 6) & 63] : '=';
+    out += (i + 2 < bytes.length) ? alpha[n & 63] : '=';
+  }
+  if (urlSafe) out = out.replace(/=+$/, '');
+  return out;
+}
+
+function csBase64Decode(bytesOrStr, urlSafe) {
+  var s = String(bytesOrStr);
+  if (urlSafe) s = s.replace(/-/g, '+').replace(/_/g, '/');
+  s = s.replace(/[^A-Za-z0-9+/=]/g, '');
+  if (!s) throw new Error('empty');
+  while (s.length % 4) s += '=';
+  var bytes = [], i;
+  function sextet(ch) { var v = CS_B64.indexOf(ch); return v < 0 ? 0 : v; }
+  for (i = 0; i < s.length; i += 4) {
+    var n = (sextet(s.charAt(i)) << 18) | (sextet(s.charAt(i + 1)) << 12) |
+            (sextet(s.charAt(i + 2)) << 6) | sextet(s.charAt(i + 3));
+    bytes.push((n >> 16) & 255, (n >> 8) & 255, n & 255);
+  }
+  var pad = 0;
+  if (s.charAt(s.length - 1) === '=') pad++;
+  if (s.charAt(s.length - 2) === '=') pad++;
+  if (pad) bytes = bytes.slice(0, bytes.length - pad);
+  return bytes;
+}
+
+/* ---------------- share links ---------------- */
+
+function csEncodeShare(req) {
+  return csBase64Encode(csUtf8Encode(JSON.stringify(csNormalize(req))), true);
+}
+
+function csDecodeShare(code) {
+  try {
+    var obj = JSON.parse(csUtf8Decode(csBase64Decode(code, true)));
+    if (!obj || typeof obj !== 'object' || typeof obj.url !== 'string' || !Array.isArray(obj.headers)) {
+      throw new Error('bad shape');
+    }
+    return { ok: true, request: csNormalize(obj) };
+  } catch (e) {
+    return { ok: false, error: 'That share link is invalid or corrupted.' };
+  }
+}
+
+/* ---------------- {{VARIABLE}} env fill ---------------- */
+
+function csExtractVariables(req) {
+  req = csNormalize(req);
+  var seen = {}, order = [];
+  function scan(s) {
+    String(s == null ? '' : s).replace(/\{\{\s*([A-Za-z0-9_.\-]+)\s*\}\}/g, function (m, name) {
+      if (!seen[name]) { seen[name] = 1; order.push(name); }
+      return m;
+    });
+  }
+  scan(req.url); scan(req.fragment); scan(req.body);
+  req.headers.forEach(function (h) { scan(h.name); scan(h.value); });
+  req.query.forEach(function (q) { scan(q.name); scan(q.value); });
+  var a = req.auth || {};
+  scan(a.token); scan(a.username); scan(a.password); scan(a.keyName); scan(a.keyValue);
+  return order;
+}
+
+function csApplyVariables(req, vars) {
+  vars = vars || {};
+  function sub(s) {
+    return String(s == null ? '' : s).replace(/\{\{\s*([A-Za-z0-9_.\-]+)\s*\}\}/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : m;
+    });
+  }
+  var out = JSON.parse(JSON.stringify(csNormalize(req)));
+  out.url = sub(out.url); out.fragment = sub(out.fragment); out.body = sub(out.body);
+  out.headers.forEach(function (h) { h.name = sub(h.name); h.value = sub(h.value); });
+  out.query.forEach(function (q) { q.name = sub(q.name); q.value = sub(q.value); });
+  var a = out.auth || {};
+  ['token', 'username', 'password', 'keyName', 'keyValue'].forEach(function (k) { a[k] = sub(a[k]); });
+  return out;
+}
+
+/* ---------------- preset library ---------------- */
+
+var csPresets = [
+  { id: 'json-api', name: 'JSON API', apply: { headers: [['Content-Type', 'application/json'], ['Accept', 'application/json']] } },
+  { id: 'bearer', name: 'Bearer token', apply: { auth: { type: 'bearer', token: 'YOUR_TOKEN' }, headers: [['Accept', 'application/json']] } },
+  { id: 'github', name: 'GitHub API', apply: { auth: { type: 'bearer', token: 'ghp_YOUR_TOKEN' }, headers: [['Accept', 'application/vnd.github+json'], ['X-GitHub-Api-Version', '2022-11-28']] } },
+  { id: 'openai', name: 'OpenAI API', apply: { method: 'POST', headers: [['Content-Type', 'application/json'], ['Authorization', 'Bearer sk-YOUR_KEY']] } },
+  { id: 'basic', name: 'Basic auth', apply: { auth: { type: 'basic', username: 'user', password: 'pass' } } },
+  { id: 'apikey', name: 'API key header', apply: { auth: { type: 'apikey', keyName: 'X-API-Key', keyValue: 'YOUR_API_KEY', keyIn: 'header' } } },
+  { id: 'form', name: 'Form POST', apply: { method: 'POST', bodyType: 'form', headers: [['Content-Type', 'application/x-www-form-urlencoded']] } },
+  { id: 'browser', name: 'Browser-like', apply: { headers: [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'], ['Accept', 'text/html,application/xhtml+xml'], ['Accept-Language', 'en-US,en;q=0.9']] } }
+];
+
+function csApplyPreset(req, id) {
+  var preset = null;
+  csPresets.forEach(function (p) { if (p.id === id) preset = p; });
+  var out = csNormalize(req);
+  if (!preset) return out;
+  var ap = preset.apply || {};
+  if (ap.method) out.method = ap.method;
+  if (ap.bodyType) out.bodyType = ap.bodyType;
+  if (ap.auth) {
+    var a = csEmptyAuth();
+    Object.keys(ap.auth).forEach(function (k) { a[k] = ap.auth[k]; });
+    out.auth = a;
+  }
+  (ap.headers || []).forEach(function (pair) {
+    var exists = out.headers.some(function (h) { return h.name.toLowerCase() === pair[0].toLowerCase(); });
+    if (!exists) out.headers.push({ name: pair[0], value: pair[1], enabled: true });
+  });
+  return out;
+}
+
+/* ---------------- validation ---------------- */
+
+function csValidate(req) {
+  req = csNormalize(req);
+  var issues = [];
+  if (!req.url.trim()) {
+    issues.push({ level: 'error', msg: 'URL is empty — type or paste an endpoint above.' });
+  } else if (!/^(https?:\/\/)[^\s]+$/i.test(req.url.trim())) {
+    issues.push({ level: 'warn', msg: 'URL does not look like a valid http(s) URL.' });
+  }
+  if ((req.method === 'GET' || req.method === 'HEAD') && req.bodyType !== 'none' && req.body) {
+    issues.push({ level: 'warn', msg: req.method + ' requests normally do not carry a body — some servers ignore it.' });
+  }
+  return issues;
+}
+
+/* ---------------- export ---------------- */
+
+var CurlSmithLogic = {
+  emptyRequest: csEmptyRequest,
+  normalize: csNormalize,
+  methods: CS_METHODS,
+  tokenize: csTokenize,
+  parseCurl: csParseCurl,
+  buildCurl: csBuildCurl,
+  fullUrl: csFullUrl,
+  effectiveHeaders: csEffectiveHeaders,
+  shellQuote: csShellQuote,
+  detectBodyType: csDetectBodyType,
+  toFetch: csToFetch,
+  toAxios: csToAxios,
+  toPython: csToPython,
+  toGo: csToGo,
+  toPhp: csToPhp,
+  encodeShare: csEncodeShare,
+  decodeShare: csDecodeShare,
+  extractVariables: csExtractVariables,
+  applyVariables: csApplyVariables,
+  presets: csPresets,
+  applyPreset: csApplyPreset,
+  validate: csValidate
+};
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var L = CurlSmithLogic;
+  var state = L.emptyRequest();
+  var varValues = {};
+  var currentExport = 'fetch';
+  var lastVarKey = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function copyText(text, btn, doneLabel) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = doneLabel || 'Copied!';
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  /* ---------- form rendering ---------- */
+
+  function renderMethod() {
+    var s = el('cs-method');
+    s.innerHTML = L.methods.map(function (m) {
+      return '<option value="' + m + '"' + (state.method === m ? ' selected' : '') + '>' + m + '</option>';
+    }).join('');
+  }
+
+  function pairRow(list, i, kind) {
+    var p = state[list][i];
+    var ph1 = kind === 'headers' ? 'Header name' : 'Param name';
+    var ph2 = kind === 'headers' ? 'value' : 'value';
+    return '<div class="flex items-center gap-2" data-row="' + i + '" data-list="' + list + '">' +
+      '<input type="checkbox" class="pair-enabled accent-sky-400 w-4 h-4 shrink-0" ' + (p.enabled !== false ? 'checked' : '') + ' title="Include in request" aria-label="Enable row">' +
+      '<input type="text" class="pair-name field flex-1 min-w-0 px-3 py-1.5 font-mono text-sm" placeholder="' + ph1 + '" value="' + esc(p.name) + '">' +
+      '<input type="text" class="pair-value field flex-[2] min-w-0 px-3 py-1.5 font-mono text-sm" placeholder="' + ph2 + '" value="' + esc(p.value) + '">' +
+      '<button class="pair-del btn-ghost px-2 py-1.5 text-sm shrink-0" title="Remove">×</button>' +
+    '</div>';
+  }
+
+  function renderPairs(list, listId) {
+    var box = el(listId);
+    box.innerHTML = state[list].map(function (_, i) { return pairRow(list, i, list); }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-row]'), function (row) {
+      var i = parseInt(row.getAttribute('data-row'), 10);
+      row.querySelector('.pair-enabled').addEventListener('change', function (e) {
+        state[list][i].enabled = e.target.checked; updateOutputs();
+      });
+      row.querySelector('.pair-name').addEventListener('input', function (e) {
+        state[list][i].name = e.target.value; updateOutputs();
+      });
+      row.querySelector('.pair-value').addEventListener('input', function (e) {
+        state[list][i].value = e.target.value; updateOutputs();
+      });
+      row.querySelector('.pair-del').addEventListener('click', function () {
+        state[list].splice(i, 1); renderPairs(list, listId); updateOutputs();
+      });
+    });
+  }
+
+  function renderBody() {
+    el('cs-body-type').value = state.bodyType;
+    var ta = el('cs-body-input');
+    if (ta.value !== state.body) ta.value = state.body;
+    ta.style.display = state.bodyType === 'none' ? 'none' : '';
+  }
+
+  function renderAuth() {
+    el('cs-auth-type').value = state.auth.type;
+    var box = el('cs-auth-fields');
+    var a = state.auth, h = '';
+    if (a.type === 'bearer') {
+      h = field('Token', 'cs-a-token', a.token, 'ghp_... or eyJ...');
+    } else if (a.type === 'basic') {
+      h = field('Username', 'cs-a-user', a.username, 'user') + field('Password', 'cs-a-pass', a.password, 'pass');
+    } else if (a.type === 'apikey') {
+      h = field('Key name', 'cs-a-keyname', a.keyName, 'X-API-Key') +
+          field('Key value', 'cs-a-keyvalue', a.keyValue, 'YOUR_API_KEY') +
+          '<div><label class="text-xs text-slate-400 block mb-1">Send via</label>' +
+          '<select id="cs-a-keyin" class="field px-3 py-2 text-sm w-full"><option value="header"' + (a.keyIn === 'header' ? ' selected' : '') + '>Header</option><option value="query"' + (a.keyIn === 'query' ? ' selected' : '') + '>Query param</option></select></div>';
+    }
+    box.innerHTML = h;
+    function field(label, id, val, ph) {
+      return '<div><label class="text-xs text-slate-400 block mb-1">' + label + '</label>' +
+        '<input id="' + id + '" type="text" spellcheck="false" class="field w-full px-3 py-2 font-mono text-sm" placeholder="' + esc(ph) + '" value="' + esc(val) + '"></div>';
+    }
+    function bind(id, key) {
+      var n = el(id);
+      if (n) n.addEventListener('input', function (e) { state.auth[key] = e.target.value; updateOutputs(); });
+    }
+    bind('cs-a-token', 'token'); bind('cs-a-user', 'username'); bind('cs-a-pass', 'password');
+    bind('cs-a-keyname', 'keyName'); bind('cs-a-keyvalue', 'keyValue');
+    var ki = el('cs-a-keyin');
+    if (ki) ki.addEventListener('change', function (e) { state.auth.keyIn = e.target.value; updateOutputs(); });
+  }
+
+  function renderPresets() {
+    el('cs-presets').innerHTML = L.presets.map(function (p) {
+      return '<button class="preset-chip px-3 py-1.5 text-xs font-semibold" data-preset="' + p.id + '">' + esc(p.name) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(el('cs-presets').querySelectorAll('[data-preset]'), function (b) {
+      b.addEventListener('click', function () {
+        state = L.applyPreset(state, b.getAttribute('data-preset'));
+        renderAll(); updateOutputs();
+      });
+    });
+  }
+
+  function renderVars() {
+    var vars = L.extractVariables(state);
+    var key = vars.join('|');
+    if (key === lastVarKey) return;
+    lastVarKey = key;
+    var box = el('cs-vars-list');
+    el('cs-vars-empty').style.display = vars.length ? 'none' : '';
+    box.innerHTML = vars.map(function (v) {
+      return '<div class="flex items-center gap-2"><span class="font-mono text-xs text-pink-300 w-40 shrink-0 truncate">{{' + esc(v) + '}}</span>' +
+        '<input type="text" data-var="' + esc(v) + '" class="field flex-1 px-3 py-1.5 font-mono text-sm" placeholder="value for ' + esc(v) + '" value="' + esc(varValues[v] || '') + '"></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-var]'), function (inp) {
+      inp.addEventListener('input', function (e) { varValues[e.target.getAttribute('data-var')] = e.target.value; });
+    });
+    el('cs-vars-preview').classList.add('hidden');
+  }
+
+  /* ---------- outputs ---------- */
+
+  function exportCode(kind) {
+    if (kind === 'fetch') return L.toFetch(state);
+    if (kind === 'axios') return L.toAxios(state);
+    if (kind === 'python') return L.toPython(state);
+    if (kind === 'go') return L.toGo(state);
+    return L.toPhp(state);
+  }
+
+  function updateOutputs() {
+    el('cs-curl-output').textContent = L.buildCurl(state);
+    el('cs-export-output').textContent = exportCode(currentExport);
+    var issues = L.validate(state);
+    el('cs-validate').innerHTML = issues.map(function (is) {
+      var col = is.level === 'error' ? 'text-red-400' : 'text-amber-300';
+      return '<div class="' + col + ' text-xs mt-1">⚠ ' + esc(is.msg) + '</div>';
+    }).join('');
+    renderVars();
+  }
+
+  function renderAll() {
+    renderMethod();
+    if (el('cs-url').value !== state.url) el('cs-url').value = state.url;
+    renderPairs('headers', 'cs-headers-list');
+    renderPairs('query', 'cs-query-list');
+    renderBody();
+    renderAuth();
+    lastVarKey = null;
+    updateOutputs();
+  }
+
+  /* ---------- wiring ---------- */
+
+  el('cs-method').addEventListener('change', function (e) { state.method = e.target.value; updateOutputs(); });
+  el('cs-url').addEventListener('input', function (e) { state.url = e.target.value; updateOutputs(); });
+  el('cs-add-header').addEventListener('click', function () {
+    state.headers.push({ name: '', value: '', enabled: true });
+    renderPairs('headers', 'cs-headers-list'); updateOutputs();
+  });
+  el('cs-add-query').addEventListener('click', function () {
+    state.query.push({ name: '', value: '', enabled: true });
+    renderPairs('query', 'cs-query-list'); updateOutputs();
+  });
+  el('cs-body-type').addEventListener('change', function (e) { state.bodyType = e.target.value; renderBody(); updateOutputs(); });
+  el('cs-body-input').addEventListener('input', function (e) {
+    state.body = e.target.value;
+    if (state.bodyType === 'none' && state.body.trim()) state.bodyType = 'raw';
+    updateOutputs();
+  });
+  el('cs-auth-type').addEventListener('change', function (e) {
+    var keep = state.auth;
+    state.auth = L.emptyRequest().auth;
+    state.auth.type = e.target.value;
+    if (state.auth.type === keep.type) state.auth = keep;
+    renderAuth(); updateOutputs();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (btn) {
+    btn.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = btn.getAttribute('data-tab');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-panel]'), function (p) {
+        p.classList.toggle('hidden', p.getAttribute('data-panel') !== tab);
+      });
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-export]'), function (btn) {
+    btn.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-export]'), function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentExport = btn.getAttribute('data-export');
+      updateOutputs();
+    });
+  });
+
+  el('cs-copy-curl').addEventListener('click', function (e) {
+    copyText(L.buildCurl(state), e.target);
+  });
+  el('cs-copy-export').addEventListener('click', function (e) {
+    copyText(exportCode(currentExport), e.target);
+  });
+  el('cs-clear-all').addEventListener('click', function () {
+    state = L.emptyRequest(); varValues = {}; lastVarKey = null;
+    el('cs-reverse-input').value = ''; el('cs-reverse-msg').textContent = '';
+    el('cs-share-wrap').classList.add('hidden');
+    renderAll();
+  });
+
+  el('cs-reverse-parse').addEventListener('click', function () {
+    var res = L.parseCurl(el('cs-reverse-input').value);
+    var msg = el('cs-reverse-msg');
+    if (!res.ok) {
+      msg.innerHTML = '<span class="text-red-400">' + esc(res.error) + '</span>';
+      return;
+    }
+    state = res.request; varValues = {}; lastVarKey = null;
+    renderAll();
+    var note = res.notes.length ? ' <span class="text-slate-500">(' + esc(res.notes.join(' · ')) + ')</span>' : '';
+    msg.innerHTML = '<span class="text-emerald-400">✓ Parsed into the form.</span>' + note;
+  });
+
+  el('cs-reverse-sample').addEventListener('click', function () {
+    state = L.applyPreset(L.emptyRequest(), 'bearer');
+    state.method = 'POST';
+    state.url = 'https://{{HOST}}/v1/users?page=2&limit=25';
+    state.bodyType = 'json';
+    state.body = '{\n  "name": "{{USER_NAME}}",\n  "role": "admin"\n}';
+    state.auth.token = '{{TOKEN}}';
+    state.query = [];
+    lastVarKey = null; varValues = {};
+    renderAll();
+  });
+
+  el('cs-share-btn').addEventListener('click', function (e) {
+    var code = L.encodeShare(state);
+    var base = window.location.href.split('#')[0];
+    var link = base + '#r=' + code;
+    el('cs-share-link').value = link;
+    el('cs-share-wrap').classList.remove('hidden');
+    copyText(link, e.target, 'Link copied!');
+  });
+  el('cs-copy-share').addEventListener('click', function (e) {
+    copyText(el('cs-share-link').value, e.target);
+  });
+
+  el('cs-vars-apply').addEventListener('click', function () {
+    var resolved = L.applyVariables(state, varValues);
+    var pre = el('cs-vars-preview');
+    pre.textContent = L.buildCurl(resolved);
+    pre.classList.remove('hidden');
+  });
+
+  /* ---------- init ---------- */
+  renderPresets();
+  renderAll();
+  if (window.location.hash.indexOf('#r=') === 0) {
+    var res = L.decodeShare(window.location.hash.slice(3));
+    if (res.ok) { state = res.request; lastVarKey = null; varValues = {}; renderAll(); }
+  }
+})();
+</script>
+</body>
+</html>
