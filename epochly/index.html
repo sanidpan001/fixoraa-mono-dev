@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/epochly/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Epochly — Unix Timestamp Converter & Discord Timestamp Generator</title>
+<meta name="description" content="Epochly converts Unix timestamps to human-readable dates and back in seconds, milliseconds, microseconds and nanoseconds. Auto-detects units, batch-converts log timestamps, generates Discord <t:...> tags with live preview, and counts down to Y2K38. Free, unlimited, no signup.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: { term: '#0B0F14', panel: '#10161D', phosphor: '#00E676', amberx: '#FFB300', dimline: '#1E2A36' },
+      fontFamily: { mono: ['"JetBrains Mono"','ui-monospace','SFMono-Regular','Menlo','Consolas','monospace'] }
+    }
+  }
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#0B0F14; }
+  .scanlines::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.05;
+    background:repeating-linear-gradient(0deg,#00E676 0 1px,transparent 1px 3px);}
+  .glow{text-shadow:0 0 18px rgba(0,230,118,.55),0 0 42px rgba(0,230,118,.25);}
+  .glow-amber{text-shadow:0 0 18px rgba(255,179,0,.5);}
+  .blink{animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .term-panel{background:#10161D;border:1px solid #1E2A36;border-radius:.75rem;box-shadow:0 0 0 1px rgba(0,230,118,.04),0 12px 40px -18px rgba(0,230,118,.15);}
+  .term-panel:hover{border-color:rgba(0,230,118,.28);}
+  .prompt{color:#00E676;}
+  .tick{font-variant-numeric:tabular-nums;}
+  input,select,textarea{color-scheme:dark;}
+  .field{background:#0B0F14;border:1px solid #2A3A4A;border-radius:.5rem;color:#E2E8F0;}
+  .field:focus{outline:none;border-color:#00E676;box-shadow:0 0 0 3px rgba(0,230,118,.15);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:#0B0F14;}
+  ::-webkit-scrollbar-thumb{background:#1E2A36;border-radius:6px;border:2px solid #0B0F14;}
+  ::-webkit-scrollbar-thumb:hover{background:#00E676;}
+  .style-pill input{display:none;}
+  .style-pill span{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .7rem;border:1px solid #2A3A4A;border-radius:.5rem;cursor:pointer;font-size:.8rem;color:#94A3B8;transition:all .15s;}
+  .style-pill input:checked+span{border-color:#00E676;color:#00E676;background:rgba(0,230,118,.08);box-shadow:0 0 12px rgba(0,230,118,.2);}
+  .style-pill span:hover{border-color:#00E676;color:#E2E8F0;}
+  .seg-btn{padding:.35rem .9rem;border:1px solid #2A3A4A;font-size:.75rem;letter-spacing:.08em;color:#94A3B8;cursor:pointer;background:transparent;}
+  .seg-btn.active{background:rgba(0,230,118,.12);color:#00E676;border-color:#00E676;}
+  table.epoch-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+  table.epoch-table th{text-align:left;padding:.6rem .75rem;color:#FFB300;font-weight:700;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #2A3A4A;white-space:nowrap;}
+  table.epoch-table td{padding:.6rem .75rem;border-bottom:1px solid #16202B;color:#CBD5E1;vertical-align:top;}
+  table.epoch-table tr:last-child td{border-bottom:none;}
+  table.epoch-table tbody tr{transition:background .12s;}
+  table.epoch-table tbody tr:hover{background:rgba(0,230,118,.05);}
+  .copy-btn{font-size:.68rem;letter-spacing:.06em;padding:.28rem .6rem;border:1px solid #2A3A4A;border-radius:.375rem;color:#94A3B8;background:transparent;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .copy-btn:hover{border-color:#00E676;color:#00E676;}
+  .copy-btn.copied{border-color:#00E676;color:#00E676;background:rgba(0,230,118,.1);}
+  .faq-item{border:1px solid #1E2A36;border-radius:.6rem;background:#10161D;}
+  .faq-item summary{cursor:pointer;list-style:none;}
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .article-body h2{color:#00E676;font-weight:800;font-size:1.35rem;margin:2.2rem 0 .8rem;letter-spacing:-.01em;}
+  .article-body h3{color:#FFB300;font-weight:700;font-size:1.05rem;margin:1.6rem 0 .6rem;}
+  .article-body p{color:#B6C2CF;line-height:1.8;margin-bottom:1rem;font-size:.95rem;}
+  .article-body ul,.article-body ol{color:#B6C2CF;line-height:1.8;margin:0 0 1rem 1.4rem;font-size:.95rem;}
+  .article-body li{margin-bottom:.4rem;}
+  .article-body code{background:#0B0F14;border:1px solid #2A3A4A;color:#00E676;padding:.1rem .4rem;border-radius:.3rem;font-size:.85em;}
+  .article-body strong{color:#E2E8F0;}
+  .discord-msg{background:#1E1F22;border-radius:.5rem;}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question","name": "What is a Unix timestamp?","acceptedAnswer": {"@type": "Answer","text": "A Unix timestamp (also called epoch time or POSIX time) is the number of seconds that have elapsed since 00:00:00 UTC on 1 January 1970, not counting leap seconds. For example, 1700000000 corresponds to 14 November 2023. Timestamps are stored as plain integers, which makes them timezone-independent, compact, and easy to compare or sort — which is why APIs, databases, log files and file systems use them everywhere."}},
+    {"@type": "Question","name": "How do I know if my timestamp is in seconds or milliseconds?","acceptedAnswer": {"@type": "Answer","text": "Count the digits. A 10-digit number (like 1767225600) is seconds; 13 digits (like 1767225600000) is milliseconds; 16 digits is microseconds; 19 digits is nanoseconds. A quick sanity check: 10-digit values near 1.7–1.8 billion mean dates around 2024–2027. If your 13-digit value converts to a date in the year 50,000+, you treated milliseconds as seconds — divide by 1,000. Epochly auto-detects the unit from digit length so you rarely need to think about it."}},
+    {"@type": "Question","name": "How do I convert an epoch timestamp to a date?","acceptedAnswer": {"@type": "Answer","text": "Paste the timestamp into Epochly's converter and it is detected and converted instantly to UTC, your local time, and ISO 8601. Programmatically: in JavaScript use new Date(timestamp * 1000) for seconds or new Date(timestamp) for milliseconds; in Python use datetime.fromtimestamp(ts, tz=timezone.utc); in most SQL dialects use FROM_UNIXTIME(ts). Always confirm whether your value is seconds or milliseconds first — that is the single most common conversion mistake."}},
+    {"@type": "Question","name": "How do Discord timestamp tags work?","acceptedAnswer": {"@type": "Answer","text": "Discord renders <t:UNIX_TIMESTAMP:STYLE> tags as dates in each viewer's own timezone. Replace UNIX_TIMESTAMP with epoch seconds and STYLE with one of t (short time), T (long time), d (short date), D (long date), f (short date/time, the default), F (long date/time) or R (relative, e.g. '2 hours ago'). Epochly's Discord generator builds the tag and shows a live preview of exactly how it will look for every style."}},
+    {"@type": "Question","name": "What is the Y2K38 problem?","acceptedAnswer": {"@type": "Answer","text": "Many older systems store Unix time in a signed 32-bit integer, whose maximum value is 2,147,483,647 — corresponding to 03:14:07 UTC on 19 January 2038. One second later the counter overflows to a negative number and dates jump back to 1901. Modern 64-bit systems are unaffected, but embedded devices, old databases and legacy file formats may still break. Epochly includes a live countdown to the Y2K38 rollover so you can watch it approach."}},
+    {"@type": "Question","name": "Why is my converted timestamp off by a few hours?","acceptedAnswer": {"@type": "Answer","text": "Almost always a timezone issue. Unix timestamps are defined in UTC, but many tools display the result in your computer's local timezone. A 5-hour-30-minute offset for a user in India (IST = UTC+5:30) is expected and correct — the timestamp itself is fine. Compare the UTC output rather than the local one when debugging, and make sure date inputs are interpreted in the timezone you intend (Epochly lets you choose UTC or local when converting dates to timestamps). Daylight-saving transitions can add a further one-hour surprise twice a year."}}
+  ]
+}
+</script>
+</head>
+<body id="top" class="scanlines bg-term text-slate-200 font-mono antialiased">
+
+<!-- ============ STICKY HEADER ============ -->
+<header class="sticky top-0 z-50 bg-term/95 backdrop-blur border-b border-phosphor/20">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="text-xl sm:text-2xl font-extrabold tracking-tight text-phosphor glow">Epochly<span class="text-amberx blink">_</span></a>
+    <nav class="flex items-center gap-5 sm:gap-8 text-sm">
+      <a href="#top" class="text-slate-300 hover:text-phosphor transition-colors">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-phosphor transition-colors">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ LIVE CLOCK HERO ============ -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-6 text-center">
+  <p class="text-xs sm:text-sm text-slate-500 mb-3"><span class="prompt">$</span> date +%s <span class="text-slate-600"># — the current Unix timestamp, ticking live</span></p>
+  <div id="hero-seconds" class="tick text-phosphor glow font-extrabold tracking-tight leading-none text-[13vw] sm:text-7xl md:text-8xl select-all">—</div>
+  <div class="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs sm:text-sm text-slate-400">
+    <span>ms <span id="hero-ms" class="tick text-slate-200">—</span></span>
+    <span>UTC <span id="hero-utc" class="tick text-slate-200">—</span></span>
+    <span>local <span id="hero-local" class="tick text-slate-200">—</span></span>
+  </div>
+  <div class="mt-5 flex items-center justify-center gap-3">
+    <button data-copy-target="hero-seconds" class="copy-btn">COPY SECONDS</button>
+    <button data-copy-target="hero-ms" class="copy-btn">COPY MS</button>
+  </div>
+</section>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOOL ============ -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-100"><span class="prompt">&gt;_</span> Timestamp <span class="text-phosphor">Console</span></h1>
+    <span class="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] uppercase text-phosphor border border-phosphor/50 rounded-full px-4 py-1.5 bg-phosphor/5">
+      <span class="w-2 h-2 rounded-full bg-phosphor blink"></span> Unlimited Free Usage
+    </span>
+  </div>
+  <p class="text-slate-400 text-sm mb-8 max-w-3xl">Bidirectional epoch converter with automatic unit detection, batch log conversion, a Discord <span class="text-phosphor">&lt;t:…&gt;</span> tag studio, and a live Y2K38 countdown. No signup, no paywall, no watermark — everything runs in your browser.</p>
+
+  <!-- ===== BIDIRECTIONAL CONVERSION PANES ===== -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+
+    <!-- Pane A: timestamp -> date -->
+    <section class="term-panel p-5 sm:p-6" aria-label="Timestamp to date converter">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="text-lg font-bold text-slate-100"><span class="prompt">$</span> epoch <span class="text-slate-500">→</span> date</h2>
+        <span id="unit-badge" class="text-[11px] font-bold tracking-wider uppercase px-2.5 py-1 rounded border border-amberx/60 text-amberx glow-amber">auto: —</span>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Paste any timestamp — seconds, ms, µs or ns are auto-detected by digit length.</p>
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <input id="ts-input" type="text" inputmode="numeric" placeholder="e.g. 1767225600 or 1767225600000"
+               class="field flex-1 px-4 py-3 text-base tick" autocomplete="off" spellcheck="false">
+        <select id="unit-override" class="field px-3 py-3 text-sm sm:w-40" aria-label="Unit override">
+          <option value="auto">Auto-detect</option>
+          <option value="s">Seconds</option>
+          <option value="ms">Milliseconds</option>
+          <option value="us">Microseconds</option>
+          <option value="ns">Nanoseconds</option>
+        </select>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button id="ts-convert" class="px-5 py-2.5 bg-phosphor text-term font-bold text-sm rounded-md hover:brightness-110 active:scale-95 transition">CONVERT</button>
+        <button id="ts-now" class="copy-btn !py-2.5 !px-4">USE NOW</button>
+        <button id="ts-clear" class="copy-btn !py-2.5 !px-4">CLEAR</button>
+      </div>
+      <div id="ts-error" class="hidden text-sm text-red-400 border border-red-400/40 bg-red-400/5 rounded-md px-3 py-2 mb-4"></div>
+      <dl id="ts-results" class="space-y-2.5 text-sm opacity-40">
+        <div class="flex items-start justify-between gap-3"><dt class="text-slate-500 shrink-0 w-24">UTC</dt><dd id="r-utc" class="tick text-slate-200 text-right break-all">—</dd></div>
+        <div class="flex items-start justify-between gap-3"><dt class="text-slate-500 shrink-0 w-24">Local <span class="text-slate-600">(you)</span></dt><dd id="r-local" class="tick text-slate-200 text-right break-all">—</dd></div>
+        <div class="flex items-start justify-between gap-3"><dt class="text-slate-500 shrink-0 w-24">ISO 8601</dt><dd id="r-iso" class="tick text-slate-200 text-right break-all select-all">—</dd></div>
+        <div class="flex items-start justify-between gap-3"><dt class="text-slate-500 shrink-0 w-24">Relative</dt><dd id="r-rel" class="text-amberx text-right">—</dd></div>
+        <div class="flex items-start justify-between gap-3"><dt class="text-slate-500 shrink-0 w-24">Day</dt><dd id="r-day" class="text-slate-200 text-right">—</dd></div>
+      </dl>
+      <div class="mt-4 flex gap-2">
+        <button data-copy-target="r-iso" class="copy-btn">COPY ISO</button>
+        <button data-copy-target="r-utc" class="copy-btn">COPY UTC</button>
+      </div>
+    </section>
+
+    <!-- Pane B: date -> timestamp -->
+    <section class="term-panel p-5 sm:p-6" aria-label="Date to timestamp converter">
+      <h2 class="text-lg font-bold text-slate-100 mb-1"><span class="prompt">$</span> date <span class="text-slate-500">→</span> epoch</h2>
+      <p class="text-xs text-slate-500 mb-4">Pick a date &amp; time, choose how to interpret it, get all four units.</p>
+      <input id="dt-input" type="datetime-local" step="1" class="field w-full px-4 py-3 text-base mb-3">
+      <div class="flex items-center gap-3 mb-4 text-xs text-slate-400">
+        <span class="text-slate-500">Interpret input as:</span>
+        <div class="flex rounded-md overflow-hidden border border-dimline">
+          <button id="tz-local" class="seg-btn active">LOCAL</button>
+          <button id="tz-utc" class="seg-btn">UTC</button>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button id="dt-convert" class="px-5 py-2.5 bg-phosphor text-term font-bold text-sm rounded-md hover:brightness-110 active:scale-95 transition">CONVERT</button>
+        <button id="dt-now" class="copy-btn !py-2.5 !px-4">USE NOW</button>
+      </div>
+      <div id="dt-error" class="hidden text-sm text-red-400 border border-red-400/40 bg-red-400/5 rounded-md px-3 py-2 mb-4"></div>
+      <dl id="dt-results" class="space-y-2.5 text-sm opacity-40">
+        <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Seconds <span class="text-slate-600">(10-digit)</span></dt><dd class="flex items-center gap-2"><code id="o-s" class="tick text-phosphor select-all">—</code><button data-copy-target="o-s" class="copy-btn">COPY</button></dd></div>
+        <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Milliseconds <span class="text-slate-600">(13-digit)</span></dt><dd class="flex items-center gap-2"><code id="o-ms" class="tick text-phosphor select-all">—</code><button data-copy-target="o-ms" class="copy-btn">COPY</button></dd></div>
+        <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Microseconds <span class="text-slate-600">(16-digit)</span></dt><dd class="flex items-center gap-2"><code id="o-us" class="tick text-phosphor select-all break-all text-right">—</code><button data-copy-target="o-us" class="copy-btn">COPY</button></dd></div>
+        <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Nanoseconds <span class="text-slate-600">(19-digit)</span></dt><dd class="flex items-center gap-2"><code id="o-ns" class="tick text-phosphor select-all break-all text-right">—</code><button data-copy-target="o-ns" class="copy-btn">COPY</button></dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <!-- ===== BATCH MODE ===== -->
+  <section class="term-panel p-5 sm:p-6 mb-6" aria-label="Batch timestamp converter">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+      <h2 class="text-lg font-bold text-slate-100"><span class="prompt">$</span> batch <span class="text-slate-500">--logs</span></h2>
+      <span class="text-[11px] text-slate-500">one timestamp per line · units auto-detected per line</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-4">Paste server logs or a column of epoch values — every line is converted to a readable UTC row.</p>
+    <textarea id="batch-input" rows="5" placeholder="1767225600&#10;1767225600000&#10;1699999999123456&#10;1699999999123456789"
+              class="field w-full px-4 py-3 text-sm tick mb-3" spellcheck="false"></textarea>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button id="batch-run" class="px-5 py-2.5 bg-phosphor text-term font-bold text-sm rounded-md hover:brightness-110 active:scale-95 transition">CONVERT ALL</button>
+      <button id="batch-sample" class="copy-btn !py-2.5 !px-4">LOAD SAMPLE</button>
+      <button id="batch-clear" class="copy-btn !py-2.5 !px-4">CLEAR</button>
+      <button id="batch-copy" class="copy-btn !py-2.5 !px-4 hidden">COPY TABLE</button>
+    </div>
+    <div id="batch-error" class="hidden text-sm text-red-400 border border-red-400/40 bg-red-400/5 rounded-md px-3 py-2 mb-4"></div>
+    <div class="overflow-x-auto rounded-md border border-dimline">
+      <table class="epoch-table" id="batch-table">
+        <thead><tr><th>#</th><th>Input</th><th>Unit</th><th>UTC date</th><th>ISO 8601</th></tr></thead>
+        <tbody id="batch-body"><tr><td colspan="5" class="!text-slate-600 !text-center py-6">No rows yet — paste timestamps above and hit CONVERT ALL.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== DISCORD TIMESTAMP STUDIO ===== -->
+  <section class="term-panel p-5 sm:p-6 mb-6" aria-label="Discord timestamp generator">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+      <h2 class="text-lg font-bold text-slate-100"><span class="prompt">$</span> discord <span class="text-slate-500">--tag</span></h2>
+      <span class="text-[11px] text-slate-500">renders in each viewer's own timezone on Discord</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-4">Pick a moment, choose a style — copy the <span class="text-phosphor">&lt;t:…&gt;</span> tag straight into any Discord message.</p>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <input id="dc-input" type="datetime-local" step="1" class="field flex-1 px-4 py-3 text-base">
+          <button id="dc-now" class="copy-btn !py-3 !px-4 shrink-0">NOW</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-4" role="radiogroup" aria-label="Discord timestamp style">
+          <label class="style-pill"><input type="radio" name="dc-style" value="t"><span><b class="text-phosphor">t</b> short time</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="T"><span><b class="text-phosphor">T</b> long time</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="d"><span><b class="text-phosphor">d</b> short date</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="D"><span><b class="text-phosphor">D</b> long date</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="f" checked><span><b class="text-phosphor">f</b> short date/time</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="F"><span><b class="text-phosphor">F</b> long date/time</span></label>
+          <label class="style-pill"><input type="radio" name="dc-style" value="R"><span><b class="text-amberx">R</b> relative</span></label>
+        </div>
+        <div class="bg-term border border-dimline rounded-md p-4 mb-3">
+          <p class="text-[10px] tracking-[0.18em] uppercase text-slate-500 mb-2">Generated tag</p>
+          <code id="dc-tag" class="tick text-phosphor text-base sm:text-lg break-all select-all">&lt;t:…:f&gt;</code>
+        </div>
+        <button id="dc-copy" class="px-5 py-2.5 bg-amberx text-term font-bold text-sm rounded-md hover:brightness-110 active:scale-95 transition">COPY DISCORD TAG</button>
+        <div id="dc-error" class="hidden mt-3 text-sm text-red-400 border border-red-400/40 bg-red-400/5 rounded-md px-3 py-2"></div>
+      </div>
+      <div>
+        <p class="text-[10px] tracking-[0.18em] uppercase text-slate-500 mb-2">Live preview <span class="normal-case tracking-normal">(as Discord would render it)</span></p>
+        <div class="discord-msg p-4">
+          <div class="flex gap-3">
+            <div class="w-10 h-10 rounded-full bg-phosphor/20 border border-phosphor/40 flex items-center justify-center text-phosphor font-bold shrink-0">E</div>
+            <div class="min-w-0">
+              <p class="text-sm"><span class="text-phosphor font-semibold">Epochly Bot</span> <span class="text-[10px] bg-phosphor/20 text-phosphor px-1.5 py-0.5 rounded ml-1 align-middle">BOT</span> <span id="dc-preview-time" class="text-xs text-slate-500 ml-1">today</span></p>
+              <p class="text-[15px] text-slate-200 mt-0.5">The event starts <span id="dc-preview" class="bg-phosphor/15 text-phosphor px-1 rounded font-medium">—</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-slate-500 leading-relaxed">
+          <p class="mb-1 text-slate-400 font-bold">All 7 styles, same moment:</p>
+          <div id="dc-all-styles" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 tick"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Y2K38 + FAMOUS EPOCHS ===== -->
+  <div class="grid lg:grid-cols-5 gap-6 mb-2">
+    <section class="term-panel p-5 sm:p-6 lg:col-span-2" aria-label="Y2K38 countdown">
+      <h2 class="text-lg font-bold text-slate-100 mb-1"><span class="prompt">$</span> y2k38 <span class="text-slate-500">--countdown</span></h2>
+      <p class="text-xs text-slate-500 mb-4">Signed 32-bit time ends at <code class="text-amberx">2147483647</code><br>→ 2038-01-19 03:14:07 UTC</p>
+      <div class="grid grid-cols-4 gap-2 text-center mb-4">
+        <div class="bg-term border border-dimline rounded-md py-3"><div id="cd-d" class="tick text-2xl sm:text-3xl font-extrabold text-amberx glow-amber">—</div><div class="text-[10px] tracking-[0.18em] text-slate-500 mt-1">DAYS</div></div>
+        <div class="bg-term border border-dimline rounded-md py-3"><div id="cd-h" class="tick text-2xl sm:text-3xl font-extrabold text-amberx glow-amber">—</div><div class="text-[10px] tracking-[0.18em] text-slate-500 mt-1">HOURS</div></div>
+        <div class="bg-term border border-dimline rounded-md py-3"><div id="cd-m" class="tick text-2xl sm:text-3xl font-extrabold text-amberx glow-amber">—</div><div class="text-[10px] tracking-[0.18em] text-slate-500 mt-1">MIN</div></div>
+        <div class="bg-term border border-dimline rounded-md py-3"><div id="cd-s" class="tick text-2xl sm:text-3xl font-extrabold text-amberx glow-amber">—</div><div class="text-[10px] tracking-[0.18em] text-slate-500 mt-1">SEC</div></div>
+      </div>
+      <div class="h-2 rounded-full bg-term border border-dimline overflow-hidden mb-2">
+        <div id="cd-bar" class="h-full bg-gradient-to-r from-phosphor to-amberx rounded-full" style="width:0%"></div>
+      </div>
+      <p class="text-[11px] text-slate-500"><span id="cd-pct" class="text-slate-300 tick">—</span> of the 32-bit era elapsed since 1970</p>
+    </section>
+
+    <section class="term-panel p-5 sm:p-6 lg:col-span-3" aria-label="Famous epochs reference">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h2 class="text-lg font-bold text-slate-100"><span class="prompt">$</span> epochs <span class="text-slate-500">--famous</span></h2>
+        <span class="text-[11px] text-slate-500">click a row to load it into the converter</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="epoch-table">
+          <thead><tr><th>Timestamp</th><th>UTC date</th><th>Event</th></tr></thead>
+          <tbody id="famous-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEO ARTICLE + FAQS ============ -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pb-10">
+  <article id="seo-article" class="article-body term-panel p-5 sm:p-8">
+    <p class="text-[11px] tracking-[0.2em] uppercase text-amberx mb-2">// knowledge base</p>
+    <h1 class="!text-phosphor !text-2xl sm:!text-3xl font-extrabold mb-4 mt-0" style="margin-top:0">Unix Timestamps: The Complete Guide to Epoch Time</h1>
+
+    <h2>What is a Unix timestamp?</h2>
+    <p>A <strong>Unix timestamp</strong> — also called <strong>epoch time</strong> or <strong>POSIX time</strong> — is the number of seconds that have elapsed since <strong>00:00:00 UTC on 1 January 1970</strong>, a moment known as the <strong>Unix epoch</strong>. It is stored as a plain integer, with no timezone, no formatting, and no ambiguity. For example, <code>1767225600</code> always means the same instant everywhere on Earth: midnight UTC on 1 January 2026.</p>
+    <p>This simplicity is exactly why timestamps dominate computing. Comparing two moments is a single integer comparison. Sorting events is a numeric sort. Storing a date costs 4–8 bytes instead of a 25-character string. APIs, databases, log files, file systems, JWT tokens, and caching headers all speak epoch time because it removes an entire category of parsing bugs. When you see a 10-digit number like <code>1700000000</code> in a JSON response, you are looking at 14 November 2023 — and a converter like the one above turns it into a human date in one step.</p>
+
+    <h2>Why 1 January 1970?</h2>
+    <p>The date was chosen by the engineers building Unix at Bell Labs in the early 1970s. They needed a convenient round starting point for timekeeping, and 1 January 1970 was recent enough that 32-bit counters would last decades, yet early enough to cover the useful history of computing. The choice stuck: the C standard library, POSIX, and eventually nearly every operating system and programming language adopted the same origin. Today the epoch is baked into JavaScript's <code>Date</code>, Python's <code>time</code> module, Java's <code>Instant</code>, Go's <code>time.Unix</code>, and SQL functions like <code>FROM_UNIXTIME()</code>. Changing it now would break the world, so 1970-01-01 is effectively permanent.</p>
+
+    <h2>Seconds, milliseconds, microseconds, nanoseconds</h2>
+    <p>The original definition counts <strong>seconds</strong>, producing 10-digit values (currently around 1.78 billion). But modern systems often need finer precision, so the same epoch is also counted in smaller units:</p>
+    <ul>
+      <li><strong>Seconds (s)</strong> — 10 digits, e.g. <code>1767225600</code>. The classic Unix timestamp. Used by PHP's <code>time()</code>, Python's <code>time.time()</code>, and most REST APIs.</li>
+      <li><strong>Milliseconds (ms)</strong> — 13 digits, e.g. <code>1767225600000</code>. JavaScript's <code>Date.now()</code> returns this, so web developers meet it constantly.</li>
+      <li><strong>Microseconds (µs)</strong> — 16 digits, e.g. <code>1767225600000000</code>. Common in databases (MySQL <code>DATETIME(6)</code>), PHP's <code>microtime(true)</code>, and high-frequency trading logs.</li>
+      <li><strong>Nanoseconds (ns)</strong> — 19 digits, e.g. <code>1767225600000000000</code>. Used by Go, Java's <code>System.nanoTime</code>-adjacent APIs, and Linux's <code>clock_gettime</code>.</li>
+    </ul>
+    <p>The digit-length rule is the fastest way to identify a unit: <strong>10 → seconds, 13 → milliseconds, 16 → microseconds, 19 → nanoseconds</strong>. Epochly applies exactly this heuristic automatically, so you can paste any of the four without selecting anything. The most common bug in timestamp work is mixing seconds and milliseconds — if your date lands in the year 55,000, divide by 1,000; if it lands in 1970, multiply by 1,000.</p>
+
+    <h2>How to convert a timestamp to a date (and back)</h2>
+    <p>Converting <strong>epoch to date</strong> is a division problem; converting <strong>date to epoch</strong> is about pinning a calendar moment to the UTC timeline. In JavaScript: <code>new Date(1767225600 * 1000)</code> for seconds, or <code>new Date(1767225600000)</code> for milliseconds. In Python: <code>datetime.fromtimestamp(1767225600, tz=timezone.utc)</code>. In a terminal: <code>date -d @1767225600 -u</code> on Linux. Going the other way, JavaScript's <code>Math.floor(date.getTime() / 1000)</code> gives epoch seconds, and Python's <code>int(dt.timestamp())</code> does the same.</p>
+    <p>Two details matter. First, confirm the unit before converting — the digit rule above. Second, decide which timezone the <em>displayed</em> result should use. The timestamp itself is always UTC; only its rendering changes. Epochly shows UTC, your local time, ISO 8601, the weekday, and a relative phrase ("3 days ago") side by side so nothing is left ambiguous.</p>
+
+    <h2>The timezone trap (and how to avoid it)</h2>
+    <p>Nine out of ten "my timestamp is wrong" reports are timezone confusion, not bad data. A Unix timestamp has no timezone — it is a single point on the global timeline. The confusion appears when software <em>displays</em> it: midnight UTC on 1 January 2026 is still 31 December 2025 in New York and already morning in Tokyo. If your conversion is off by exactly your UTC offset (5:30 for India, 5:00 for US Eastern in winter), the timestamp is fine and the display timezone is the culprit.</p>
+    <p>Defensive habits: store and transmit timestamps in UTC always; convert to local time only at the final display step; when debugging, compare the UTC rendering, not the local one; and remember daylight-saving shifts can inject a one-hour surprise twice a year in regions that observe it. When Epochly converts a date <em>to</em> a timestamp, it lets you declare whether the input means local time or UTC — that single toggle eliminates the most common direction of the bug.</p>
+
+    <h2>Y2K38: the 2038 problem</h2>
+    <p>Systems that store Unix time in a <strong>signed 32-bit integer</strong> hit a wall at <code>2147483647</code> — 03:14:07 UTC on <strong>19 January 2038</strong>. One second later the counter overflows into negative numbers and clocks jump back to December 1901. It is the same class of bug as Y2K, but harder to fix because the vulnerable counters hide in embedded controllers, old file formats, legacy databases, and binary network protocols rather than in visible date fields.</p>
+    <p>Modern 64-bit operating systems, languages, and databases already use 64-bit time and are safe for billions of years. The risk sits in long-lived infrastructure: industrial controllers, automotive firmware, medical devices, and archived data formats designed decades ago. If you maintain such systems, audit every place a 32-bit <code>time_t</code> or 32-bit timestamp column appears, and migrate storage to 64-bit integers well before 2038. The live countdown above shows exactly how much runway remains.</p>
+
+    <h3>Famous epoch milestones</h3>
+    <p>Certain timestamps have become landmarks: <code>0</code> (the epoch itself, 1970-01-01), <code>1000000000</code> (the billion-second party, 2001-09-09), <code>1234567890</code> (2009-02-13), <code>1500000000</code> (2017-07-14), <code>2000000000</code> (2033-05-18), and <code>2147483647</code> (the 32-bit limit). Developers use them as test fixtures and Easter eggs; the reference table above renders each one and loads it into the converter on click.</p>
+
+    <h2>Discord timestamps: dynamic dates for every viewer</h2>
+    <p>Discord supports a special syntax — <code>&lt;t:UNIX_TIMESTAMP:STYLE&gt;</code> — that renders as a date <strong>in each reader's own timezone</strong>. Post <code>&lt;t:1767225600:F&gt;</code> and an American sees "Wednesday, December 31, 2025 7:00 PM" while an Indian sees "Thursday, January 1, 2026 5:30 AM", both correct. It is the cleanest way to announce event times to a global audience.</p>
+    <p>All seven styles: <code>t</code> short time (4:20 PM), <code>T</code> long time (4:20:30 PM), <code>d</code> short date (1/1/2026), <code>D</code> long date (January 1, 2026), <code>f</code> short date/time (the default when no style is given), <code>F</code> full date/time with weekday, and <code>R</code> relative ("in 3 days" / "2 hours ago" — it even updates live on Discord). The timestamp must be whole <strong>seconds</strong>, not milliseconds. Epochly's Discord studio builds the tag, previews every style instantly, and copies it to your clipboard.</p>
+
+    <h2>Where timestamps hide in everyday tech</h2>
+    <p>Once you recognize epoch time, you see it everywhere. HTTP cache headers (<code>Expires</code>, <code>Last-Modified</code>), JWT <code>exp</code> claims, OAuth token lifetimes, database <code>created_at</code> columns, file modification times, GPS and telemetry logs, analytics event streams, and certificate validity windows all use it. Log forensics is a major use case: paste a column of epoch values into the batch converter above and an unreadable wall of numbers becomes a readable timeline in seconds — invaluable when correlating incidents across services that log in different units.</p>
+
+    <h2>Leap seconds: the asterisk on epoch time</h2>
+    <p>Strictly, Unix time <strong>ignores leap seconds</strong>: every day is defined as exactly 86,400 seconds, and the occasional leap second inserted into UTC is simply not counted. That means Unix timestamps drift from true solar time by the accumulated leap seconds (currently 27). For everyday software this is irrelevant, but it matters for astronomy, satellite navigation, and precise scientific measurement, which use TAI or GPS time instead. If you need sub-second legal-time accuracy across leap-second boundaries, convert via a leap-second table rather than raw arithmetic.</p>
+
+    <h2>Best practices for working with epoch time</h2>
+    <ol>
+      <li><strong>Store UTC, display local.</strong> Keep one canonical integer; localize only at render time.</li>
+      <li><strong>Use 64-bit integers</strong> for storage. Never store epoch seconds in a 32-bit column in new systems.</li>
+      <li><strong>Be explicit about units</strong> in APIs — name fields <code>created_at_ms</code> or document "epoch seconds" so consumers never guess.</li>
+      <li><strong>Prefer ISO 8601 strings</strong> (<code>2026-01-01T00:00:00Z</code>) in human-facing APIs; reserve raw integers for machine-to-machine paths.</li>
+      <li><strong>Validate ranges</strong> on input: reject negative values or absurd far-future dates where they make no sense for your domain.</li>
+      <li><strong>Test the 2038 boundary</strong> if your stack touches 32-bit time anywhere, including serialized data and third-party libraries.</li>
+    </ol>
+    <p>Epoch time has survived more than five decades because it is the smallest possible honest representation of "when". Whether you are debugging a log, scheduling a Discord event for a worldwide community, or auditing a system for Y2K38, the converter above handles every unit, every direction, and every edge case — instantly, privately, and free.</p>
+  </article>
+
+  <!-- FAQs -->
+  <div class="mt-8">
+    <h2 class="text-xl font-extrabold text-slate-100 mb-4"><span class="prompt">$</span> faqs <span class="text-slate-500">--6</span></h2>
+    <div class="space-y-3" id="faq-list">
+      <details class="faq-item" open>
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">What is a Unix timestamp?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">A Unix timestamp (epoch time) is the number of seconds since 00:00:00 UTC on 1 January 1970, stored as a plain integer with no timezone. APIs, databases, logs and file systems use it because it is compact, unambiguous and trivial to compare or sort.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">How do I know if my timestamp is in seconds or milliseconds?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Count the digits: 10 digits means seconds, 13 means milliseconds, 16 means microseconds and 19 means nanoseconds. Values near 1.7–1.8 billion (10 digits) are dates around 2024–2027. Epochly auto-detects the unit from digit length automatically.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">How do I convert an epoch timestamp to a date?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Paste it into Epochly for an instant conversion to UTC, local time and ISO 8601. In code: JavaScript <code class="text-phosphor">new Date(ts * 1000)</code> for seconds, Python <code class="text-phosphor">datetime.fromtimestamp(ts, tz=timezone.utc)</code>, or Linux <code class="text-phosphor">date -d @ts -u</code>. Always confirm seconds vs milliseconds first.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">How do Discord timestamp tags work?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Discord renders <code class="text-phosphor">&lt;t:UNIX_TIMESTAMP:STYLE&gt;</code> in each viewer's own timezone. Styles are t, T, d, D, f, F and R (relative, e.g. "2 hours ago"). Use whole seconds, not milliseconds. Epochly generates the tag and previews all seven styles live.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">What is the Y2K38 problem?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Signed 32-bit Unix time maxes out at 2,147,483,647 — 03:14:07 UTC on 19 January 2038 — then overflows to 1901 dates. Modern 64-bit systems are safe, but old embedded devices, databases and file formats may break. Epochly includes a live countdown to the rollover.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="px-5 py-4 font-bold text-slate-100 text-sm flex justify-between items-center gap-3">Why is my converted timestamp off by a few hours?<span class="text-phosphor">+</span></summary>
+        <p class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Almost always timezone display, not bad data: the timestamp is UTC, but the tool showed it in your local timezone. An offset matching your UTC offset exactly (e.g. 5:30 for IST) confirms this. Compare the UTC output when debugging, and watch for daylight-saving shifts.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="border-t border-dimline">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+    <p><span class="text-phosphor font-bold">Epochly_</span> · Unix timestamp converter &amp; Discord tag studio</p>
+    <p>All conversions run 100% in your browser. Nothing is uploaded or tracked.</p>
+  </div>
+<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+
+<script id="epochly-core">
+/* EPOCHLY CORE — pure logic, zero DOM. Shared by the page and the Node test suite. */
+var Y2K38_TS = 2147483647; // max signed 32-bit unix time -> 2038-01-19T03:14:07Z
+var DISCORD_STYLES = ['t','T','d','D','f','F','R'];
+var DISCORD_STYLE_NAMES = { t:'short time', T:'long time', d:'short date', D:'long date', f:'short date/time', F:'long date/time', R:'relative' };
+
+var FAMOUS_EPOCHS = [
+  { ts: '0',          label: 'Unix epoch — time begins' },
+  { ts: '1',          label: 'One second after the epoch' },
+  { ts: '1000000000', label: 'Billion-second party' },
+  { ts: '1234567890', label: 'The famous 1234567890' },
+  { ts: '1500000000', label: '1.5 billion seconds' },
+  { ts: '1600000000', label: '1.6 billion seconds' },
+  { ts: '2000000000', label: '2 billion seconds' },
+  { ts: '2147483647', label: 'Y2K38 — max signed 32-bit' },
+  { ts: '4102444800', label: 'Year 2100 begins' }
+];
+
+function detectUnit(raw) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (!/^[+-]?\d+$/.test(s)) return null;
+  var digits = s.replace(/^[+-]/, '').replace(/^0+/, '') || '0';
+  var len = digits.length;
+  if (len <= 10) return 's';
+  if (len <= 13) return 'ms';
+  if (len <= 16) return 'us';
+  if (len <= 19) return 'ns';
+  return null;
+}
+
+function toMsBigInt(raw, unit) {
+  var n = BigInt(String(raw).trim());
+  if (unit === 's')  return n * 1000n;
+  if (unit === 'ms') return n;
+  if (unit === 'us') return n / 1000n;
+  if (unit === 'ns') return n / 1000000n;
+  throw new Error('unknown unit: ' + unit);
+}
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function formatUTC(msNum) {
+  try {
+    return new Date(msNum).toISOString();
+  } catch (e) { return 'Out of range'; }
+}
+
+function formatLocal(msNum) {
+  var d = new Date(msNum);
+  if (isNaN(d.getTime())) return 'Out of range';
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' +
+         pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+
+function weekdayName(msNum) {
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(msNum).getUTCDay()];
+}
+
+function parseTimestamp(raw, unitOverride) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (!/^[+-]?\d+$/.test(s)) {
+    return { ok: false, raw: s, unit: null, error: 'Not a valid integer timestamp.' };
+  }
+  var unit = (unitOverride && ['s','ms','us','ns'].indexOf(unitOverride) !== -1) ? unitOverride : detectUnit(s);
+  if (!unit) {
+    return { ok: false, raw: s, unit: null, error: 'Could not detect the unit — too many digits.' };
+  }
+  var ms;
+  try { ms = toMsBigInt(s, unit); }
+  catch (e) { return { ok: false, raw: s, unit: unit, error: 'Number is too large to process.' }; }
+  var msNum = Number(ms);
+  if (!isFinite(msNum) || Math.abs(msNum) > 8.64e15) {
+    return { ok: false, raw: s, unit: unit, error: 'Date is outside the representable range.' };
+  }
+  var iso = formatUTC(msNum);
+  return {
+    ok: true, raw: s, unit: unit, ms: ms, msNum: msNum,
+    iso: iso,
+    utc: iso.replace('T', ' ').replace('Z', ' UTC'),
+    local: formatLocal(msNum),
+    relative: relativeTime(msNum, Date.now()),
+    weekday: weekdayName(msNum)
+  };
+}
+
+/* Date (as ms BigInt) -> all four epoch units, returned as strings (BigInt-safe). */
+function dateToAllParts(msBig) {
+  var ms = typeof msBig === 'bigint' ? msBig : BigInt(msBig);
+  return {
+    s:  (ms / 1000n).toString(),
+    ms: ms.toString(),
+    us: (ms * 1000n).toString(),
+    ns: (ms * 1000000n).toString()
+  };
+}
+
+function discordTag(tsSec, style) {
+  var t = String(tsSec == null ? '' : tsSec).trim();
+  if (!/^[+-]?\d+$/.test(t)) throw new Error('Discord tags need whole epoch seconds.');
+  if (DISCORD_STYLES.indexOf(style) === -1) throw new Error('Unknown Discord style: ' + style);
+  return '<t:' + t + ':' + style + '>';
+}
+
+function relativeTime(fromMs, toMs) {
+  var diff = Math.round((toMs - fromMs) / 1000);
+  var future = diff > 0;
+  diff = Math.abs(diff);
+  if (diff < 5) return 'just now';
+  var units = [[31557600,'year'],[2592000,'month'],[604800,'week'],[86400,'day'],[3600,'hour'],[60,'minute'],[1,'second']];
+  for (var i = 0; i < units.length; i++) {
+    if (diff >= units[i][0]) {
+      var v = Math.floor(diff / units[i][0]);
+      var str = v + ' ' + units[i][1] + (v > 1 ? 's' : '');
+      return future ? 'in ' + str : str + ' ago';
+    }
+  }
+  return 'just now';
+}
+
+/* Approximate Discord rendering for live preview. tz: IANA name or 'UTC'. */
+function discordPreview(msNum, style, nowMs, tz) {
+  var zone = tz || 'UTC';
+  function fmt(opts) {
+    var o = { timeZone: zone };
+    for (var k in opts) o[k] = opts[k];
+    return new Intl.DateTimeFormat('en-US', o).format(new Date(msNum));
+  }
+  switch (style) {
+    case 't': return fmt({ hour: 'numeric', minute: '2-digit' });
+    case 'T': return fmt({ hour: 'numeric', minute: '2-digit', second: '2-digit' });
+    case 'd': return fmt({ month: 'numeric', day: 'numeric', year: 'numeric' });
+    case 'D': return fmt({ month: 'long', day: 'numeric', year: 'numeric' });
+    case 'f': return fmt({ month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    case 'F': return fmt({ weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    case 'R': return relativeTime(msNum, nowMs == null ? Date.now() : nowMs);
+    default: throw new Error('Unknown Discord style: ' + style);
+  }
+}
+
+/* Batch: one timestamp per line -> converted rows. */
+function batchConvert(text) {
+  var rows = [];
+  String(text == null ? '' : text).split(/\r?\n/).forEach(function (line, i) {
+    var trimmed = line.trim();
+    if (!trimmed) return;
+    var m = trimmed.match(/[+-]?\d+/);
+    if (!m) { rows.push({ line: i + 1, raw: '', unit: null, ok: false, error: 'No number found on this line.' }); return; }
+    var p = parseTimestamp(m[0], null);
+    rows.push({ line: i + 1, raw: m[0], unit: p.unit, ok: p.ok, iso: p.iso || null,
+                utc: p.utc || null, local: p.local || null, error: p.error || null });
+  });
+  return rows;
+}
+
+function y2k38Remaining(nowMs) {
+  var targetMs = Y2K38_TS * 1000;
+  var rem = targetMs - nowMs;
+  if (rem <= 0) return { passed: true, remainingMs: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
+  var totalSec = Math.floor(rem / 1000);
+  return {
+    passed: false,
+    remainingMs: rem,
+    days: Math.floor(totalSec / 86400),
+    hours: Math.floor(totalSec % 86400 / 3600),
+    minutes: Math.floor(totalSec % 3600 / 60),
+    seconds: totalSec % 60
+  };
+}
+
+function y2k38Progress(nowMs) {
+  var start = 0, end = Y2K38_TS * 1000;
+  if (nowMs <= start) return 0;
+  if (nowMs >= end) return 100;
+  return (nowMs - start) / (end - start) * 100;
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var UNIT_LABELS = { s: 'seconds', ms: 'milliseconds', us: 'microseconds', ns: 'nanoseconds' };
+
+  function show(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+  function hide(el) { el.classList.add('hidden'); }
+
+  function copyText(text, btn) {
+    function done() {
+      if (!btn) return;
+      var old = btn.textContent;
+      btn.textContent = 'COPIED ✓'; btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = old; btn.classList.remove('copied'); }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+  document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var t = $(btn.getAttribute('data-copy-target'));
+      var txt = t ? (t.textContent || '').trim() : '';
+      if (txt && txt !== '—') copyText(txt, btn);
+    });
+  });
+
+  /* ---------- live hero clock ---------- */
+  function tickHero() {
+    var now = Date.now();
+    $('hero-seconds').textContent = Math.floor(now / 1000);
+    $('hero-ms').textContent = now;
+    $('hero-utc').textContent = new Date(now).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    var d = new Date(now);
+    $('hero-local').textContent = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' +
+      pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+  tickHero(); setInterval(tickHero, 1000);
+
+  /* ---------- pane A: timestamp -> date ---------- */
+  var tsInput = $('ts-input'), unitOverride = $('unit-override');
+  function runTsConvert() {
+    var raw = tsInput.value.trim();
+    hide($('ts-error'));
+    if (!raw) {
+      $('ts-results').classList.add('opacity-40');
+      $('unit-badge').textContent = 'auto: —';
+      ['r-utc','r-local','r-iso','r-rel','r-day'].forEach(function (id) { $(id).textContent = '—'; });
+      return;
+    }
+    var ov = unitOverride.value === 'auto' ? null : unitOverride.value;
+    var p = parseTimestamp(raw, ov);
+    $('unit-badge').textContent = p.unit ? ('auto: ' + UNIT_LABELS[p.unit]) : 'auto: ?';
+    if (!p.ok) { show($('ts-error'), '⚠ ' + p.error); $('ts-results').classList.add('opacity-40'); return; }
+    $('ts-results').classList.remove('opacity-40');
+    $('r-utc').textContent = p.utc;
+    $('r-local').textContent = p.local;
+    $('r-iso').textContent = p.iso;
+    $('r-rel').textContent = p.relative;
+    $('r-day').textContent = p.weekday;
+  }
+  $('ts-convert').addEventListener('click', runTsConvert);
+  tsInput.addEventListener('input', runTsConvert);
+  unitOverride.addEventListener('change', runTsConvert);
+  $('ts-now').addEventListener('click', function () { tsInput.value = String(Math.floor(Date.now() / 1000)); runTsConvert(); });
+  $('ts-clear').addEventListener('click', function () { tsInput.value = ''; runTsConvert(); });
+
+  /* ---------- pane B: date -> timestamp ---------- */
+  var dtInput = $('dt-input'), interpretUTC = false;
+  function setTz(which) {
+    interpretUTC = (which === 'utc');
+    $('tz-utc').classList.toggle('active', interpretUTC);
+    $('tz-local').classList.toggle('active', !interpretUTC);
+    runDtConvert();
+  }
+  $('tz-local').addEventListener('click', function () { setTz('local'); });
+  $('tz-utc').addEventListener('click', function () { setTz('utc'); });
+
+  function inputToMs() {
+    var v = dtInput.value;
+    if (!v) return null;
+    var parts = v.split('T');
+    var dp = parts[0].split('-').map(Number), tp = (parts[1] || '00:00:00').split(':').map(Number);
+    if (interpretUTC) return Date.UTC(dp[0], dp[1] - 1, dp[2], tp[0] || 0, tp[1] || 0, tp[2] || 0);
+    return new Date(dp[0], dp[1] - 1, dp[2], tp[0] || 0, tp[1] || 0, tp[2] || 0).getTime();
+  }
+  function runDtConvert() {
+    hide($('dt-error'));
+    var ms = inputToMs();
+    if (ms == null || isNaN(ms)) {
+      $('dt-results').classList.add('opacity-40');
+      ['o-s','o-ms','o-us','o-ns'].forEach(function (id) { $(id).textContent = '—'; });
+      return;
+    }
+    var parts = dateToAllParts(BigInt(ms));
+    $('dt-results').classList.remove('opacity-40');
+    $('o-s').textContent = parts.s; $('o-ms').textContent = parts.ms;
+    $('o-us').textContent = parts.us; $('o-ns').textContent = parts.ns;
+  }
+  $('dt-convert').addEventListener('click', runDtConvert);
+  dtInput.addEventListener('input', runDtConvert);
+  $('dt-now').addEventListener('click', function () {
+    var d = new Date();
+    function p2(n){ return (n<10?'0':'')+n; }
+    dtInput.value = d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate()) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+    runDtConvert();
+  });
+
+  /* ---------- batch mode ---------- */
+  var BATCH_SAMPLE = '1767225600\n1767225600000\n1699999999123456\n1699999999123456789\n0\n-86400';
+  $('batch-sample').addEventListener('click', function () { $('batch-input').value = BATCH_SAMPLE; runBatch(); });
+  $('batch-clear').addEventListener('click', function () {
+    $('batch-input').value = '';
+    $('batch-body').innerHTML = '<tr><td colspan="5" class="!text-slate-600 !text-center py-6">No rows yet — paste timestamps above and hit CONVERT ALL.</td></tr>';
+    $('batch-copy').classList.add('hidden'); hide($('batch-error'));
+  });
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function runBatch() {
+    hide($('batch-error'));
+    var rows = batchConvert($('batch-input').value);
+    if (!rows.length) {
+      show($('batch-error'), '⚠ Paste at least one timestamp first (try LOAD SAMPLE).');
+      return;
+    }
+    var html = rows.map(function (r) {
+      if (!r.ok) return '<tr><td class="text-slate-600">' + r.line + '</td><td class="tick text-red-400">' + esc(r.raw || '—') + '</td><td colspan="3" class="text-red-400/80">⚠ ' + esc(r.error) + '</td></tr>';
+      return '<tr><td class="text-slate-600">' + r.line + '</td><td class="tick text-phosphor">' + esc(r.raw) + '</td>' +
+        '<td class="text-amberx">' + esc(r.unit) + '</td><td class="tick">' + esc(r.utc) + '</td>' +
+        '<td class="tick text-slate-500">' + esc(r.iso) + '</td></tr>';
+    }).join('');
+    $('batch-body').innerHTML = html;
+    $('batch-copy').classList.remove('hidden');
+  }
+  $('batch-run').addEventListener('click', runBatch);
+  $('batch-copy').addEventListener('click', function (e) {
+    var rows = batchConvert($('batch-input').value).filter(function (r) { return r.ok; });
+    var tsv = 'input\tunit\tutc\tiso\n' + rows.map(function (r) { return r.raw + '\t' + r.unit + '\t' + r.utc + '\t' + r.iso; }).join('\n');
+    copyText(tsv, e.currentTarget);
+  });
+
+  /* ---------- discord studio ---------- */
+  var dcInput = $('dc-input');
+  function dcMs() {
+    var v = dcInput.value;
+    if (!v) return null;
+    var parts = v.split('T');
+    var dp = parts[0].split('-').map(Number), tp = (parts[1] || '00:00:00').split(':').map(Number);
+    return new Date(dp[0], dp[1] - 1, dp[2], tp[0] || 0, tp[1] || 0, tp[2] || 0).getTime();
+  }
+  function dcStyle() {
+    var el = document.querySelector('input[name="dc-style"]:checked');
+    return el ? el.value : 'f';
+  }
+  function runDiscord() {
+    hide($('dc-error'));
+    var ms = dcMs();
+    if (ms == null || isNaN(ms)) {
+      $('dc-tag').textContent = '<t:…:' + dcStyle() + '>';
+      $('dc-preview').textContent = '—';
+      return;
+    }
+    var sec = Math.floor(ms / 1000);
+    var style = dcStyle();
+    try {
+      $('dc-tag').textContent = discordTag(sec, style);
+    } catch (e) { show($('dc-error'), '⚠ ' + e.message); return; }
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    $('dc-preview').textContent = discordPreview(ms, style, Date.now(), tz);
+    var now = Date.now();
+    $('dc-all-styles').innerHTML = DISCORD_STYLES.map(function (s) {
+      return '<div class="flex justify-between gap-2"><span class="text-amberx font-bold w-16">:' + s + ' <span class="text-slate-600 font-normal">' + DISCORD_STYLE_NAMES[s] + '</span></span><span class="text-slate-300 text-right">' + esc(discordPreview(ms, s, now, tz)) + '</span></div>';
+    }).join('');
+    var d = new Date(ms);
+    $('dc-preview-time').textContent = 'Today at ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+  dcInput.addEventListener('input', runDiscord);
+  document.querySelectorAll('input[name="dc-style"]').forEach(function (r) { r.addEventListener('change', runDiscord); });
+  $('dc-now').addEventListener('click', function () {
+    var d = new Date();
+    function p2(n){ return (n<10?'0':'')+n; }
+    dcInput.value = d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate()) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+    runDiscord();
+  });
+  $('dc-copy').addEventListener('click', function (e) {
+    var txt = $('dc-tag').textContent.trim();
+    if (txt.indexOf('…') !== -1) { show($('dc-error'), '⚠ Pick a date & time first.'); return; }
+    copyText(txt, e.currentTarget);
+  });
+
+  /* ---------- y2k38 countdown ---------- */
+  function tickCd() {
+    var r = y2k38Remaining(Date.now());
+    if (r.passed) {
+      ['cd-d','cd-h','cd-m','cd-s'].forEach(function (id) { $(id).textContent = '0'; });
+      $('cd-pct').textContent = '100%';
+      $('cd-bar').style.width = '100%';
+      return;
+    }
+    $('cd-d').textContent = r.days.toLocaleString('en-US');
+    $('cd-h').textContent = pad2(r.hours);
+    $('cd-m').textContent = pad2(r.minutes);
+    $('cd-s').textContent = pad2(r.seconds);
+    var pct = y2k38Progress(Date.now());
+    $('cd-pct').textContent = pct.toFixed(4) + '%';
+    $('cd-bar').style.width = pct + '%';
+  }
+  tickCd(); setInterval(tickCd, 1000);
+
+  /* ---------- famous epochs ---------- */
+  $('famous-body').innerHTML = FAMOUS_EPOCHS.map(function (e) {
+    var p = parseTimestamp(e.ts, null);
+    return '<tr class="cursor-pointer" data-ts="' + esc(e.ts) + '" title="Load into converter">' +
+      '<td class="tick text-phosphor">' + esc(e.ts) + '</td>' +
+      '<td class="tick">' + esc(p.ok ? p.utc : '—') + '</td>' +
+      '<td>' + esc(e.label) + '</td></tr>';
+  }).join('');
+  document.querySelectorAll('#famous-body tr').forEach(function (tr) {
+    tr.addEventListener('click', function () {
+      tsInput.value = tr.getAttribute('data-ts');
+      runTsConvert();
+      tsInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      tsInput.focus({ preventScroll: true });
+    });
+  });
+
+  /* deep-link: #ts=<value> loads the converter */
+  try {
+    var m = location.hash.match(/#ts=([+-]?\d+)/);
+    if (m) { tsInput.value = m[1]; runTsConvert(); }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
