@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vim Cheat Sheet: Searchable Commands by Mode - VimCheat</title>
+<meta name="description" content="Searchable free Vim cheat sheet: 40+ commands across normal, insert, visual and command modes with instant filter and click-to-copy keystrokes.">
+<link rel="canonical" href="https://dev.fixoraa.tech/vimcheat/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Vim Cheat Sheet: Searchable Commands by Mode - VimCheat">
+<meta property="og:description" content="Searchable free Vim cheat sheet: 40+ commands across normal, insert, visual and command modes with instant filter and click-to-copy keystrokes.">
+<meta property="og:url" content="https://dev.fixoraa.tech/vimcheat/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "VimCheat",
+      "url": "https://dev.fixoraa.tech/vimcheat/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Searchable free Vim cheat sheet: 40+ commands across normal, insert, visual and command modes with instant filter and click-to-copy keystrokes.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I quit Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Press Esc to enter normal mode, then type :q and Enter to quit, or :q! to quit without saving. If you are stuck, Esc followed by :q! always exits."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I start typing text in Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Press i to enter insert mode and type normally, then Esc to return to normal mode. a appends after the cursor, o opens a new line below."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I copy and paste in Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yank with y (for example yy for a line), move the cursor, and paste with p (after cursor) or P (before cursor). In visual mode, y then p works on selections."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I search in Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Type / followed by your search term and Enter; n jumps to the next match, N to the previous. * searches for the word under the cursor."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I undo in Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "u undoes the last change; Ctrl+r redoes. Vim's undo is a tree, so you can also use :earlier and :later to time-travel through edit history."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I find and replace in Vim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use :%s/old/new/g to replace across the whole file, or :%s/old/new/gc to confirm each replacement. :s/old/new/ affects only the current line."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#0D1117; --surface:#161B22; --accent:#3FB950; --accent-ink:#0D1117;
+  --ink:#E6EDF3; --muted:#A9B4C0; --line:#21262D;
+  --display:'IBM Plex Mono',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.vc-wrap{max-width:1080px;margin:0 auto;padding:8px 4px;font-family:Inter,system-ui,sans-serif;color:#E6EDF3}.vc-head{text-align:center;padding:32px 14px 18px}.vc-logo{font-size:42px}.vc-h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(1.7rem,4vw,2.4rem);margin:12px 0 8px;color:#3FB950}.vc-tag{color:#A9B4C0;font-size:1rem;max-width:540px;margin:0 auto}.vc-grid{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start;margin-top:8px}.vc-rail{background:#161B22;border:1px solid #21262D;border-radius:16px;padding:12px;display:grid;gap:8px}.vc-mode{background:transparent;border:1px solid #21262D;border-radius:10px;padding:13px;color:#A9B4C0;font-family:'IBM Plex Mono',monospace;font-weight:600;cursor:pointer;text-align:left;min-height:48px;font-size:.88rem}.vc-mode.active{background:#3FB950;border-color:#3FB950;color:#0D1117}.vc-search{width:100%;box-sizing:border-box;background:#161B22;border:1.5px solid #21262D;border-radius:12px;color:#E6EDF3;padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:1rem;min-height:52px;margin-bottom:16px}.vc-search:focus{outline:2px solid #3FB950;border-color:#3FB950}.vc-search::placeholder{color:#6E7681}.vc-grid2{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.vc-card{background:#161B22;border:1px solid #21262D;border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s;min-height:76px}.vc-card:hover{border-color:#3FB950}.vc-keys{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#3FB950;font-size:1.02rem}.vc-desc{color:#A9B4C0;font-size:.85rem;margin-top:6px;line-height:1.5}.vc-count{font-family:'IBM Plex Mono',monospace;color:#6E7681;font-size:.8rem;margin-bottom:10px}.vc-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#3FB950;color:#0D1117;font-weight:700;padding:12px 22px;border-radius:10px;display:none;font-family:'IBM Plex Mono',monospace;z-index:50}.vc-empty{color:#6E7681;font-family:'IBM Plex Mono',monospace;padding:30px;text-align:center}@media(max-width:760px){.vc-grid{grid-template-columns:1fr}.vc-rail{grid-template-columns:repeat(2,1fr)}.vc-grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="VimCheat home">
+      <span class="fx-logo-tile" aria-hidden="true">⌨</span>
+      <span class="fx-brand">VimCheat</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-side-rail" aria-label="VimCheat tool">
+<div class='vc-wrap'>
+  <div class='vc-head'><div class='vc-logo'>⌨</div><h1 class='vc-h1'>Vim Cheat Sheet</h1><p class='vc-tag'>Every Vim keystroke, one search away.</p></div>
+  <div class='vc-grid'>
+    <div class='vc-rail'>
+      <button class='vc-mode active' data-mode='all' type='button'>All modes</button>
+      <button class='vc-mode' data-mode='normal' type='button'>Normal</button>
+      <button class='vc-mode' data-mode='insert' type='button'>Insert</button>
+      <button class='vc-mode' data-mode='visual' type='button'>Visual</button>
+      <button class='vc-mode' data-mode='command' type='button'>Command</button>
+    </div>
+    <div>
+      <input class='vc-search' id='vc-q' placeholder='Search commands... try delete, yank, split' aria-label='Search Vim commands'>
+      <div class='vc-count' id='vc-count'></div>
+      <div class='vc-grid2' id='vc-grid'></div>
+    </div>
+  </div>
+  <div class='vc-toast' id='vc-toast'>Copied!</div>
+</div>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>Why Vim Still Matters</h2>
+<p>Vim is over thirty years old and still the fastest way to edit text once its language clicks. The reason is modal editing: instead of reaching for the mouse or holding modifier keys, you compose small verbs and nouns — d for delete, w for word, so dw deletes a word. This grammar scales: once you know a dozen motions and a handful of operators, you can express hundreds of edits without thinking. Developers who invest two weeks of deliberate practice typically report never going back.</p>
+<p>The cheat sheet above is organised the way Vim itself is organised: by mode. Normal mode is where you navigate and operate. Insert mode is for typing. Visual mode is for selecting. Command-line mode (the colon commands) is for files, searching and ex-commands. Learn which mode you are in at all times — the number one beginner error is typing commands into insert mode or text into normal mode.</p>
+<h2>The Survival Kit: Twelve Commands</h2>
+<p>If you learn nothing else, these twelve make you functional: i enters insert mode, Esc returns to normal, :w saves, :q quits, :wq saves and quits, :q! quits without saving, h/j/k/l move, dd deletes a line, u undoes, yy yanks (copies) a line, p pastes, and / searches. With just these you can open any file, edit it, and leave — which is the entire job most of the time.</p>
+<h3>Escaping the quit meme</h3>
+<p>The famous joke about not being able to quit Vim exists because modal confusion is real: newcomers type :q while in insert mode and see it inserted as text. The rule is simple — Esc first, then command. And :q! is the emergency exit: it discards everything since the last save. Prefer :wq when you mean to keep your work.</p>
+<h2>Motions: The True Power</h2>
+<p>Beginners move with h/j/k/l and arrow keys; intermediates move with words and lines. w jumps to the next word start, b back a word, e to word end, 0 to line start, $ to line end, gg to file top, G to file bottom. The leap is combining motions with operators: d$ deletes to end of line, yG yanks to end of file, caw changes a word. Motions are also countable — 3w jumps three words, 5dd deletes five lines — which is where Vim's speed comes from: one thought, one keystroke sequence, large precise change.</p>
+<h3>Text objects: Vim's secret weapon</h3>
+<p>Text objects select semantic units regardless of cursor position inside them. di( deletes inside parentheses, da' deletes around single quotes including the quotes, ci{ changes inside braces. The i/a distinction (inner vs around) plus a delimiter gives you surgical edits that mouse users cannot match. Learn iw, i(, i[, i{, it (HTML tag) and i' early — they pay off daily.</p>
+<h2>Visual Mode and Registers</h2>
+<p>Visual mode (v) selects text the way you are used to, then an operator acts on the selection — d deletes it, y yanks it, > indents it. V selects whole lines, Ctrl+v selects rectangular blocks, which is magical for editing columns of text. Yanked text goes into registers; the unnamed register is the default clipboard, but named registers let you juggle multiple clipboards, something most editors cannot do at all.</p>
+<h2>Search, Replace and Repeat</h2>
+<p>/pattern searches forward, n/N move through matches, * searches for the word under the cursor. :s/old/new/ substitutes on the current line, :%s/old/new/g across the whole file, with /c asking for confirmation each time. And the dot command (.) repeats your last change — the single most underused key in Vim. A typical power workflow is: search, make one perfect edit, then n.n.n. to repeat it down the file.</p>
+<h3>Marks for navigation</h3>
+<p>mx drops a named mark at the cursor; 'x jumps back to it. Marks turn long files into navigable spaces: mark the function you are editing, jump to a definition, then pop back with a single keystroke. Combined with Ctrl+o (jump back through the jump list), you rarely need to scroll aimlessly again.</p>
+<h2>Insert Mode Essentials</h2>
+<p>Most time in insert mode is plain typing, but a few keys save constant mode-switching: Ctrl+w deletes the previous word, Ctrl+u deletes to line start, Ctrl+r followed by a register pastes without leaving insert mode. And o/O open new lines below/above while staying in insert mode — faster than the Esc-then-o dance beginners do.</p>
+<h2>Command-Line Mode Power</h2>
+<p>Beyond :w and :q, the colon commands run the file-level operations: :e opens a file, :sp/:vsp split the window, :tabnew opens a tab, :!cmd runs a shell command, :r !cmd inserts command output. Ranges make them surgical: :10,20d deletes lines 10–20, :%!sort pipes the file through sort. Vim's command line is a small Unix philosophy embedded in the editor.</p>
+<h2>How This Cheat Sheet Helps</h2>
+<p>VimCheat keeps every command one search away: type delete, yank, or split and the grid filters instantly. Switch mode tabs to study one mode at a time, and click any command to copy its keystrokes. Keep it open in a side tab during your first month — that is how muscle memory gets built.</p>
+<h2>Making Vim Yours: vimrc Essentials</h2>
+<p>Vim's defaults are famously spartan; a small vimrc transforms the experience. Start with syntax on, set number, set relativenumber (line numbers relative to the cursor make motions like 5j precise), set tabstop=2 shiftwidth=2 expandtab for consistent indentation, set ignorecase smartcase for smarter searching, and a quick insert-mode escape mapping. Keep the file in version control — your vimrc is a developer fingerprint worth syncing across machines. Every setting is a :set command you can also try live before committing it to the file.</p>
+<h2>Vim vs Neovim</h2>
+<p>Neovim is a modern fork that keeps nearly all Vim keybindings while adding Lua configuration, built-in LSP support, Treesitter highlighting and an async plugin architecture. If you want IDE features — go-to-definition, inline diagnostics, fuzzy finding — Neovim gets you there with far less friction than classic Vimscript. The commands in this cheat sheet work identically in both, so your muscle memory transfers completely. Choose classic Vim for ubiquity (it is on every server you will ever ssh into) and Neovim for a daily driver you customise deeply. Learning the keybindings first, as this sheet teaches, is the right order either way.</p>
+<h2>The Dot Command and Macros</h2>
+<p>The dot command (.) repeats your last change — combine it with search for devastating efficiency: make one perfect edit, then n.n.n. down the file. When edits get complex, record a macro: qa starts recording into register a, q stops, @a replays. Macros shine on repetitive structured text — reformatting fifty lines, each needing the same five keystrokes. And for the truly repetitive, running the macro across a range applies it everywhere. The pattern is always the same: do it once perfectly, then let Vim repeat it.</p>
+<h3>Registers worth knowing</h3>
+<p>Beyond the named registers a-z, Vim has special ones: register 0 holds the last yank (unaffected by deletes, unlike the unnamed register), the plus and star registers talk to the system clipboard, / holds the last search pattern, and : shows the last command. Knowing how to paste the last yank even after deleting rescues countless workflows. Peek at :registers anytime to see what is stored where. Combine marks, macros and the dot command and you have the complete Vim power toolkit: navigate instantly, repeat effortlessly, automate the rest.</p>
+<h2>A Thirty-Day Learning Path</h2>
+<p>Week one: survive — open, edit, save, quit, undo. Week two: move — words, lines, file jumps, search. Week three: operate — delete, yank, paste, text objects, the dot command. Week four: compose — macros, marks, splits, command-line ranges. Practise fifteen minutes daily on real files rather than tutorials, keep this cheat sheet open beside you, and consider disabling the arrow keys after week two to force the new habits. Most learners cross the fluency threshold around day twenty and never look back.</p>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>How do I quit Vim?</summary><p>Press Esc to enter normal mode, then type :q and Enter to quit, or :q! to quit without saving. If you are stuck, Esc followed by :q! always exits.</p></details>
+<details><summary>How do I start typing text in Vim?</summary><p>Press i to enter insert mode and type normally, then Esc to return to normal mode. a appends after the cursor, o opens a new line below.</p></details>
+<details><summary>How do I copy and paste in Vim?</summary><p>Yank with y (for example yy for a line), move the cursor, and paste with p (after cursor) or P (before cursor). In visual mode, y then p works on selections.</p></details>
+<details><summary>How do I search in Vim?</summary><p>Type / followed by your search term and Enter; n jumps to the next match, N to the previous. * searches for the word under the cursor.</p></details>
+<details><summary>How do I undo in Vim?</summary><p>u undoes the last change; Ctrl+r redoes. Vim's undo is a tree, so you can also use :earlier and :later to time-travel through edit history.</p></details>
+<details><summary>How do I find and replace in Vim?</summary><p>Use :%s/old/new/g to replace across the whole file, or :%s/old/new/gc to confirm each replacement. :s/old/new/ affects only the current line.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">VimCheat</div>
+    <p>VimCheat is a searchable Vim cheat sheet with mode tabs and click-to-copy commands.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function vimSearch(commands,query){var q=String(query||'').toLowerCase().trim();var scored=[];for(var i=0;i<commands.length;i++){var c=commands[i];var ks=String(c.keys).toLowerCase(),ds=String(c.desc).toLowerCase(),ms=String(c.mode||'').toLowerCase();if(!q){scored.push({c:c,s:0,i:i});continue;}var s=-1;if(ks===q)s=0;else if(ks.indexOf(q)===0)s=1;else if(ds.indexOf(q)!==-1)s=2;else if(ks.indexOf(q)!==-1)s=3;else if(ms.indexOf(q)!==-1)s=4;if(s>=0)scored.push({c:c,s:s,i:i});}scored.sort(function(a,b){return a.s-b.s||a.i-b.i;});return scored.map(function(x){return x.c;});}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){var COMMANDS=[{keys:'h j k l',desc:'Move left / down / up / right',mode:'normal'},{keys:'w',desc:'Jump to start of next word',mode:'normal'},{keys:'b',desc:'Jump back to start of word',mode:'normal'},{keys:'e',desc:'Jump to end of word',mode:'normal'},{keys:'0',desc:'Jump to start of line',mode:'normal'},{keys:'$',desc:'Jump to end of line',mode:'normal'},{keys:'gg',desc:'Go to top of file',mode:'normal'},{keys:'G',desc:'Go to bottom of file',mode:'normal'},{keys:'dd',desc:'Delete the current line',mode:'normal'},{keys:'dw',desc:'Delete from cursor to start of next word',mode:'normal'},{keys:'d',desc:'Delete operator - combine with a motion (e.g. d$)',mode:'normal'},{keys:'D',desc:'Delete from cursor to end of line',mode:'normal'},{keys:'x',desc:'Delete the character under the cursor',mode:'normal'},{keys:'u',desc:'Undo last change',mode:'normal'},{keys:'Ctrl+r',desc:'Redo',mode:'normal'},{keys:'yy',desc:'Yank (copy) the current line',mode:'normal'},{keys:'yw',desc:'Yank from cursor to start of next word',mode:'normal'},{keys:'p',desc:'Paste after the cursor',mode:'normal'},{keys:'P',desc:'Paste before the cursor',mode:'normal'},{keys:'/',desc:'Search forward for a pattern',mode:'normal'},{keys:'n',desc:'Jump to next search match',mode:'normal'},{keys:'N',desc:'Jump to previous search match',mode:'normal'},{keys:'*',desc:'Search for the word under the cursor',mode:'normal'},{keys:'v',desc:'Enter visual mode (select text)',mode:'normal'},{keys:'V',desc:'Visual line mode - select whole lines',mode:'normal'},{keys:'Ctrl+v',desc:'Visual block mode - select a rectangle',mode:'normal'},{keys:'o',desc:'Open a new line below and enter insert mode',mode:'normal'},{keys:'O',desc:'Open a new line above and enter insert mode',mode:'normal'},{keys:'a',desc:'Append after the cursor',mode:'normal'},{keys:'A',desc:'Append at end of line',mode:'normal'},{keys:'i',desc:'Enter insert mode',mode:'normal'},{keys:'r',desc:'Replace the character under the cursor',mode:'normal'},{keys:'.',desc:'Repeat the last change',mode:'normal'},{keys:'J',desc:'Join the next line onto this one',mode:'normal'},{keys:'~',desc:'Toggle case of character under cursor',mode:'normal'},{keys:'zz',desc:'Centre the screen on the cursor',mode:'normal'},{keys:'Ctrl+d',desc:'Scroll half a page down',mode:'normal'},{keys:'Ctrl+u',desc:'Scroll half a page up',mode:'normal'},{keys:'mx',desc:'Set mark x at the cursor',mode:'normal'},{keys:'Ctrl+w',desc:'Delete the previous word',mode:'insert'},{keys:'Ctrl+u',desc:'Delete to start of line',mode:'insert'},{keys:'v then d',desc:'Delete the visual selection',mode:'visual'},{keys:'v then y',desc:'Yank the visual selection',mode:'visual'},{keys:'> / <',desc:'Indent / outdent the selection',mode:'visual'},{keys:':w',desc:'Save the file',mode:'command'},{keys:':q',desc:'Quit Vim',mode:'command'},{keys:':wq',desc:'Save and quit',mode:'command'},{keys:':q!',desc:'Quit without saving',mode:'command'},{keys:':e',desc:'Open a file for editing',mode:'command'},{keys:':%s/old/new/g',desc:'Replace all occurrences in the file',mode:'command'}];var mode='all';var grid=document.getElementById('vc-grid');var count=document.getElementById('vc-count');function render(){var q=document.getElementById('vc-q').value;var list=vimSearch(COMMANDS,q);if(mode!=='all')list=list.filter(function(c){return c.mode===mode;});grid.innerHTML='';count.textContent=list.length+' commands';if(!list.length){grid.innerHTML='<div class=vc-empty>No matches - try another term.</div>';return;}list.forEach(function(c){var d=document.createElement('div');d.className='vc-card';var k=document.createElement('div');k.className='vc-keys';k.textContent=c.keys;var ds=document.createElement('div');ds.className='vc-desc';ds.textContent=c.desc+'  -  '+c.mode;d.appendChild(k);d.appendChild(ds);d.addEventListener('click',function(){var t=c.keys;if(navigator.clipboard)navigator.clipboard.writeText(t);var toast=document.getElementById('vc-toast');toast.textContent='Copied: '+t;toast.style.display='block';setTimeout(function(){toast.style.display='none';},1200);});grid.appendChild(d);});}document.querySelectorAll('.vc-mode').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.vc-mode').forEach(function(x){x.classList.remove('active');});b.classList.add('active');mode=b.getAttribute('data-mode');render();});});document.getElementById('vc-q').addEventListener('input',render);render();});}
+</script>
+</body>
+</html>
