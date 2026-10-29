@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nginx Config Generator: Static, Proxy &amp; PHP – NginxConf</title>
+<meta name="description" content="Free nginx config generator: static, reverse proxy and PHP-FPM server blocks with SSL snippets. Copy or download production-ready .conf files.">
+<link rel="canonical" href="https://dev.fixoraa.tech/nginxconf/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Nginx Config Generator: Static, Proxy &amp; PHP – NginxConf">
+<meta property="og:description" content="Free nginx config generator: static, reverse proxy and PHP-FPM server blocks with SSL snippets. Copy or download production-ready .conf files.">
+<meta property="og:url" content="https://dev.fixoraa.tech/nginxconf/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "NginxConf",
+      "url": "https://dev.fixoraa.tech/nginxconf/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Free nginx config generator: static, reverse proxy and PHP-FPM server blocks with SSL snippets. Copy or download production-ready .conf files.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an nginx server block?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A server block (the server { ... } section) defines how nginx handles requests for one or more domain names: which port to listen on, where files live, and how locations are routed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I reverse proxy to a Node.js app with nginx?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use proxy_pass to forward requests to your app, e.g. proxy_pass http://localhost:3000;. Also set proxy_set_header Host $host and X-Real-IP so your app sees the real hostname and client IP."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I serve a static site or SPA with nginx?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Serve static files with root + try_files $uri $uri/ =404;. For single-page apps use try_files $uri $uri/ /index.html; so client-side routes do not 404 on refresh."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does nginx work with PHP?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PHP runs in PHP-FPM, a separate process. Nginx forwards .php requests to it via fastcgi_pass unix:/var/run/php/php8.2-fpm.sock; inside a location ~ \\.php$ block, with try_files $uri =404; for security."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I test and reload nginx config safely?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run nginx -t to test syntax, then systemctl reload nginx to apply changes without dropping connections. Never reload without testing first."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What causes nginx 502 Bad Gateway?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A 502 means nginx is running but the upstream is not \u2014 your app process is down, the PHP-FPM socket path is wrong, or the port in proxy_pass does not match. Check the upstream first, not nginx."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#F7F5FF; --surface:#FFFFFF; --accent:#2F6FED; --accent-ink:#FFFFFF;
+  --ink:#101A33; --muted:#5C6B8A; --line:#D9DFF2;
+  --display:'JetBrains Mono',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.nx-wrap{max-width:1080px;margin:0 auto;padding:8px 4px;font-family:Inter,system-ui,sans-serif;color:#101A33}.nx-head{text-align:center;padding:32px 14px 20px}.nx-logo{font-size:42px}.nx-h1{font-family:'JetBrains Mono',monospace;font-size:clamp(1.7rem,4vw,2.4rem);margin:12px 0 8px}.nx-tag{color:#5C6B8A;font-size:1rem;max-width:560px;margin:0 auto}.nx-grid{display:grid;grid-template-columns:220px 1fr;gap:18px;align-items:start;margin-top:8px}.nx-rail{background:#fff;border:1px solid #D9DFF2;border-radius:18px;padding:14px;display:grid;gap:8px}.nx-mode{background:#F7F5FF;border:1.5px solid #D9DFF2;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;text-align:left;color:#101A33;min-height:52px;font-size:.92rem;font-family:'JetBrains Mono',monospace}.nx-mode.active{background:#2F6FED;border-color:#2F6FED;color:#fff}.nx-mode small{display:block;font-weight:400;font-size:.75rem;opacity:.75;margin-top:3px}.nx-work{background:#fff;border:1px solid #D9DFF2;border-radius:18px;padding:24px;box-shadow:0 16px 44px -30px rgba(47,111,237,.35)}.nx-h2{font-family:'JetBrains Mono',monospace;font-size:1.1rem;margin:0 0 16px}.nx-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.nx-field{display:grid;gap:7px;font-size:.84rem;font-weight:600;color:#5C6B8A}.nx-field input{border:1.5px solid #D9DFF2;border-radius:10px;padding:12px 14px;font-size:.95rem;min-height:48px;width:100%;box-sizing:border-box;color:#101A33;font-family:'JetBrains Mono',monospace}.nx-field input:focus{outline:2px solid #2F6FED;border-color:#2F6FED}.nx-checks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}.nx-check{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;color:#101A33;cursor:pointer;min-height:44px}.nx-check input{width:20px;height:20px;accent-color:#2F6FED}.nx-out{background:#101A33;border-radius:14px;padding:20px;overflow-x:auto;margin-bottom:14px}.nx-out pre{margin:0;color:#D7E3FF;font-family:'JetBrains Mono',monospace;font-size:.85rem;line-height:1.65;white-space:pre}.nx-actions{display:flex;gap:10px;flex-wrap:wrap}.nx-btn{background:#2F6FED;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-weight:700;cursor:pointer;min-height:48px;font-family:'JetBrains Mono',monospace}.nx-btn:hover{background:#2059cc}.nx-btn2{background:#fff;color:#2F6FED;border:1.5px solid #2F6FED;border-radius:10px;padding:13px 22px;font-weight:700;cursor:pointer;min-height:48px}.nx-tip{font-size:.82rem;color:#5C6B8A;margin-top:14px;line-height:1.6}.nx-tip code{background:#EEF2FD;padding:2px 7px;border-radius:6px;font-family:'JetBrains Mono',monospace}@media(max-width:760px){.nx-grid{grid-template-columns:1fr}.nx-rail{grid-template-columns:repeat(3,1fr)}.nx-fields{grid-template-columns:1fr}.nx-work{padding:18px 14px}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="NginxConf home">
+      <span class="fx-logo-tile" aria-hidden="true">🔧</span>
+      <span class="fx-brand">NginxConf</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-side-rail" aria-label="NginxConf tool">
+<div class='nx-wrap'>
+  <div class='nx-head'><div class='nx-logo'>🔧</div><h1 class='nx-h1'>Nginx Config Generator</h1><p class='nx-tag'>Production-ready server blocks in seconds, not Stack Overflow tabs.</p></div>
+  <div class='nx-grid'>
+    <div class='nx-rail'>
+      <button class='nx-mode active' data-mode='static' type='button'>Static<small>HTML files from disk</small></button>
+      <button class='nx-mode' data-mode='proxy' type='button'>Reverse proxy<small>Node / Python / Go app</small></button>
+      <button class='nx-mode' data-mode='php' type='button'>PHP<small>PHP-FPM via socket</small></button>
+    </div>
+    <div class='nx-work'>
+      <h2 class='nx-h2'>Configure</h2>
+      <div class='nx-fields'>
+        <label class='nx-field'>Domain<input id='nx-domain' value='example.com' spellcheck='false'></label>
+        <label class='nx-field' id='nx-portwrap'>App port<input id='nx-port' type='number' value='3000'></label>
+      </div>
+      <div class='nx-checks'>
+        <label class='nx-check'><input type='checkbox' id='nx-ssl'> Add SSL (443) snippet</label>
+        <label class='nx-check'><input type='checkbox' id='nx-www'> Include www subdomain</label>
+      </div>
+      <div class='nx-out'><pre id='nx-pre'></pre></div>
+      <div class='nx-actions'>
+        <button class='nx-btn' id='nx-copy' type='button'>Copy config</button>
+        <button class='nx-btn2' id='nx-dl' type='button'>Download .conf</button>
+      </div>
+      <p class='nx-tip'>After copying: save to <code>/etc/nginx/sites-available/</code>, symlink into <code>sites-enabled</code>, then run <code>nginx -t && systemctl reload nginx</code>.</p>
+    </div>
+  </div>
+</div>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>What an Nginx Server Block Does</h2>
+<p>Every website nginx serves is described by a server block: a declaration of which domain names it answers to, which port it listens on, and how each request path is handled. The three patterns in this generator cover the vast majority of real deployments. A static site serves files from disk. A reverse proxy forwards requests to an application (Node, Python, Go) running on localhost. A PHP site hands .php files to PHP-FPM. Choosing the wrong pattern is the root cause of most nginx confusion — so start by naming yours.</p>
+<h2>Pattern 1: Static Sites</h2>
+<p>The static pattern is the simplest and fastest: a root directory, an index file, and a try_files directive that serves the exact file or a clean 404. Because nginx serves these files directly from disk with sendfile, static sites handle enormous traffic on tiny servers. Single-page applications need one tweak — try_files $uri $uri/ /index.html — so client-side routes do not 404 on refresh. The generator emits the classic variant; add the SPA fallback if your framework handles routing in the browser.</p>
+<h3>Static block anatomy</h3>
+<p>listen 80 binds the HTTP port. server_name lists the domains — always include both the bare domain and www, or redirect one to the other to avoid duplicate content. root points at the directory holding your files; a trailing-slash mistake here is a classic 403 source. The location / block with try_files is what makes nginx a file server rather than a proxy.</p>
+<h2>Pattern 2: Reverse Proxy</h2>
+<p>Most modern applications do not let nginx serve anything directly. Instead, your Node, Django, Rails or Go process listens on localhost:3000 (or a Unix socket), and nginx — battle-hardened at accepting internet traffic — forwards each request to it. This split of responsibilities is the standard production architecture: nginx terminates TLS, serves static assets, rate-limits and buffers slow clients, while your app focuses purely on application logic.</p>
+<p>Three proxy directives matter most. proxy_pass is the destination — note the trailing-slash semantics: proxy_pass http://localhost:3000/ with a slash rewrites the URI, without it passes the full path through. proxy_set_header Host $host preserves the original hostname, which frameworks need for URL generation and virtual hosting. X-Real-IP and X-Forwarded-For preserve the client address for logging and rate limiting, since your app would otherwise see every request as coming from 127.0.0.1.</p>
+<h3>Proxy pitfalls</h3>
+<ul>
+<li><strong>WebSockets need upgrades:</strong> add proxy_http_version 1.1 plus Upgrade and Connection headers, or sockets silently fail.</li>
+<li><strong>Large uploads:</strong> the default client_max_body_size is 1MB — uploads bigger than that get a 413 until you raise it.</li>
+<li><strong>Timeouts:</strong> long-running endpoints need proxy_read_timeout raised above the default 60s.</li>
+<li><strong>Header size:</strong> apps with big cookies or JWTs can trip proxy_buffer_size limits with cryptic 502s.</li>
+</ul>
+<h2>Pattern 3: PHP via PHP-FPM</h2>
+<p>PHP does not run inside nginx; it runs in a separate PHP-FPM process pool, and nginx forwards .php requests to it over a Unix socket (or TCP). The location ~ \.php$ block is the handoff: fastcgi_pass points at the socket, and the fastcgi_params include file sets the CGI variables PHP expects. The try_files $uri =404 guard inside the PHP location is a security essential — without it, a crafted request can trick nginx into executing arbitrary uploaded files as PHP.</p>
+<p>Match the socket path to your installed PHP version (php8.2-fpm.sock, php8.3-fpm.sock, and so on) — a version mismatch after an OS upgrade is one of the most common causes of sudden 502 Bad Gateway errors on PHP sites. The generator emits the 8.2 path; adjust to taste.</p>
+<h2>Adding HTTPS the Right Way</h2>
+<p>The SSL toggle adds a 443 listener with certificate paths. In practice, almost nobody writes these by hand anymore: Certbot's nginx plugin obtains free Let's Encrypt certificates and edits your server blocks automatically, including renewal. The generated snippet shows you what Certbot produces so you can read and verify it — ssl_certificate pointing at the fullchain.pem, ssl_certificate_key at the privkey.pem, plus a redirect from port 80 to 443 that the generator's HTTP block pairs with.</p>
+<p>Two HTTPS details worth knowing: always redirect all HTTP traffic to HTTPS (never serve the same content on both), and enable HTTP/2 with a single listen 443 ssl http2 directive — it is a free performance upgrade for modern browsers.</p>
+<h2>Testing and Reloading Safely</h2>
+<p>Never reload nginx blind. The ritual is: nginx -t to test the configuration syntax, then systemctl reload nginx (not restart — reload keeps existing connections alive). A failed -t tells you the exact file and line number; fix it before reloading. Keep known-good configs in version control, and for critical sites, test with nginx -T, which dumps the entire effective configuration so you can see exactly what nginx thinks you asked for.</p>
+<h3>Reading nginx errors</h3>
+<ul>
+<li><strong>502 Bad Gateway:</strong> nginx is fine, but the upstream (your app, PHP-FPM) is down or unreachable — check the process and socket.</li>
+<li><strong>403 Forbidden:</strong> permissions on the root directory or a missing index file.</li>
+<li><strong>404 on every route:</strong> try_files misconfigured, or an SPA without the /index.html fallback.</li>
+<li><strong>413 Payload Too Large:</strong> raise client_max_body_size.</li>
+<li><strong>Connection refused on 443:</strong> certificate paths wrong or the 443 listener missing.</li>
+</ul>
+<h2>How This Generator Helps</h2>
+<p>NginxConf removes the blank-page problem: pick static, reverse proxy or PHP in the rail, enter your domain, toggle SSL, and copy a clean, commented server block — or download it as a .conf file ready to drop into sites-available. Learn the patterns once from the generated output, then customise with confidence.</p>
+<h2>From Config to Production: A Checklist</h2>
+<p>A generated server block is the start, not the finish. Work through this before going live: place the file in sites-available and symlink it into sites-enabled; run nginx -t and fix every warning; reload (never restart) so existing connections survive; test the domain with curl -I to confirm the right block answers; verify HTTPS redirects; check the certificate expiry and enable auto-renewal; confirm your app receives the X-Forwarded headers it needs; load-test the proxy timeouts with a slow endpoint; and set up log rotation so access logs do not fill the disk. The generator's tip line covers the core commands — this checklist covers everything around them.</p>
+<h2>When Not to Use Nginx</h2>
+<p>Nginx is the right default, but not the only answer. For pure static sites, a CDN or object storage fronted by a CDN is simpler and cheaper than a server you maintain. For containerised apps behind an orchestrator, an ingress controller or service mesh may already terminate TLS. For local development, your framework's dev server is enough — nginx adds nothing until you need production concerns like TLS termination, caching or rate limiting. Choose nginx when you need a robust, boring edge: TLS, static files, buffering and proxying in one battle-tested binary.</p>
+<h2>Caching Static Assets</h2>
+<p>Once your server block works, make it fast. Add expires headers for images, CSS and JS so browsers cache them — a location block matching static extensions with expires 30d cuts repeat-visit load dramatically. Enable gzip (or brotli) for text assets — a few lines that typically shrink HTML, CSS and JS by 60–70%. For high-traffic sites, proxy_cache in front of your app can absorb huge spikes. These three — expires, compression, caching — are the highest-leverage performance wins in nginx, and they all live in the same server block you just generated.</p>
+<h2>Rate Limiting in a Few Lines</h2>
+<p>Once your proxy serves traffic, protect it. Nginx rate limiting needs two directives: one defines a shared memory zone keyed by client address, and the other applies that zone inside your location block. A modest per-second allowance with a small burst absorbs normal browsing while blunting scrapers and brute-force login attempts. Start permissive and tighten based on what the access logs show — an over-aggressive limit locks out real users behind shared office addresses, which is worse than the bots you were trying to stop.</p>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>What is an nginx server block?</summary><p>A server block (the server { ... } section) defines how nginx handles requests for one or more domain names: which port to listen on, where files live, and how locations are routed.</p></details>
+<details><summary>How do I reverse proxy to a Node.js app with nginx?</summary><p>Use proxy_pass to forward requests to your app, e.g. proxy_pass http://localhost:3000;. Also set proxy_set_header Host $host and X-Real-IP so your app sees the real hostname and client IP.</p></details>
+<details><summary>How do I serve a static site or SPA with nginx?</summary><p>Serve static files with root + try_files $uri $uri/ =404;. For single-page apps use try_files $uri $uri/ /index.html; so client-side routes do not 404 on refresh.</p></details>
+<details><summary>How does nginx work with PHP?</summary><p>PHP runs in PHP-FPM, a separate process. Nginx forwards .php requests to it via fastcgi_pass unix:/var/run/php/php8.2-fpm.sock; inside a location ~ \.php$ block, with try_files $uri =404; for security.</p></details>
+<details><summary>How do I test and reload nginx config safely?</summary><p>Run nginx -t to test syntax, then systemctl reload nginx to apply changes without dropping connections. Never reload without testing first.</p></details>
+<details><summary>What causes nginx 502 Bad Gateway?</summary><p>A 502 means nginx is running but the upstream is not — your app process is down, the PHP-FPM socket path is wrong, or the port in proxy_pass does not match. Check the upstream first, not nginx.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">NginxConf</div>
+    <p>NginxConf generates production-ready nginx server blocks for static, proxy and PHP sites.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function nginxConf(opts){opts=opts||{};var domain=opts.domain||'example.com';var lines=[];lines.push('server {');lines.push('    listen 80;');lines.push('    server_name '+domain+';');if(opts.ssl){lines.push('    listen 443 ssl;');lines.push('    ssl_certificate /etc/nginx/ssl/'+domain+'.crt;');lines.push('    ssl_certificate_key /etc/nginx/ssl/'+domain+'.key;');}lines.push('');if(opts.proxy){var port=opts.port||3000;lines.push('    location / {');lines.push('        proxy_pass http://localhost:'+port+';');lines.push('        proxy_set_header Host $host;');lines.push('        proxy_set_header X-Real-IP $remote_addr;');lines.push('        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;');lines.push('    }');}else if(opts.php){lines.push('    root /var/www/'+domain+';');lines.push('    index index.php index.html;');lines.push('    location ~ \\.php$ {');lines.push('        try_files $uri =404;');lines.push('        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;');lines.push('        include fastcgi_params;');lines.push('    }');}else{lines.push('    root /var/www/'+domain+';');lines.push('    index index.html;');lines.push('    location / {');lines.push('        try_files $uri $uri/ =404;');lines.push('    }');}lines.push('}');return{config:lines.join('\n'),domain:domain,mode:opts.proxy?'proxy':(opts.php?'php':'static')};}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){var mode='static';var modes=document.querySelectorAll('.nx-mode');function current(){var domain=(document.getElementById('nx-domain').value||'example.com').trim();var o={domain:domain,ssl:document.getElementById('nx-ssl').checked};if(mode==='proxy'){o.proxy=true;o.port=parseInt(document.getElementById('nx-port').value,10)||3000;}if(mode==='php')o.php=true;var r=nginxConf(o);if(document.getElementById('nx-www').checked){r.config=r.config.replace('server_name '+domain+';','server_name '+domain+' www.'+domain+';');}return r;}function render(){var r=current();document.getElementById('nx-pre').textContent=r.config;document.getElementById('nx-portwrap').style.display=mode==='proxy'?'grid':'none';}modes.forEach(function(m){m.addEventListener('click',function(){modes.forEach(function(x){x.classList.remove('active');});m.classList.add('active');mode=m.getAttribute('data-mode');render();});});['nx-domain','nx-port','nx-ssl','nx-www'].forEach(function(id){document.getElementById(id).addEventListener('input',render);document.getElementById(id).addEventListener('change',render);});document.getElementById('nx-copy').addEventListener('click',function(){var t=current().config;if(navigator.clipboard){navigator.clipboard.writeText(t);}var b=document.getElementById('nx-copy');b.textContent='Copied!';setTimeout(function(){b.textContent='Copy config';},1500);});document.getElementById('nx-dl').addEventListener('click',function(){var r=current();var blob=new Blob([r.config],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=r.domain+'.conf';document.body.appendChild(a);a.click();a.remove();});render();});}
+</script>
+</body>
+</html>
