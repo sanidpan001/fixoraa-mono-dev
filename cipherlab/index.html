@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/cipherlab/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipherLab — Classical Cipher Playground: Caesar, Vigenère, Atbash Decoders</title>
+<meta name="description" content="CipherLab is a free classical cipher playground: encode and decode Caesar, Vigenère, Atbash, Rail Fence and ROT13 ciphers, auto-detect unknown ciphers, guess Vigenère key lengths and analyze letter frequencies — 100% in your browser.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: { labbg:'#0c1222', labpanel:'#111a30', labedge:'#243355', amber:'#fbbf24', sky:'#38bdf8' },
+    fontFamily: { mono:['"JetBrains Mono"','ui-monospace','SFMono-Regular','Menlo','monospace'], disp:['"Space Grotesk"','ui-sans-serif','system-ui','sans-serif'] }
+  }}
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { background:#0c1222; color:#e2e8f0; font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif; }
+  .mono { font-family:'JetBrains Mono',ui-monospace,monospace; }
+  .console { background:linear-gradient(165deg,#101832 0%,#0c1222 100%); border:1px solid #243355; border-radius:1rem; }
+  .console-head { border-bottom:1px solid #243355; }
+  .glow-amber { text-shadow:0 0 22px rgba(251,191,36,.45); }
+  .tab-btn { transition:all .18s ease; }
+  .tab-btn.active { background:rgba(251,191,36,.14); color:#fbbf24; border-color:#fbbf24; }
+  input[type=range] { accent-color:#fbbf24; }
+  input, select, textarea { color-scheme:dark; }
+  details.faq { background:linear-gradient(165deg,#101832 0%,#0c1222 100%); border:1px solid #243355; border-radius:1rem; padding:1rem; }
+  details.faq summary { cursor:pointer; }
+  details.faq summary::-webkit-details-marker { display:none; }
+  details.faq[open] .faq-plus { transform:rotate(45deg); }
+  .faq-plus { transition:transform .2s ease; }
+  .scan { position:relative; overflow:hidden; }
+  .scan::after { content:''; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(56,189,248,.045) 0 1px, transparent 1px 3px); }
+  .led { width:8px; height:8px; border-radius:9999px; display:inline-block; }
+  .led.on { background:#34d399; box-shadow:0 0 8px #34d399; }
+  .led.hot { background:#fbbf24; box-shadow:0 0 8px #fbbf24; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background:#0c1222; }
+  ::-webkit-scrollbar-thumb { background:#243355; border-radius:8px; }
+  .res-row:hover { background:rgba(56,189,248,.08); }
+</style>
+</head>
+<body id="top" class="min-h-screen mono">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-50 border-b border-labedge/70" style="background:rgba(12,18,34,.93);backdrop-filter:blur(10px)">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-amber/60" style="background:radial-gradient(circle at 35% 35%, #1d2b52, #0c1222)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="10" height="10" rx="2"/><path d="M14 14h7M18 14v4M20 14v2"/></svg>
+      </span>
+      <span class="font-disp text-xl font-bold tracking-tight">Cipher<span class="text-amber">Lab</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm">
+      <a href="#top" class="text-slate-300 hover:text-amber transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-amber transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-2">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.4)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      Unlimited Free Usage
+    </span>
+    <span class="text-xs text-slate-500">No signup · No paywall · 100% in your browser</span>
+  </div>
+  <h1 class="font-disp text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
+    Classical Cipher <span class="text-amber glow-amber">Playground</span>
+  </h1>
+  <p class="mt-3 max-w-2xl text-slate-400 text-sm sm:text-base">
+    Encode and decode <span class="text-slate-200">Caesar, Vigenère, Atbash, Rail Fence and ROT13</span> ciphers on a lab console —
+    with an <span class="text-amber">auto-detect cipher solver</span> that cracks unknown ciphertext, a Caesar cipher wheel,
+    a Vigenère key-length guesser and a live frequency analyzer.
+  </p>
+  <div class="mt-4 flex items-center gap-2 text-[11px] text-slate-500">
+    <span class="led on"></span><span>SYS://CIPHERLAB v3.0</span>
+    <span class="led hot"></span><span>ALL MODULES ONLINE</span>
+  </div>
+</section>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= TOOL CONSOLE ================= -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+
+  <!-- cipher tabs -->
+  <div class="console scan mb-5">
+    <div class="console-head px-4 sm:px-5 py-3 flex flex-wrap items-center gap-2">
+      <span class="text-[11px] uppercase tracking-[0.2em] text-sky mr-2">select_module</span>
+      <div class="flex flex-wrap gap-2" id="cl-cipher">
+        <button type="button" data-cipher="caesar" class="tab-btn active mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">CAESAR</button>
+        <button type="button" data-cipher="vigenere" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">VIGENÈRE</button>
+        <button type="button" data-cipher="atbash" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">ATBASH</button>
+        <button type="button" data-cipher="railfence" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">RAIL FENCE</button>
+        <button type="button" data-cipher="rot13" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">ROT13</button>
+        <button type="button" data-cipher="detect" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">AUTO-DETECT</button>
+        <button type="button" data-cipher="chain" class="tab-btn mono text-xs px-3 py-1.5 rounded-lg border border-labedge text-slate-300">CHAIN</button>
+      </div>
+    </div>
+
+    <div class="p-4 sm:p-5 grid lg:grid-cols-2 gap-4">
+      <!-- INPUT -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label for="cl-input" class="text-[11px] uppercase tracking-[0.2em] text-slate-500">input_stream</label>
+          <button type="button" id="cl-clear-btn" class="text-[11px] text-sky hover:text-amber">clear</button>
+        </div>
+        <textarea id="cl-input" rows="7" placeholder="Type or paste your text / ciphertext here…"
+          class="w-full bg-labbg border border-labedge rounded-xl p-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber/70 resize-y"></textarea>
+
+        <!-- param panels -->
+        <div class="mt-4 space-y-4">
+          <div id="cl-panel-caesar" class="rounded-xl border border-labedge/70 p-3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-slate-400">SHIFT</span>
+              <span class="text-amber text-sm font-bold" id="cl-shift-val">3</span>
+            </div>
+            <input type="range" id="cl-shift" min="0" max="25" value="3" class="w-full">
+            <div class="flex justify-between text-[10px] text-slate-600"><span>0</span><span>13</span><span>25</span></div>
+          </div>
+
+          <div id="cl-panel-vigenere" class="rounded-xl border border-labedge/70 p-3 hidden">
+            <label for="cl-key" class="text-xs text-slate-400 block mb-1">KEY <span class="text-slate-600">(letters only)</span></label>
+            <input type="text" id="cl-key" value="LEMON" placeholder="e.g. LEMON"
+              class="w-full bg-labbg border border-labedge rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber/70 uppercase">
+            <button type="button" id="cl-keylen-btn" class="mt-2 text-xs px-3 py-1.5 rounded-lg border border-sky/50 text-sky hover:bg-sky/10">Guess key length (Friedman test)</button>
+            <div id="cl-keylen-results" class="mt-2 space-y-1 text-xs"></div>
+          </div>
+
+          <div id="cl-panel-railfence" class="rounded-xl border border-labedge/70 p-3 hidden">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-slate-400">RAILS</span>
+              <span class="text-amber text-sm font-bold" id="cl-rails-val">3</span>
+            </div>
+            <input type="range" id="cl-rails" min="2" max="8" value="3" class="w-full">
+            <div class="flex justify-between text-[10px] text-slate-600"><span>2</span><span>5</span><span>8</span></div>
+          </div>
+
+          <div id="cl-panel-detect" class="rounded-xl border border-labedge/70 p-3 hidden">
+            <p class="text-xs text-slate-400 mb-2">Unknown cipher? The solver brute-forces every decoder (Caesar 0–25, Atbash, Rail Fence 2–6) and ranks results by English-likeness — chi-squared letter scoring + dictionary-word matches.</p>
+            <button type="button" id="cl-detect-btn" class="text-xs px-4 py-2 rounded-lg bg-amber text-labbg font-bold hover:brightness-110">RUN AUTO-DETECT</button>
+          </div>
+
+          <div id="cl-panel-chain" class="rounded-xl border border-labedge/70 p-3 hidden">
+            <p class="text-xs text-slate-400 mb-2">Stack ciphers: each step's output feeds the next. Decoding unwraps the stack in reverse.</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select id="cl-chain-cipher" class="bg-labbg border border-labedge rounded-lg px-3 py-2 text-sm">
+                <option value="caesar">Caesar</option>
+                <option value="vigenere">Vigenère</option>
+                <option value="atbash">Atbash</option>
+                <option value="railfence">Rail Fence</option>
+                <option value="rot13">ROT13</option>
+              </select>
+              <input type="text" id="cl-chain-key" placeholder="key / shift / rails" class="flex-1 bg-labbg border border-labedge rounded-lg px-3 py-2 text-sm">
+              <button type="button" id="cl-chain-add" class="text-xs px-3 py-2 rounded-lg border border-sky/50 text-sky hover:bg-sky/10">+ ADD</button>
+            </div>
+            <div id="cl-chain-list" class="mt-2 space-y-1 text-xs"></div>
+          </div>
+
+          <div id="cl-panel-static" class="rounded-xl border border-labedge/70 p-3 hidden">
+            <p class="text-xs text-slate-400" id="cl-static-note">No parameters needed — this module runs as-is.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label for="cl-output" class="text-[11px] uppercase tracking-[0.2em] text-slate-500">output_stream</label>
+          <div class="flex gap-2">
+            <button type="button" id="cl-copy-btn" class="text-[11px] px-2.5 py-1 rounded-lg border border-labedge text-slate-300 hover:border-amber hover:text-amber">copy</button>
+            <button type="button" id="cl-download-btn" class="text-[11px] px-2.5 py-1 rounded-lg border border-labedge text-slate-300 hover:border-amber hover:text-amber">download</button>
+          </div>
+        </div>
+        <textarea id="cl-output" rows="7" readonly placeholder="Result appears here…"
+          class="w-full bg-labbg border border-labedge rounded-xl p-3 text-sm text-amber placeholder-slate-600 focus:outline-none resize-y"></textarea>
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" id="cl-encode-btn" class="py-2.5 rounded-xl bg-amber text-labbg font-bold text-sm hover:brightness-110 transition">ENCODE →</button>
+          <button type="button" id="cl-decode-btn" class="py-2.5 rounded-xl border border-sky/60 text-sky font-bold text-sm hover:bg-sky/10 transition">← DECODE</button>
+        </div>
+        <div id="cl-status" class="mt-2 text-[11px] text-slate-500">SYS:// ready — pick a module, enter text, encode or decode.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- detect results -->
+  <div id="cl-detect-wrap" class="console scan mb-5 hidden">
+    <div class="console-head px-4 sm:px-5 py-3 flex items-center gap-2">
+      <span class="text-[11px] uppercase tracking-[0.2em] text-sky">solver_rankings</span>
+      <span class="text-[11px] text-slate-500">sorted by English-likeness score</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <div id="cl-detect-results" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- wheel + frequency -->
+  <div class="grid lg:grid-cols-2 gap-5 mb-5">
+    <div class="console scan">
+      <div class="console-head px-4 sm:px-5 py-3">
+        <span class="text-[11px] uppercase tracking-[0.2em] text-sky">caesar_wheel</span>
+        <span class="text-[11px] text-slate-500 ml-2">outer ring = plain · inner ring = cipher</span>
+      </div>
+      <div class="p-4 sm:p-5 flex flex-col items-center">
+        <canvas id="cl-wheel" width="300" height="300" class="max-w-full"></canvas>
+        <p class="mt-2 text-xs text-slate-500">Drag the SHIFT slider in the console to rotate the wheel.</p>
+      </div>
+    </div>
+    <div class="console scan">
+      <div class="console-head px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span class="text-[11px] uppercase tracking-[0.2em] text-sky">frequency_scope</span>
+          <span class="text-[11px] text-slate-500 ml-2">amber = your text · sky = English baseline</span>
+        </div>
+        <div class="flex gap-2 text-[11px]">
+          <button type="button" id="cl-freq-input-btn" class="px-2 py-1 rounded border border-amber/60 text-amber">input</button>
+          <button type="button" id="cl-freq-output-btn" class="px-2 py-1 rounded border border-labedge text-slate-400">output</button>
+        </div>
+      </div>
+      <div class="p-4 sm:p-5">
+        <canvas id="cl-freq-chart" width="520" height="260" class="w-full"></canvas>
+        <div id="cl-ioc-readout" class="mt-2 text-[11px] text-slate-500"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SEO ARTICLE ================= -->
+<!-- SEO ARTICLE -->
+<article class="mx-auto max-w-6xl px-4 sm:px-6 py-10 text-slate-400 text-[15px] leading-relaxed">
+<h2 class="font-disp text-2xl sm:text-3xl font-bold text-slate-100 mb-6">Classical Ciphers, Decoded: The Complete Guide to Caesar, Vigenère, Atbash, Rail Fence and ROT13</h2>
+
+<p class="mb-4">Secret writing is one of humanity's oldest technologies. Long before computers, generals, spies, lovers and rebels hid messages with pencil-and-paper ciphers — systems simple enough to work by hand, yet tricky enough to fool a casual reader. Today these classical ciphers are history lessons, puzzle fuel and the perfect first step into cryptography. A good <strong class="text-slate-200">cipher solver online</strong> lets you experiment with all of them in seconds: type a message, pick a cipher, and watch plaintext turn into apparent gibberish — then crack it back open again.</p>
+
+<p class="mb-4">This guide walks through the five ciphers inside the CipherLab console above, explains how each one works, how to break each one, and why cryptanalysts developed tools like frequency analysis, chi-squared scoring and the Friedman test to defeat them. Whether you need a <strong class="text-slate-200">caesar cipher decoder</strong> for a puzzle hunt, a <strong class="text-slate-200">vigenere cipher decoder</strong> for an escape-room clue, or just want to understand how encryption evolved, everything below runs through real, working examples.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">1. The Caesar Cipher: history's most famous shift</h3>
+<p class="mb-4">Julius Caesar reportedly protected military messages by shifting every letter three places forward: A became D, B became E, and so on. Encoding "attack" with a shift of 3 gives "dwwdfn". The shift is the key — anyone who knows it can decode instantly, anyone who doesn't must guess among only 25 possible shifts.</p>
+<p class="mb-4">That tiny key space is exactly why a <strong class="text-slate-200">caesar cipher decoder</strong> is so effective. Brute force is trivial: try all 25 shifts and pick the one that produces readable English. Modern solvers automate the "readable English" judgment with statistics — more on that in the auto-detect section. The interactive Caesar wheel above shows the same idea visually: the outer ring is the plain alphabet, the inner ring is the alphabet rotated by the shift, and encoding is simply reading inner letters where outer letters sit.</p>
+<p class="mb-4">Caesar ciphers still show up everywhere: puzzle books, geocaching hints, children's secret-message games, and as one layer inside stronger hand ciphers. They are also the ancestor of ROT13, which is just a Caesar shift of 13.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">2. ROT13: the cipher that is its own decoder</h3>
+<p class="mb-4">ROT13 shifts every letter exactly 13 places — half the alphabet. That makes it an involution: encoding and decoding are the same operation. Apply it twice and you are back where you started. Early internet forums used ROT13 to hide spoilers, punchlines and offensive text; readers who wanted to see the hidden content ran it through a decoder, and everyone else scrolled past safely.</p>
+<p class="mb-4">Because 13 is exactly half of 26, the ROT13 mapping pairs letters up: A↔N, B↔O, C↔P and so on. There is no key to choose and nothing to brute force, which is why ROT13 offers zero real security — but it remains the fastest way to obscure text that a human should not read accidentally. In the CipherLab console, ROT13 is its own module, but it also appears inside auto-detect results whenever shift-13 Caesar wins the ranking.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">3. Atbash: the ancient mirror cipher</h3>
+<p class="mb-4">Atbash is even older than Caesar. It appears in the Hebrew Bible, where it reverses the alphabet: the first letter becomes the last, the second becomes the second-to-last, and so on. In English terms, A becomes Z, B becomes Y, C becomes X. Like ROT13, Atbash is its own inverse — run the ciphertext through the same mirror and the plaintext returns.</p>
+<p class="mb-4">Atbash has exactly one key (the alphabet itself), so there is nothing to guess. Its value today is mostly in puzzles and multi-layer ciphers, where an Atbash layer disguises text that has already been Caesar-shifted. That combination — shifting, then mirroring — is a simple example of the cipher chaining the console supports: two weak ciphers stacked together can still be cracked, but a casual reader will never see through both.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">4. The Rail Fence: hiding messages in zigzags</h3>
+<p class="mb-4">The rail fence cipher is a transposition cipher — instead of substituting letters, it scrambles their order. Write the message in a zigzag across a number of "rails", then read each rail left to right. With three rails, "WEAREDISCOVERED" becomes "WECRERDSOEEAIVD". The number of rails is the key, and decoding means reconstructing the zigzag and reading it back in order.</p>
+<p class="mb-4">Transposition ciphers resist the frequency-analysis attacks that destroy substitution ciphers, because every letter keeps its identity — only positions change. A frequency chart of rail-fence ciphertext looks almost like English. That is why the auto-detect solver ranks rail-fence candidates too: chi-squared scoring alone cannot catch them, but dictionary-word scoring can, because only the correct rail count reassembles real words. Short messages on few rails are easy to crack by trying every rail count; the console tries rails 2 through 6 automatically.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">5. The Vigenère Cipher: "unbreakable" for 300 years</h3>
+<p class="mb-4">Published in the 16th century, the Vigenère cipher uses a keyword to choose a different Caesar shift for every letter. With the key LEMON, the first letter shifts by 11 (L), the second by 4 (E), the third by 12 (M), then the key repeats. The famous example: "ATTACKATDAWN" with key "LEMON" becomes "LXFOPVEFRNHR". Because the same plaintext letter encodes to different ciphertext letters depending on its position, simple frequency analysis fails — which is why Vigenère was called <em>le chiffre indéchiffrable</em>, the indecipherable cipher, for nearly three centuries.</p>
+<p class="mb-4">A reliable <strong class="text-slate-200">vigenere cipher decoder</strong> therefore needs two stages. First, recover the key length — without it, nothing else works. Second, solve each key position as a separate Caesar cipher. The console's key-length guesser automates stage one with the Friedman test: it splits the ciphertext into columns for each candidate key length and measures the index of coincidence of each column. Columns cut at the true key length behave like monoalphabetic text (index of coincidence near 0.0667, the English value); columns cut at wrong lengths look random (near 0.0385). The candidate whose columns average closest to 0.0667 wins the ranking, and you can try that length with candidate keys until words appear.</p>
+<p class="mb-4">Stage two is mechanical: each column is a Caesar cipher, so frequency analysis cracks every column independently. In 1863, Friedrich Kasiski published a second method — looking for repeated ciphertext fragments whose spacing reveals the key length — and together the Friedman and Kasiski techniques ended Vigenère's reputation for good. If you only remember one lesson from classical cryptography, make it this: any cipher whose key repeats is eventually solvable.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">6. How the auto-detect cipher solver works</h3>
+<p class="mb-4">The star module of the console is the auto-detect solver. Feed it mystery ciphertext and it behaves like a junior cryptanalyst: it runs every decoder it knows — all 25 Caesar shifts, Atbash, and Rail Fence with 2 to 6 rails — and ranks every candidate by how much it looks like English. The ranking blends two independent signals.</p>
+<p class="mb-4">The first signal is the <strong class="text-slate-200">chi-squared statistic</strong>. In English, E appears about 12.7% of the time, T about 9.1%, A about 8.2%, while Z and Q barely register. Chi-squared measures how far a candidate's letter frequencies deviate from those expectations; the lower the deviation, the more English-like the text. This catches Caesar shifts beautifully: only the correct shift reproduces English letter proportions.</p>
+<p class="mb-4">The second signal is <strong class="text-slate-200">dictionary-word scoring</strong>. The solver splits each candidate into words and counts how many appear in a list of common English words — the, and, of, to, you, and dozens more. Real decodings score hits; wrong shifts produce letter salad with zero matches. This second signal is what catches rail-fence decodings, where letter frequencies alone are unhelpful. Combined, the two scores rank the true plaintext at the top in the vast majority of cases, provided the message is at least a sentence or two long. Very short ciphertexts — under a dozen letters — are genuinely ambiguous, and no solver can reliably crack those: with so little data, several decodings can all look plausible.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">7. Frequency analysis: reading the shape of language</h3>
+<p class="mb-4">Every natural language has a fingerprint. The frequency scope in the console plots your text's letter distribution in amber against the English baseline in sky blue, so you can literally see the fingerprint. Monoalphabetic substitution ciphers — Caesar, Atbash, ROT13 — preserve the fingerprint's shape and merely relabel the bars: the tallest bar is still E, just wearing a different letter's name. That is why frequency analysis, invented by the 9th-century scholar Al-Kindi, broke every substitution cipher of its era.</p>
+<p class="mb-4">The readout also shows the index of coincidence, a single number summarizing how "clumpy" the letter distribution is. English text scores around 0.0667; random text scores around 0.0385. Polyalphabetic ciphers like Vigenère flatten the distribution toward 0.0385 — which is precisely the property the Friedman test exploits to find key lengths. Watch the amber bars flatten as you chain more ciphers together, and you will understand, visually, why each layer makes cryptanalysis harder.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">8. Cipher chaining: stacking weak ciphers into puzzles</h3>
+<p class="mb-4">One classical cipher rarely stops anyone for long. But apply a Caesar shift, then a rail fence, then Atbash — and the result defeats every single-cipher solver, including this page's auto-detect. The chain module lets you build these stacks: add steps in order, and encoding feeds each step's output into the next, while decoding automatically unwraps the stack in reverse. This mirrors real historical practice, where operatives layered a transposition over a substitution to frustrate frequency analysis.</p>
+<p class="mb-4">Chaining is also excellent puzzle design. Escape rooms and puzzle hunts love multi-layer ciphers because each cracked layer hands solvers a satisfying "aha" moment and a new ciphertext to attack. A good rule of thumb for puzzle makers: end-to-end solvability matters more than difficulty. Test your own chain by decoding it in the console before publishing — if the tool cannot unwrap it with the documented steps, your players will not either.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">9. From classical ciphers to modern cryptography</h3>
+<p class="mb-4">Nothing on this page should protect real secrets. Classical ciphers fall to statistics, brute force and known-plaintext attacks within seconds on modern hardware, and that was the point of studying them: every weakness they reveal taught cryptographers what not to do. Kerckhoffs's principle — a system should stay secure even when everything except the key is public — emerged from this era. So did the insistence on large key spaces, non-repeating keys, and diffusion, the property that makes one plaintext bit affect many ciphertext bits.</p>
+<p class="mb-4">Modern encryption like AES-256 internalizes all those lessons: keys are 256 random bits, nothing repeats, and the best known attacks are barely better than brute force. But the mental models transfer directly. Frequency analysis is the ancestor of statistical attacks; the Friedman test's index of coincidence is the ancestor of modern distinguishers; and cipher chaining is the ancestor of product ciphers, where rounds of substitution and permutation stack into AES itself. Playing with Caesar and Vigenère is not just nostalgia — it is the fastest way to build intuition for how all encryption works.</p>
+
+<h3 class="font-disp text-xl font-bold text-slate-100 mt-8 mb-3">10. Practical tips for solving ciphers by hand</h3>
+<p class="mb-4">Start by counting: if the ciphertext preserves word breaks, single-letter words are almost always "A" or "I", and common three-letter words are "the" and "and". Those cribs crack Caesar shifts immediately. If word breaks were removed, look at letter frequencies and match the tallest bars to E, T, A, O, N. For Vigenère, hunt for repeated three-letter groups — their spacing is usually a multiple of the key length — then solve each column as a Caesar cipher.</p>
+<p class="mb-4">For rail fence, count the letters and sketch the zigzag for small rail counts; most puzzle rail fences use 2, 3 or 4 rails. And when nothing works, suspect a chain: try Atbash first (it is free — no key to guess), then run auto-detect on the result. The console's solver does in milliseconds what takes pencil and paper an evening, so use it to check your manual work as you learn. That feedback loop — guess by hand, verify by machine — is the fastest way to become the person in the room who can actually read the mysterious note.</p>
+</article>
+<!-- /SEO ARTICLE -->
+
+<!-- ================= FAQS ================= -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pb-12">
+  <h2 class="font-disp text-2xl font-bold text-slate-100 mb-5">Frequently Asked Questions</h2>
+  <div class="space-y-3">
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>How does the auto-detect cipher solver figure out which cipher was used?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">The solver brute-forces every decoder it knows — all 25 Caesar shifts, Atbash, and Rail Fence with 2 to 6 rails — and scores each candidate with two statistics. The chi-squared test compares the candidate's letter frequencies against English (E ≈ 12.7%, T ≈ 9.1%, A ≈ 8.2%), and dictionary scoring counts how many common English words appear. Candidates are ranked by the combined score, so the true plaintext almost always lands at rank #1 for messages of a sentence or more. Vigenère is not auto-detected because its key cannot be guessed blindly — use the Friedman key-length guesser for those.</p>
+    </details>
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>What is the difference between a Caesar cipher and ROT13?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">ROT13 is simply a Caesar cipher with a fixed shift of 13 — exactly half the alphabet. Because 13 is half of 26, encoding and decoding are the same operation: apply ROT13 twice and you get the original text back. A general Caesar cipher lets you choose any shift from 1 to 25, so a caesar cipher decoder must try all 25 possibilities, while ROT13 has only one. Both preserve letter case and leave numbers and punctuation untouched in the CipherLab console.</p>
+    </details>
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>How do I decode a Vigenère cipher if I don't know the key?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">First, find the key length. Paste the ciphertext into the Vigenère module and click "Guess key length" — the Friedman test splits the text into columns for each candidate length and measures the index of coincidence. The length whose columns look most like English (index of coincidence near 0.0667) is almost certainly correct. Then each column is an independent Caesar cipher: use letter frequencies (the tallest bar in a column is usually E) to recover each key letter, or try likely words. A vigenere cipher decoder that skips the key-length step is guessing blind, which is why the guesser is built into the console.</p>
+    </details>
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>Why does the frequency chart matter for breaking ciphers?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">Every language has a letter fingerprint — in English, E, T, A, O, N dominate and Z, Q, X are rare. Substitution ciphers like Caesar and Atbash keep the fingerprint's shape and just rename the bars, so matching your text's tallest bars against the English baseline reveals the shift. The chart plots your text in amber against the English baseline in sky blue, plus an index-of-coincidence readout: ~0.0667 means English-like text, ~0.0385 means random-looking text (typical of Vigenère or well-chained ciphers). If your amber bars are flat, frequency analysis alone won't crack it — try the auto-detect solver or the key-length guesser instead.</p>
+    </details>
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>Can I combine multiple ciphers, and will the solver still crack them?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">Yes — the Chain module stacks ciphers in sequence: for example, Caesar shift 5, then Rail Fence with 3 rails, then Atbash. Encoding feeds each step's output into the next, and decoding automatically unwraps the stack in reverse order, so you never have to track the sequence yourself. A chained ciphertext defeats the auto-detect solver, because the solver only tests single ciphers; each layer must be peeled off individually. That makes chaining perfect for puzzle hunts and escape rooms — but remember that no classical chain is truly secure, so never use these ciphers for real secrets.</p>
+    </details>
+    <details class="faq">
+      <summary class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-100">
+        <span>Is CipherLab free, and does my text leave my browser?</span>
+        <span class="faq-plus text-amber text-xl leading-none">+</span>
+      </summary>
+      <p class="mt-2 text-sm text-slate-400 leading-relaxed">CipherLab is completely free with unlimited usage — no signup, no paywall, no watermark on your output. Everything runs locally in your browser with plain JavaScript: your text is never uploaded, sent to a server, or stored anywhere. You can even disconnect from the internet after the page loads and every module — the encoders, the auto-detect cipher solver online ranking, the Friedman key-length guesser and the frequency analyzer — keeps working. Use the download button to save results as a text file.</p>
+    </details>
+  </div>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does the auto-detect cipher solver figure out which cipher was used?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The solver brute-forces every decoder it knows — all 25 Caesar shifts, Atbash, and Rail Fence with 2 to 6 rails — and scores each candidate with two statistics. The chi-squared test compares the candidate's letter frequencies against English, and dictionary scoring counts common English words. Candidates are ranked by the combined score, so the true plaintext almost always lands at rank #1 for messages of a sentence or more." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between a Caesar cipher and ROT13?",
+      "acceptedAnswer": { "@type": "Answer", "text": "ROT13 is a Caesar cipher with a fixed shift of 13 — exactly half the alphabet. Because 13 is half of 26, encoding and decoding are the same operation. A general Caesar cipher lets you choose any shift from 1 to 25, so a Caesar cipher decoder must try all 25 possibilities, while ROT13 has only one." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I decode a Vigenère cipher if I don't know the key?",
+      "acceptedAnswer": { "@type": "Answer", "text": "First find the key length with the Friedman test: split the ciphertext into columns for each candidate length and measure the index of coincidence. The length whose columns look most like English (index of coincidence near 0.0667) is almost certainly correct. Then each column is an independent Caesar cipher solvable by letter frequency analysis." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does the frequency chart matter for breaking ciphers?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Every language has a letter fingerprint. Substitution ciphers keep the fingerprint's shape and just rename the bars, so matching your text's tallest bars against the English baseline reveals the shift. The chart plots your text against the English baseline with an index-of-coincidence readout: ~0.0667 means English-like text, ~0.0385 means random-looking text." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I combine multiple ciphers, and will the solver still crack them?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — the Chain module stacks ciphers in sequence. Encoding feeds each step's output into the next, and decoding unwraps the stack in reverse automatically. A chained ciphertext defeats the single-cipher auto-detect solver, making chaining ideal for puzzle hunts — but no classical cipher chain is truly secure, so never use them for real secrets." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is CipherLab free, and does my text leave my browser?",
+      "acceptedAnswer": { "@type": "Answer", "text": "CipherLab is completely free with unlimited usage — no signup, no paywall, no watermark. Everything runs locally in your browser: your text is never uploaded or stored anywhere. Every module keeps working offline after the page loads." }
+    }
+  ]
+}
+</script>
+
+<!-- ============ PURE LOGIC LIB (inlined at build time) ============ -->
+<script id="v3-cipherlab-cipher-playground-lib">
+/* CipherLab v3 pure logic — classical cipher lab.
+   Pure functions only: no DOM, no browser globals, no page access.
+   NOTE: never embed a literal closing script tag in this file. */
+'use strict';
+
+/* ---------------- alphabet helpers ---------------- */
+function cleanLetters(text) {
+  return String(text || '').toLowerCase().replace(/[^a-z]/g, '');
+}
+
+function shiftChar(ch, shift) {
+  const code = ch.charCodeAt(0);
+  let out = ch;
+  if (code >= 97 && code <= 122) {
+    out = String.fromCharCode(((code - 97 + shift) % 26 + 26) % 26 + 97);
+  } else if (code >= 65 && code <= 90) {
+    out = String.fromCharCode(((code - 65 + shift) % 26 + 26) % 26 + 65);
+  }
+  return out;
+}
+
+/* ---------------- Caesar ---------------- */
+function caesarEncode(text, shift) {
+  const s = ((Number(shift) || 0) % 26 + 26) % 26;
+  return String(text || '').split('').map(function (ch) { return shiftChar(ch, s); }).join('');
+}
+function caesarDecode(text, shift) {
+  return caesarEncode(text, -(Number(shift) || 0));
+}
+
+/* ---------------- ROT13 ---------------- */
+function rot13(text) {
+  return caesarEncode(text, 13);
+}
+
+/* ---------------- Atbash ---------------- */
+function atbashChar(ch) {
+  const code = ch.charCodeAt(0);
+  if (code >= 97 && code <= 122) return String.fromCharCode(122 - (code - 97));
+  if (code >= 65 && code <= 90) return String.fromCharCode(90 - (code - 65));
+  return ch;
+}
+function atbash(text) {
+  return String(text || '').split('').map(atbashChar).join('');
+}
+
+/* ---------------- Rail Fence ---------------- */
+function railPattern(length, rails) {
+  const r = Math.max(2, Math.floor(Number(rails) || 2));
+  const pattern = new Array(length);
+  let row = 0, dir = 1;
+  for (let i = 0; i < length; i++) {
+    pattern[i] = row;
+    if (r === 1) continue;
+    row += dir;
+    if (row === 0 || row === r - 1) dir = -dir;
+  }
+  return { pattern: pattern, rails: r };
+}
+function railFenceEncode(text, rails) {
+  const t = String(text || '');
+  if (t.length === 0) return '';
+  const rp = railPattern(t.length, rails);
+  const rows = [];
+  for (let i = 0; i < rp.rails; i++) rows.push([]);
+  for (let i = 0; i < t.length; i++) rows[rp.pattern[i]].push(t[i]);
+  return rows.map(function (r) { return r.join(''); }).join('');
+}
+function railFenceDecode(text, rails) {
+  const t = String(text || '');
+  if (t.length === 0) return '';
+  const rp = railPattern(t.length, rails);
+  const rowLens = new Array(rp.rails).fill(0);
+  for (let i = 0; i < t.length; i++) rowLens[rp.pattern[i]]++;
+  const rows = [];
+  let pos = 0;
+  for (let r = 0; r < rp.rails; r++) {
+    rows.push(t.slice(pos, pos + rowLens[r]).split(''));
+    pos += rowLens[r];
+  }
+  const out = new Array(t.length);
+  for (let i = 0; i < t.length; i++) out[i] = rows[rp.pattern[i]].shift();
+  return out.join('');
+}
+
+/* ---------------- Vigenere ---------------- */
+function keyShifts(key) {
+  const clean = cleanLetters(key);
+  const shifts = [];
+  for (let i = 0; i < clean.length; i++) shifts.push(clean.charCodeAt(i) - 97);
+  return shifts;
+}
+function vigenere(text, key, mode) {
+  const shifts = keyShifts(key);
+  if (shifts.length === 0) return String(text || '');
+  const dir = mode === 'decode' ? -1 : 1;
+  const t = String(text || '');
+  let ki = 0;
+  return t.split('').map(function (ch) {
+    const code = ch.charCodeAt(0);
+    const isLower = code >= 97 && code <= 122;
+    const isUpper = code >= 65 && code <= 90;
+    if (!isLower && !isUpper) return ch;
+    const base = isLower ? 97 : 65;
+    const s = shifts[ki % shifts.length] * dir;
+    ki++;
+    return String.fromCharCode(((code - base + s) % 26 + 26) % 26 + base);
+  }).join('');
+}
+function vigenereEncode(text, key) { return vigenere(text, key, 'encode'); }
+function vigenereDecode(text, key) { return vigenere(text, key, 'decode'); }
+
+/* ---------------- English-likeness scoring ---------------- */
+var ENGLISH_FREQ = {
+  a: 0.08167, b: 0.01492, c: 0.02782, d: 0.04253, e: 0.12702, f: 0.02228,
+  g: 0.02015, h: 0.06094, i: 0.06966, j: 0.00153, k: 0.00772, l: 0.04025,
+  m: 0.02406, n: 0.06749, o: 0.07507, p: 0.01929, q: 0.00095, r: 0.05987,
+  s: 0.06327, t: 0.09056, u: 0.02758, v: 0.00978, w: 0.02360, x: 0.00150,
+  y: 0.01974, z: 0.00074
+};
+
+function chiSquared(text) {
+  const letters = cleanLetters(text);
+  const n = letters.length;
+  if (n === 0) return 99999;
+  const counts = {};
+  for (let i = 0; i < n; i++) {
+    const ch = letters[i];
+    counts[ch] = (counts[ch] || 0) + 1;
+  }
+  let chi = 0;
+  for (let i = 0; i < 26; i++) {
+    const ch = String.fromCharCode(97 + i);
+    const expected = n * ENGLISH_FREQ[ch];
+    const observed = counts[ch] || 0;
+    const diff = observed - expected;
+    chi += (diff * diff) / expected;
+  }
+  return chi;
+}
+
+var COMMON_WORDS = [
+  'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it',
+  'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this',
+  'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or',
+  'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
+  'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me',
+  'when', 'make', 'can', 'like', 'time', 'just', 'him', 'know', 'take',
+  'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them',
+  'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its',
+  'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our',
+  'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because',
+  'any', 'these', 'give', 'day', 'most', 'us', 'is', 'was', 'are',
+  'has', 'had', 'were', 'been', 'being', 'did', 'does', 'very', 'can',
+  'quick', 'brown', 'fox', 'jumps', 'lazy', 'dog', 'hello', 'world'
+];
+var WORD_SET = {};
+for (let i = 0; i < COMMON_WORDS.length; i++) WORD_SET[COMMON_WORDS[i]] = true;
+
+function dictionaryScore(text) {
+  const words = String(text || '').toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  let hits = 0;
+  for (let i = 0; i < words.length; i++) {
+    if (WORD_SET[words[i]]) hits++;
+  }
+  return hits;
+}
+
+/* englishScore: higher = more English-like. */
+function englishScore(text) {
+  const letters = cleanLetters(text);
+  if (letters.length === 0) return 0;
+  const chi = chiSquared(text);
+  const dict = dictionaryScore(text);
+  const chiPart = Math.max(0, 400 - chi);
+  return dict * 200 + chiPart;
+}
+
+/* ---------------- auto-detect: try every decoder, rank ---------------- */
+function detectCipher(ciphertext, maxRails) {
+  const t = String(ciphertext || '');
+  const results = [];
+  if (cleanLetters(t).length === 0) return results;
+  const railsMax = Math.min(Math.max(2, Math.floor(Number(maxRails) || 6)), 10);
+
+  for (let shift = 0; shift < 26; shift++) {
+    const plain = caesarDecode(t, shift);
+    results.push({
+      cipher: shift === 13 ? 'ROT13' : 'Caesar',
+      shift: shift,
+      rails: null,
+      key: null,
+      text: plain,
+      score: englishScore(plain)
+    });
+  }
+  const atb = atbash(t);
+  results.push({ cipher: 'Atbash', shift: null, rails: null, key: null, text: atb, score: englishScore(atb) });
+  for (let r = 2; r <= railsMax; r++) {
+    const plain = railFenceDecode(t, r);
+    results.push({ cipher: 'Rail Fence', shift: null, rails: r, key: null, text: plain, score: englishScore(plain) });
+  }
+  results.sort(function (a, b) { return b.score - a.score; });
+  results.forEach(function (r, i) { r.rank = i + 1; });
+  return results;
+}
+
+/* ---------------- Friedman / index of coincidence ---------------- */
+function indexOfCoincidence(text) {
+  const letters = cleanLetters(text);
+  const n = letters.length;
+  if (n < 2) return 0;
+  const counts = {};
+  for (let i = 0; i < n; i++) {
+    const ch = letters[i];
+    counts[ch] = (counts[ch] || 0) + 1;
+  }
+  let sum = 0;
+  for (const k in counts) sum += counts[k] * (counts[k] - 1);
+  return sum / (n * (n - 1));
+}
+
+/* guess Vigenere key length: columns of the right key length read like English (IoC ~0.0667) */
+function guessKeyLengths(ciphertext, maxLen) {
+  const letters = cleanLetters(ciphertext);
+  const results = [];
+  if (letters.length < 4) return results;
+  const maxK = Math.min(Math.max(2, Math.floor(Number(maxLen) || 12)), Math.max(2, Math.floor(letters.length / 2)));
+  for (let k = 1; k <= maxK; k++) {
+    let total = 0, cols = 0;
+    for (let i = 0; i < k; i++) {
+      let col = '';
+      for (let j = i; j < letters.length; j += k) col += letters[j];
+      if (col.length >= 2) { total += indexOfCoincidence(col); cols++; }
+    }
+    const avg = cols > 0 ? total / cols : 0;
+    results.push({ keyLength: k, avgIoC: avg, englishDistance: Math.abs(avg - 0.0667) });
+  }
+  results.sort(function (a, b) { return a.englishDistance - b.englishDistance; });
+  results.forEach(function (r, i) { r.rank = i + 1; });
+  return results;
+}
+
+/* ---------------- letter frequency vs English baseline ---------------- */
+function letterFrequency(text) {
+  const letters = cleanLetters(text);
+  const counts = {};
+  for (let i = 0; i < 26; i++) counts[String.fromCharCode(97 + i)] = 0;
+  for (let i = 0; i < letters.length; i++) counts[letters[i]]++;
+  const rows = [];
+  for (let i = 0; i < 26; i++) {
+    const ch = String.fromCharCode(97 + i);
+    rows.push({
+      letter: ch,
+      count: counts[ch],
+      pct: letters.length > 0 ? (counts[ch] / letters.length) * 100 : 0,
+      englishPct: ENGLISH_FREQ[ch] * 100
+    });
+  }
+  return rows;
+}
+
+/* ---------------- cipher chaining ---------------- */
+/* steps: [{ cipher: 'caesar'|'vigenere'|'atbash'|'railfence'|'rot13', key: string }]
+   encode applies steps in order; decode applies in reverse with inverse ops. */
+function applyStep(text, step, mode) {
+  const cipher = String(step && step.cipher ? step.cipher : '').toLowerCase();
+  const key = step && step.key !== undefined ? step.key : '';
+  const dir = mode === 'decode' ? -1 : 1;
+  if (cipher === 'caesar') return caesarEncode(text, Number(key) * dir);
+  if (cipher === 'vigenere') return vigenere(text, key, mode === 'decode' ? 'decode' : 'encode');
+  if (cipher === 'atbash') return atbash(text);
+  if (cipher === 'railfence') return mode === 'decode' ? railFenceDecode(text, key) : railFenceEncode(text, key);
+  if (cipher === 'rot13') return rot13(text);
+  return String(text || '');
+}
+
+function chainEncode(text, steps) {
+  let out = String(text || '');
+  const list = Array.isArray(steps) ? steps : [];
+  for (let i = 0; i < list.length; i++) out = applyStep(out, list[i], 'encode');
+  return out;
+}
+function chainDecode(text, steps) {
+  let out = String(text || '');
+  const list = Array.isArray(steps) ? steps : [];
+  for (let i = list.length - 1; i >= 0; i--) out = applyStep(out, list[i], 'decode');
+  return out;
+}
+
+function describeStep(step) {
+  const cipher = String(step && step.cipher ? step.cipher : '').toLowerCase();
+  const key = step && step.key !== undefined ? step.key : '';
+  if (cipher === 'caesar') return 'Caesar (shift ' + Number(key) + ')';
+  if (cipher === 'vigenere') return 'Vigenere (key "' + key + '")';
+  if (cipher === 'atbash') return 'Atbash';
+  if (cipher === 'railfence') return 'Rail Fence (' + key + ' rails)';
+  if (cipher === 'rot13') return 'ROT13';
+  return 'Unknown';
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    caesarEncode: caesarEncode,
+    caesarDecode: caesarDecode,
+    rot13: rot13,
+    atbash: atbash,
+    railFenceEncode: railFenceEncode,
+    railFenceDecode: railFenceDecode,
+    vigenere: vigenere,
+    vigenereEncode: vigenereEncode,
+    vigenereDecode: vigenereDecode,
+    chiSquared: chiSquared,
+    dictionaryScore: dictionaryScore,
+    englishScore: englishScore,
+    detectCipher: detectCipher,
+    indexOfCoincidence: indexOfCoincidence,
+    guessKeyLengths: guessKeyLengths,
+    letterFrequency: letterFrequency,
+    applyStep: applyStep,
+    chainEncode: chainEncode,
+    chainDecode: chainDecode,
+    describeStep: describeStep,
+    ENGLISH_FREQ: ENGLISH_FREQ,
+    cleanLetters: cleanLetters
+  };
+}
+
+</script>
+
+<!-- ============ UI WIRING (separate from lib) ============ -->
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var currentCipher = 'caesar';
+  var chainSteps = [];
+  var freqSource = 'input';
+
+  /* ---------- tabs ---------- */
+  var tabs = document.querySelectorAll('#cl-cipher .tab-btn');
+  var panels = {
+    caesar: $('cl-panel-caesar'),
+    vigenere: $('cl-panel-vigenere'),
+    railfence: $('cl-panel-railfence'),
+    detect: $('cl-panel-detect'),
+    chain: $('cl-panel-chain')
+  };
+  function setCipher(name) {
+    currentCipher = name;
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('active', tabs[i].getAttribute('data-cipher') === name);
+    }
+    var keys = ['caesar', 'vigenere', 'railfence', 'detect', 'chain'];
+    for (var k = 0; k < keys.length; k++) panels[keys[k]].classList.add('hidden');
+    var note = $('cl-panel-static');
+    if (panels[name]) { panels[name].classList.remove('hidden'); note.classList.add('hidden'); }
+    else {
+      note.classList.remove('hidden');
+      $('cl-static-note').textContent = name === 'atbash'
+        ? 'Atbash mirrors the alphabet (A↔Z). No key needed — encoding and decoding are identical.'
+        : 'ROT13 shifts by 13 — half the alphabet. No key needed — encoding and decoding are identical.';
+    }
+    $('cl-detect-wrap').classList.toggle('hidden', name !== 'detect');
+    status(name === 'detect' ? 'SYS:// auto-detect armed — paste ciphertext and hit RUN AUTO-DETECT.' : 'SYS:// module ' + name.toUpperCase() + ' loaded.');
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    (function (btn) {
+      btn.addEventListener('click', function () { setCipher(btn.getAttribute('data-cipher')); });
+    })(tabs[t]);
+  }
+
+  function status(msg) { $('cl-status').textContent = msg; }
+
+  /* ---------- params ---------- */
+  $('cl-shift').addEventListener('input', function () {
+    $('cl-shift-val').textContent = this.value;
+    drawWheel(parseInt(this.value, 10));
+  });
+  $('cl-rails').addEventListener('input', function () {
+    $('cl-rails-val').textContent = this.value;
+  });
+
+  /* ---------- single-cipher run ---------- */
+  function singleRun(mode) {
+    var text = $('cl-input').value;
+    if (!text) { status('SYS:// input empty — nothing to ' + mode + '.'); return; }
+    var out = '';
+    try {
+      if (currentCipher === 'caesar') out = mode === 'encode' ? caesarEncode(text, parseInt($('cl-shift').value, 10)) : caesarDecode(text, parseInt($('cl-shift').value, 10));
+      else if (currentCipher === 'vigenere') out = vigenere(text, $('cl-key').value, mode);
+      else if (currentCipher === 'atbash') out = atbash(text);
+      else if (currentCipher === 'railfence') out = mode === 'encode' ? railFenceEncode(text, $('cl-rails').value) : railFenceDecode(text, $('cl-rails').value);
+      else if (currentCipher === 'rot13') out = rot13(text);
+      else if (currentCipher === 'chain') out = mode === 'encode' ? chainEncode(text, chainSteps) : chainDecode(text, chainSteps);
+      else { status('SYS:// use RUN AUTO-DETECT for the solver module.'); return; }
+    } catch (e) { status('SYS:// error — ' + e.message); return; }
+    $('cl-output').value = out;
+    status('SYS:// ' + mode + ' complete — ' + text.length + ' chars processed.');
+    drawFreq();
+  }
+
+  $('cl-encode-btn').addEventListener('click', function () { singleRun('encode'); });
+  $('cl-decode-btn').addEventListener('click', function () { singleRun('decode'); });
+  $('cl-clear-btn').addEventListener('click', function () {
+    $('cl-input').value = ''; $('cl-output').value = '';
+    $('cl-detect-results').innerHTML = '';
+    status('SYS:// streams cleared.');
+    drawFreq();
+  });
+
+  /* ---------- copy / download ---------- */
+  $('cl-copy-btn').addEventListener('click', function () {
+    var v = $('cl-output').value;
+    if (!v) { status('SYS:// nothing to copy.'); return; }
+    function done() { status('SYS:// output copied to clipboard.'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(v).then(done, function () { fallbackCopy(v); done(); });
+    } else { fallbackCopy(v); done(); }
+  });
+  function fallbackCopy(v) {
+    var ta = document.createElement('textarea');
+    ta.value = v; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  $('cl-download-btn').addEventListener('click', function () {
+    var v = $('cl-output').value;
+    if (!v) { status('SYS:// nothing to download.'); return; }
+    var blob = new Blob([v], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cipherlab-output.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
+    status('SYS:// output downloaded as cipherlab-output.txt.');
+  });
+
+  /* ---------- auto-detect ---------- */
+  $('cl-detect-btn').addEventListener('click', function () {
+    var text = $('cl-input').value;
+    if (!cleanLetters(text)) { status('SYS:// need some letters to analyze.'); return; }
+    var t0 = Date.now();
+    var results = detectCipher(text, 6);
+    var box = $('cl-detect-results');
+    box.innerHTML = '';
+    var shown = results.slice(0, 6);
+    for (var i = 0; i < shown.length; i++) {
+      (function (r) {
+        var label = r.cipher === 'Caesar' || r.cipher === 'ROT13'
+          ? r.cipher + ' · shift ' + r.shift
+          : (r.cipher === 'Rail Fence' ? 'Rail Fence · ' + r.rails + ' rails' : r.cipher);
+        var row = document.createElement('div');
+        row.className = 'res-row rounded-lg border border-labedge/70 p-3 cursor-pointer';
+        var head = document.createElement('div');
+        head.className = 'flex items-center justify-between gap-2 mb-1';
+        head.innerHTML = '<span class="text-xs font-bold ' + (r.rank === 1 ? 'text-amber' : 'text-sky') + '">#' + r.rank + ' ' + escapeHtml(label) + '</span>' +
+          '<span class="text-[10px] text-slate-500">score ' + Math.round(r.score) + '</span>';
+        var pre = document.createElement('div');
+        pre.className = 'text-xs text-slate-300 break-words';
+        pre.textContent = r.text.length > 160 ? r.text.slice(0, 160) + '…' : r.text;
+        var hint = document.createElement('div');
+        hint.className = 'text-[10px] text-slate-600 mt-1';
+        hint.textContent = 'click to load into output';
+        row.appendChild(head); row.appendChild(pre); row.appendChild(hint);
+        row.addEventListener('click', function () {
+          $('cl-output').value = r.text;
+          status('SYS:// candidate #' + r.rank + ' (' + label + ') loaded into output.');
+        });
+        box.appendChild(row);
+      })(shown[i]);
+    }
+    var more = document.createElement('div');
+    more.className = 'text-[11px] text-slate-500 mt-1';
+    more.textContent = '…plus ' + (results.length - shown.length) + ' more candidates ranked below. (' + (Date.now() - t0) + ' ms)';
+    box.appendChild(more);
+    $('cl-detect-wrap').classList.remove('hidden');
+    status('SYS:// auto-detect complete — ' + results.length + ' candidates ranked.');
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* ---------- Vigenere key-length guesser ---------- */
+  $('cl-keylen-btn').addEventListener('click', function () {
+    var text = $('cl-input').value;
+    var box = $('cl-keylen-results');
+    box.innerHTML = '';
+    var guesses = guessKeyLengths(text, 12);
+    if (!guesses.length) { box.innerHTML = '<div class="text-slate-500">Need at least 4 letters of ciphertext.</div>'; return; }
+    var top = guesses.slice(0, 5);
+    for (var i = 0; i < top.length; i++) {
+      (function (g) {
+        var row = document.createElement('div');
+        row.className = 'res-row flex items-center justify-between rounded-lg border border-labedge/70 px-3 py-1.5 cursor-pointer';
+        row.innerHTML = '<span class="' + (g.rank === 1 ? 'text-amber font-bold' : 'text-slate-300') + '">key length ' + g.keyLength + '</span>' +
+          '<span class="text-slate-500">avg IoC ' + g.avgIoC.toFixed(4) + '</span>';
+        row.title = 'Click to decode columns with a trial key';
+        box.appendChild(row);
+      })(top[i]);
+    }
+    var note = document.createElement('div');
+    note.className = 'text-[10px] text-slate-600 mt-1';
+    note.textContent = 'Closest to English IoC 0.0667 ranks first. Try candidate keys of that length in the KEY field.';
+    box.appendChild(note);
+    status('SYS:// Friedman test complete — best guess: key length ' + guesses[0].keyLength + '.');
+  });
+
+  /* ---------- chain builder ---------- */
+  function renderChain() {
+    var box = $('cl-chain-list');
+    box.innerHTML = '';
+    if (!chainSteps.length) {
+      box.innerHTML = '<div class="text-slate-600">No steps yet — add your first cipher above.</div>';
+      return;
+    }
+    for (var i = 0; i < chainSteps.length; i++) {
+      (function (idx) {
+        var row = document.createElement('div');
+        row.className = 'flex items-center justify-between rounded-lg border border-labedge/70 px-3 py-1.5';
+        var label = document.createElement('span');
+        label.className = 'text-slate-300';
+        label.textContent = (idx + 1) + '. ' + describeStep(chainSteps[idx]);
+        var rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'text-[11px] text-red-400 hover:text-red-300';
+        rm.textContent = 'remove';
+        rm.addEventListener('click', function () { chainSteps.splice(idx, 1); renderChain(); });
+        row.appendChild(label); row.appendChild(rm);
+        box.appendChild(row);
+      })(i);
+    }
+  }
+  $('cl-chain-add').addEventListener('click', function () {
+    var cipher = $('cl-chain-cipher').value;
+    var key = $('cl-chain-key').value.trim();
+    if ((cipher === 'caesar' || cipher === 'railfence') && !/^-?\d+$/.test(key)) {
+      status('SYS:// ' + cipher + ' needs a numeric key (shift or rail count).');
+      return;
+    }
+    if (cipher === 'vigenere' && !/[a-zA-Z]/.test(key)) {
+      status('SYS:// vigenere needs a letter key.');
+      return;
+    }
+    chainSteps.push({ cipher: cipher, key: key });
+    $('cl-chain-key').value = '';
+    renderChain();
+    status('SYS:// chain step added — ' + chainSteps.length + ' step(s).');
+  });
+  renderChain();
+
+  /* ---------- Caesar wheel ---------- */
+  var wheel = $('cl-wheel');
+  function drawWheel(shift) {
+    var ctx = wheel.getContext('2d');
+    var W = wheel.width, H = wheel.height, cx = W / 2, cy = H / 2;
+    ctx.clearRect(0, 0, W, H);
+    var outerR = 128, innerR = 96;
+    ctx.strokeStyle = '#243355'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, outerR + 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, innerR - 14, 0, Math.PI * 2); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var i = 0; i < 26; i++) {
+      var ang = (i / 26) * Math.PI * 2 - Math.PI / 2;
+      var ox = cx + Math.cos(ang) * outerR, oy = cy + Math.sin(ang) * outerR;
+      ctx.fillStyle = '#94a3b8'; ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.fillText(String.fromCharCode(65 + i), ox, oy);
+      var j = (((i + shift) % 26) + 26) % 26;
+      var ix = cx + Math.cos(ang) * innerR, iy = cy + Math.sin(ang) * innerR;
+      ctx.fillStyle = '#fbbf24'; ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.fillText(String.fromCharCode(65 + j), ix, iy);
+      ctx.strokeStyle = 'rgba(56,189,248,.18)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ix, iy); ctx.stroke();
+    }
+    ctx.fillStyle = '#0c1222';
+    ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fbbf24'; ctx.font = '700 11px "JetBrains Mono", monospace';
+    ctx.fillText('SHIFT', cx, cy - 10);
+    ctx.font = '700 22px "JetBrains Mono", monospace';
+    ctx.fillText(String(shift), cx, cy + 14);
+  }
+  drawWheel(3);
+
+  /* ---------- frequency chart ---------- */
+  var freqCanvas = $('cl-freq-chart');
+  var iocReadout = $('cl-ioc-readout');
+  function drawFreq() {
+    var text = freqSource === 'input' ? $('cl-input').value : $('cl-output').value;
+    var ctx = freqCanvas.getContext('2d');
+    var W = freqCanvas.width, H = freqCanvas.height;
+    ctx.clearRect(0, 0, W, H);
+    var rows = letterFrequency(text);
+    var maxPct = 0;
+    for (var i = 0; i < rows.length; i++) maxPct = Math.max(maxPct, rows[i].pct, rows[i].englishPct);
+    maxPct = Math.max(maxPct, 1);
+    var padL = 22, padB = 20, padT = 8;
+    var plotW = W - padL - 8, plotH = H - padT - padB;
+    var slot = plotW / 26;
+    ctx.strokeStyle = '#243355'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(W - 8, padT + plotH); ctx.stroke();
+    for (var k = 0; k < rows.length; k++) {
+      var r = rows[k];
+      var x = padL + k * slot;
+      var bw = slot * 0.36;
+      var hIn = (r.pct / maxPct) * plotH;
+      var hEn = (r.englishPct / maxPct) * plotH;
+      ctx.fillStyle = 'rgba(56,189,248,.35)';
+      ctx.fillRect(x + slot * 0.52, padT + plotH - hEn, bw, hEn);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(x + slot * 0.12, padT + plotH - hIn, bw, hIn);
+      ctx.fillStyle = '#64748b'; ctx.font = '9px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(r.letter, x + slot / 2, H - 6);
+    }
+    var ioc = indexOfCoincidence(text);
+    var verdict = ioc > 0.06 ? 'English-like' : (ioc > 0.045 ? 'flattened (polyalphabetic?)' : 'random-like');
+    iocReadout.textContent = 'index of coincidence: ' + ioc.toFixed(4) + ' — ' + verdict + ' · ' + cleanLetters(text).length + ' letters analyzed';
+  }
+  $('cl-input').addEventListener('input', drawFreq);
+  $('cl-freq-input-btn').addEventListener('click', function () {
+    freqSource = 'input';
+    $('cl-freq-input-btn').className = 'px-2 py-1 rounded border border-amber/60 text-amber';
+    $('cl-freq-output-btn').className = 'px-2 py-1 rounded border border-labedge text-slate-400';
+    drawFreq();
+  });
+  $('cl-freq-output-btn').addEventListener('click', function () {
+    freqSource = 'output';
+    $('cl-freq-output-btn').className = 'px-2 py-1 rounded border border-amber/60 text-amber';
+    $('cl-freq-input-btn').className = 'px-2 py-1 rounded border border-labedge text-slate-400';
+    drawFreq();
+  });
+  drawFreq();
+
+  setCipher('caesar');
+})();
+</script>
+
+<footer style="padding:18px 12px 26px"><p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p></footer>
+</body>
+</html>
