@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://dev.fixoraa.tech/cronsage/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CronSage — Cron Expression Parser, Explainer & Schedule Tester</title>
+<meta name="description" content="Paste any cron expression and get a plain-English explanation, next & previous run times, a would-it-fire-at-this-time tester, DST skip/double-fire warnings and overlap-risk checks. Free, unlimited, no signup.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232E2A3B'/%3E%3Ctext x='16' y='22' font-size='17' text-anchor='middle' fill='%236EE7B7' font-family='monospace' font-weight='bold'%3E*%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .console-glow { box-shadow: 0 0 0 1px rgba(196,181,253,.12), 0 18px 50px -18px rgba(0,0,0,.55); }
+  .timeline { position: relative; }
+  .timeline::before { content:""; position:absolute; left:7px; top:8px; bottom:8px; width:2px; background:rgba(196,181,253,.25); border-radius:2px; }
+  .tl-dot { position:absolute; left:0; top:4px; width:16px; height:16px; border-radius:9999px; }
+  .pill-active { background:#6EE7B7 !important; color:#2E2A3B !important; border-color:#6EE7B7 !important; }
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(.8); cursor:pointer; }
+  .fade-in { animation: fadeIn .35s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none;} }
+  ::selection { background:#6EE7B7; color:#2E2A3B; }
+</style>
+</head>
+<body id="top" class="bg-[#2E2A3B] text-slate-200 antialiased">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-50 border-b border-[#C4B5FD]/15 bg-[#2E2A3B]/95 backdrop-blur">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between">
+    <a href="#top" class="text-xl font-extrabold tracking-tight" aria-label="CronSage home">
+      <span class="text-[#C4B5FD]">Cron</span><span class="text-[#6EE7B7]">Sage</span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="text-slate-300/80 hover:text-[#C4B5FD] transition-colors">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300/80 hover:text-[#C4B5FD] transition-colors">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 rounded-full border border-[#6EE7B7]/40 bg-[#6EE7B7]/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#6EE7B7] uppercase">
+    <span class="inline-block w-2 h-2 rounded-full bg-[#6EE7B7] animate-pulse"></span>
+    Unlimited Free Usage
+  </div>
+  <h1 class="mt-4 text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
+    Cron Expression <span class="text-[#C4B5FD]">Parser</span> &amp; <span class="text-[#6EE7B7]">Explainer</span>
+  </h1>
+  <p class="mt-3 max-w-2xl mx-auto text-slate-300/90 text-sm sm:text-base">
+    Paste any cron expression and instantly get a plain-English explanation, the next &amp; previous run times,
+    a would-it-fire-at-this-time diagnostic, DST skip / double-fire warnings and overlap-risk checks.
+    No signup. No paywall. Everything runs in your browser.
+  </p>
+</section>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= TOOL CONSOLE ================= -->
+<section id="tool" class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] overflow-hidden">
+    <!-- console title bar -->
+    <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#C4B5FD]/15 bg-[#2b2839]">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-[#F87171]/80"></span>
+        <span class="w-3 h-3 rounded-full bg-[#FBBF24]/80"></span>
+        <span class="w-3 h-3 rounded-full bg-[#6EE7B7]/80"></span>
+        <span class="ml-3 mono text-xs text-slate-400">cronsage — explainer console</span>
+      </div>
+      <span class="hidden sm:inline-block rounded-full border border-[#6EE7B7]/40 bg-[#6EE7B7]/10 px-3 py-1 text-[11px] font-semibold text-[#6EE7B7] uppercase tracking-wide">Unlimited Free Usage</span>
+    </div>
+
+    <div class="p-4 sm:p-6">
+      <!-- dialect pills + timezone -->
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Cron dialect">
+          <button data-dialect="standard" class="dialect-pill pill-active rounded-lg border border-[#C4B5FD]/30 px-3.5 py-2 text-sm font-semibold text-slate-200 transition-colors">Standard · 5-field</button>
+          <button data-dialect="quartz" class="dialect-pill rounded-lg border border-[#C4B5FD]/30 px-3.5 py-2 text-sm font-semibold text-slate-200 transition-colors">Quartz · 6–7 field</button>
+          <button data-dialect="github" class="dialect-pill rounded-lg border border-[#C4B5FD]/30 px-3.5 py-2 text-sm font-semibold text-slate-200 transition-colors">GitHub Actions</button>
+        </div>
+        <div class="lg:ml-auto flex items-center gap-2">
+          <label for="tzSelect" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Timezone</label>
+          <select id="tzSelect" class="mono rounded-lg border border-[#C4B5FD]/30 bg-[#2E2A3B] px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#6EE7B7]/60 max-w-[240px]"></select>
+        </div>
+      </div>
+
+      <!-- cron input -->
+      <div class="mt-4 flex flex-col sm:flex-row gap-3">
+        <input id="cronInput" type="text" spellcheck="false" autocomplete="off"
+          class="mono flex-1 rounded-xl border-2 border-[#C4B5FD]/30 bg-[#241f33] px-4 py-3.5 text-base sm:text-lg text-[#6EE7B7] placeholder-slate-500 focus:outline-none focus:border-[#6EE7B7]/70 focus:ring-2 focus:ring-[#6EE7B7]/20"
+          placeholder="*/15 * * * *" aria-label="Cron expression">
+        <button id="parseBtn"
+          class="rounded-xl bg-[#6EE7B7] px-8 py-3.5 text-base font-extrabold text-[#2E2A3B] hover:bg-[#8df0c6] active:scale-[.98] transition-all">
+          Explain →
+        </button>
+      </div>
+
+      <!-- field position chips -->
+      <div id="fieldChips" class="mt-3 flex flex-wrap gap-1.5" aria-label="Field order"></div>
+
+      <!-- samples -->
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider">Try:</span>
+        <div id="sampleChips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- field-level errors -->
+      <div id="errorBox" class="hidden mt-4 rounded-xl border border-[#F87171]/40 bg-[#F87171]/10 p-4">
+        <p class="text-sm font-bold text-[#F87171] mb-2">Couldn't parse that expression:</p>
+        <ul id="errorList" class="space-y-1.5 text-sm text-slate-200"></ul>
+      </div>
+      <div id="githubNote" class="hidden mt-4 rounded-xl border border-[#C4B5FD]/30 bg-[#C4B5FD]/10 p-4 text-sm text-slate-200">
+        <span class="font-bold text-[#C4B5FD]">GitHub Actions note:</span>
+        scheduled workflows use standard 5-field syntax. The shortest supported interval is
+        <span class="mono font-bold">5 minutes</span>, and runs can be delayed during high load — never rely on to-the-second timing.
+        <span id="githubWarn" class="hidden block mt-2 font-semibold text-[#FBBF24]"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div id="results" class="hidden mt-6 space-y-6">
+
+    <!-- plain english + field breakdown -->
+    <div class="grid gap-6 lg:grid-cols-5">
+      <div class="lg:col-span-3 console-glow rounded-2xl border border-[#6EE7B7]/25 bg-[#353147] p-5 sm:p-6 fade-in">
+        <div class="flex items-start justify-between gap-3">
+          <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#6EE7B7]">Plain-English explanation</h2>
+          <button id="copyEnglish" class="shrink-0 rounded-lg border border-[#6EE7B7]/40 px-3 py-1.5 text-xs font-bold text-[#6EE7B7] hover:bg-[#6EE7B7]/10 transition-colors">Copy</button>
+        </div>
+        <p id="englishText" class="mt-3 text-xl sm:text-2xl font-bold leading-snug text-white"></p>
+        <p id="englishMeta" class="mono mt-3 text-xs text-slate-400 break-all"></p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button id="copyExplain" class="rounded-lg bg-[#C4B5FD] px-4 py-2 text-sm font-bold text-[#2E2A3B] hover:bg-[#d6c9ff] transition-colors">Copy full report</button>
+          <button id="downloadTxt" class="rounded-lg border border-[#C4B5FD]/50 px-4 py-2 text-sm font-bold text-[#C4B5FD] hover:bg-[#C4B5FD]/10 transition-colors">Download .txt</button>
+        </div>
+      </div>
+      <div class="lg:col-span-2 console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] p-5 sm:p-6 fade-in">
+        <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#C4B5FD]">Field breakdown</h2>
+        <dl id="fieldRows" class="mt-3 space-y-2.5 text-sm"></dl>
+      </div>
+    </div>
+
+    <!-- timeline -->
+    <div class="grid gap-6 lg:grid-cols-5">
+      <div class="lg:col-span-3 console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] p-5 sm:p-6 fade-in">
+        <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#C4B5FD]">Next runs <span id="tzBadge" class="mono normal-case tracking-normal text-slate-400"></span></h2>
+        <div id="nextRuns" class="timeline mt-4 space-y-4 pl-8"></div>
+        <p id="exhaustNote" class="hidden mt-3 text-sm text-[#FBBF24]"></p>
+      </div>
+      <div class="lg:col-span-2 console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] p-5 sm:p-6 fade-in">
+        <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Previous runs</h2>
+        <ul id="prevRuns" class="mt-4 space-y-2.5 text-sm"></ul>
+      </div>
+    </div>
+
+    <!-- diagnostic + overlap -->
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] p-5 sm:p-6 fade-in">
+        <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#C4B5FD]">Diagnostic — would it fire at this time?</h2>
+        <div class="mt-3 flex flex-col sm:flex-row gap-3">
+          <input id="diagInput" type="datetime-local"
+            class="mono flex-1 rounded-lg border border-[#C4B5FD]/30 bg-[#241f33] px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#6EE7B7]/60">
+          <button id="diagBtn" class="rounded-lg bg-[#C4B5FD] px-5 py-2.5 text-sm font-bold text-[#2E2A3B] hover:bg-[#d6c9ff] transition-colors">Check</button>
+        </div>
+        <div id="diagResult" class="hidden mt-4"></div>
+      </div>
+      <div class="console-glow rounded-2xl border border-[#C4B5FD]/20 bg-[#353147] p-5 sm:p-6 fade-in">
+        <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#C4B5FD]">Overlap-risk check</h2>
+        <p class="mt-2 text-sm text-slate-300/90">How long does one run of this job usually take? If the next run starts before the previous one finishes, runs pile up.</p>
+        <div class="mt-3 flex flex-col sm:flex-row gap-3">
+          <div class="flex items-center gap-2 flex-1">
+            <input id="durInput" type="number" min="1" value="10"
+              class="mono w-full rounded-lg border border-[#C4B5FD]/30 bg-[#241f33] px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#6EE7B7]/60" aria-label="Expected job duration in minutes">
+            <span class="text-sm text-slate-400 whitespace-nowrap">minutes</span>
+          </div>
+          <button id="overlapBtn" class="rounded-lg bg-[#C4B5FD] px-5 py-2.5 text-sm font-bold text-[#2E2A3B] hover:bg-[#d6c9ff] transition-colors">Check overlap</button>
+        </div>
+        <div id="overlapResult" class="hidden mt-4"></div>
+      </div>
+    </div>
+
+    <!-- DST warnings -->
+    <div class="console-glow rounded-2xl border border-[#FBBF24]/25 bg-[#353147] p-5 sm:p-6 fade-in">
+      <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-[#FBBF24]">Daylight-saving warnings <span class="normal-case tracking-normal text-slate-400 font-medium">— for the selected timezone</span></h2>
+      <ul id="dstList" class="mt-3 space-y-2.5 text-sm"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+(function(grnp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = grnp || {};
+s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SEO ARTICLE ================= -->
+<section class="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+<article id="seo-article" class="prose-custom text-slate-300/95 text-[15px] leading-relaxed">
+<h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">Cron Expressions Explained: The Complete Guide to Scheduling Jobs Like a Pro</h2>
+
+<p>If you have ever stared at a string like <code class="mono text-[#6EE7B7]">*/15 * * * *</code> and wondered what on earth it means, you are not alone. Cron expressions are one of those things every developer, DevOps engineer and system administrator eventually has to learn — and almost everyone learns them the hard way, usually at 2 a.m. when a job fires at the wrong time. This guide explains cron expressions from the ground up: what each field does, how the special characters work, where the classic traps hide, and how the Quartz and GitHub Actions dialects differ from standard cron.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">What is a cron expression?</h3>
+<p>A cron expression is a compact text string that describes a recurring schedule. The name comes from <em>cron</em>, the time-based job scheduler built into Unix-like operating systems since the 1970s. You write the expression, the scheduler reads it, and your command, script or workflow runs whenever the current time matches the pattern.</p>
+<p>Today cron syntax lives far beyond Linux servers. You will find it in Jenkins build triggers, Kubernetes CronJobs, the Java Quartz scheduler, cloud platforms like AWS EventBridge, and CI systems like GitHub Actions. The core idea is identical everywhere: five (sometimes six or seven) fields, each describing one unit of time, read left to right from the smallest unit to the largest.</p>
+<p>The reason cron expressions confuse people is density. Five numbers and asterisks carry a surprising amount of meaning, and two expressions that look almost identical — <code class="mono text-[#6EE7B7]">0 9 * * *</code> versus <code class="mono text-[#6EE7B7]">0 9 * * 1</code> — behave completely differently. A cron parser that translates the expression into plain English, like the console above, is the fastest way to check that what you wrote is what you meant.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">The five fields, decoded</h3>
+<p>A standard cron expression has five fields separated by spaces, always in this order:</p>
+<div class="overflow-x-auto my-4">
+<table class="w-full text-sm border-collapse">
+<thead><tr class="text-left text-[#C4B5FD]">
+<th class="border border-[#C4B5FD]/20 px-3 py-2">Position</th><th class="border border-[#C4B5FD]/20 px-3 py-2">Field</th><th class="border border-[#C4B5FD]/20 px-3 py-2">Allowed values</th><th class="border border-[#C4B5FD]/20 px-3 py-2">Special characters</th>
+</tr></thead>
+<tbody class="mono text-[13px]">
+<tr><td class="border border-[#C4B5FD]/20 px-3 py-2">1</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Minute</td><td class="border border-[#C4B5FD]/20 px-3 py-2">0–59</td><td class="border border-[#C4B5FD]/20 px-3 py-2">* , - /</td></tr>
+<tr><td class="border border-[#C4B5FD]/20 px-3 py-2">2</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Hour</td><td class="border border-[#C4B5FD]/20 px-3 py-2">0–23</td><td class="border border-[#C4B5FD]/20 px-3 py-2">* , - /</td></tr>
+<tr><td class="border border-[#C4B5FD]/20 px-3 py-2">3</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Day of month</td><td class="border border-[#C4B5FD]/20 px-3 py-2">1–31</td><td class="border border-[#C4B5FD]/20 px-3 py-2">* , - /</td></tr>
+<tr><td class="border border-[#C4B5FD]/20 px-3 py-2">4</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Month</td><td class="border border-[#C4B5FD]/20 px-3 py-2">1–12 or JAN–DEC</td><td class="border border-[#C4B5FD]/20 px-3 py-2">* , - /</td></tr>
+<tr><td class="border border-[#C4B5FD]/20 px-3 py-2">5</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Day of week</td><td class="border border-[#C4B5FD]/20 px-3 py-2">0–7 or SUN–SAT</td><td class="border border-[#C4B5FD]/20 px-3 py-2">* , - /</td></tr>
+</tbody>
+</table>
+</div>
+<p>So <code class="mono text-[#6EE7B7]">30 2 * * *</code> reads as: minute 30, hour 2, every day of the month, every month, every day of the week — in plain English, "at 02:30 every day". And <code class="mono text-[#6EE7B7]">0 9 * * 1-5</code> means "at 09:00, Monday through Friday". The fields are always evaluated together: a job fires only when <em>all</em> the field conditions are satisfied at the same time — with one famous exception involving the two day fields, which we will get to shortly.</p>
+<p>Note that hours use the 24-hour clock. <code class="mono text-[#6EE7B7]">0 14 * * *</code> is 2 p.m., not 2 a.m. There is no AM/PM marker in cron, which is another classic source of midnight-versus-noon confusion: <code class="mono text-[#6EE7B7]">0 0 * * *</code> is midnight, <code class="mono text-[#6EE7B7]">0 12 * * *</code> is noon.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Special characters: the *, ,, - and / operators</h3>
+<p>Four special characters do all the heavy lifting in cron expressions. Master these and you can read any schedule:</p>
+<p><strong class="text-white">Asterisk (*) — "every".</strong> A star means "every possible value for this field". <code class="mono text-[#6EE7B7]">* * * * *</code> therefore means "every minute of every hour of every day" — the most frequent schedule cron can express. In the minute field, <code class="mono text-[#6EE7B7]">0 * * * *</code> means "at minute zero of every hour", i.e. once per hour.</p>
+<p><strong class="text-white">Comma (,) — lists.</strong> Separate individual values: <code class="mono text-[#6EE7B7]">0 9,18 * * *</code> runs at 09:00 and 18:00 every day. <code class="mono text-[#6EE7B7]">0 0 * * 1,3,5</code> runs at midnight on Monday, Wednesday and Friday.</p>
+<p><strong class="text-white">Hyphen (-) — ranges.</strong> <code class="mono text-[#6EE7B7]">0 9 * * 1-5</code> covers Monday through Friday. <code class="mono text-[#6EE7B7]">0 0 * 1-3 *</code> runs daily during the first quarter of the year. Ranges are inclusive on both ends.</p>
+<p><strong class="text-white">Slash (/) — steps.</strong> The step operator picks every nth value: <code class="mono text-[#6EE7B7]">*/15 * * * *</code> means "every 15 minutes" (minutes 0, 15, 30, 45). <code class="mono text-[#6EE7B7]">0 */2 * * *</code> means "every 2 hours". You can combine steps with ranges too: <code class="mono text-[#6EE7B7]">0 9-17/2 * * *</code> fires at 09:00, 11:00, 13:00, 15:00 and 17:00 — every two hours during the working day.</p>
+<p>One subtle point: <code class="mono text-[#6EE7B7]">*/10</code> in the minute field starts counting from 0, giving minutes 0, 10, 20, 30, 40, 50. If you want "10 minutes past every hour" instead, write the literal <code class="mono text-[#6EE7B7]">10 * * * *</code>. The step always anchors at the field's minimum unless you give it an explicit range like <code class="mono text-[#6EE7B7]">5-55/10</code>.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Names instead of numbers</h3>
+<p>In the month and day-of-week fields you can use three-letter English names instead of numbers: JAN, FEB, MAR … DEC and SUN, MON, TUE, WED, THU, FRI, SAT. Names are case-insensitive, so <code class="mono text-[#6EE7B7]">0 9 * * mon-fri</code> works exactly like <code class="mono text-[#6EE7B7]">0 9 * * 1-5</code>. They work inside ranges and lists as well: <code class="mono text-[#6EE7B7]">0 0 1 JAN,APR,JUL,OCT *</code> runs at midnight on the first day of each quarter.</p>
+<p>A small quirk worth knowing: in standard cron, both 0 and 7 mean Sunday in the day-of-week field. So <code class="mono text-[#6EE7B7]">0 0 * * 0</code> and <code class="mono text-[#6EE7B7]">0 0 * * 7</code> are identical. (Quartz does this differently — more on that below.)</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">The day-of-month vs day-of-week trap: the OR rule</h3>
+<p>Here is the single most misunderstood behavior in all of cron. When <em>both</em> the day-of-month and day-of-week fields are restricted (neither is <code class="mono text-[#6EE7B7]">*</code>), the job runs when <strong class="text-white">either</strong> condition matches — not when both match. This is the OR rule, and it surprises almost everyone the first time.</p>
+<p>Consider <code class="mono text-[#6EE7B7]">0 0 1 * 1</code>. A newcomer reads it as "midnight on the 1st of the month, but only if it's a Monday". What it actually means is "midnight on the 1st of every month, <em>or</em> every Monday" — roughly five runs a month instead of the occasional one. If you truly want "the first Monday of the month", standard cron cannot express it directly; you need a wrapper script that checks the date, or a scheduler with richer syntax.</p>
+<p>The rule, precisely: if day-of-month is <code class="mono text-[#6EE7B7]">*</code>, only day-of-week is considered; if day-of-week is <code class="mono text-[#6EE7B7]">*</code>, only day-of-month is considered; if both are restricted, the job fires when either matches; if both are <code class="mono text-[#6EE7B7]">*</code>, it fires every day. Paste any suspicious expression into the parser above and check the field breakdown — it spells out exactly which rule is in play.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Quartz cron: the 6- and 7-field dialects</h3>
+<p>The Quartz scheduler, popular in Java applications, extends cron with extra fields and slightly different conventions. A Quartz expression has <strong class="text-white">six</strong> fields — seconds, minutes, hours, day-of-month, month, day-of-week — with an optional seventh for the year. So the Quartz equivalent of "every 15 minutes" is <code class="mono text-[#6EE7B7]">0 */15 * ? * *</code>: note the leading seconds field and the <code class="mono text-[#6EE7B7]">?</code>.</p>
+<p>The question mark is Quartz's "no specific value" placeholder, used in exactly one of the two day fields. Because Quartz evaluates day-of-month and day-of-week with AND logic instead of cron's OR rule, it forces you to disambiguate: put <code class="mono text-[#6EE7B7]">?</code> in the day field you don't care about. <code class="mono text-[#6EE7B7]">0 0 12 ? * WED</code> means "12:00 every Wednesday"; <code class="mono text-[#6EE7B7]">0 0 12 15 * ?</code> means "12:00 on the 15th of every month". Setting both day fields to specific values is an error in Quartz, and the parser above flags it for you.</p>
+<p>Another Quartz difference: day-of-week is numbered 1 (Sunday) through 7 (Saturday), unlike standard cron's 0–6. Quartz also supports advanced characters like <code class="mono text-[#6EE7B7]">L</code> (last), <code class="mono text-[#6EE7B7]">W</code> (nearest weekday) and <code class="mono text-[#6EE7B7]">#</code> (nth weekday of the month, as in <code class="mono text-[#6EE7B7]">3#2</code> for the second Tuesday). Those are powerful but rare; most teams never need them, and this parser intentionally asks you to expand them into explicit values so the plain-English explanation stays exact.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">GitHub Actions schedules</h3>
+<p>GitHub Actions' <code class="mono text-[#6EE7B7]">schedule</code> trigger uses standard 5-field POSIX cron syntax — the same grammar as a Linux crontab. Two practical differences matter. First, the minimum interval is <strong class="text-white">five minutes</strong>; anything more frequent, like <code class="mono text-[#6EE7B7]">* * * * *</code>, will not run every minute. Second, scheduled workflows run in UTC and can be delayed by several minutes during periods of high load, so never design a workflow that depends on to-the-second timing. The parser above includes a GitHub Actions mode that warns you automatically if your expression fires more often than every five minutes.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Daylight saving time: the skip and the double</h3>
+<p>Cron schedules are evaluated in wall-clock time, which means daylight saving transitions can do strange things to your jobs twice a year. In spring, when clocks jump forward (for example 02:00 → 03:00), any schedule targeting the skipped hour simply <strong class="text-white">never fires</strong> that day. A backup job set for <code class="mono text-[#6EE7B7]">30 2 * * *</code> silently misses its run on the spring-forward Sunday — no error, no retry, just a missing backup you might not notice for weeks.</p>
+<p>In autumn the opposite happens: when clocks fall back, the repeated hour occurs twice, and a job scheduled inside it can <strong class="text-white">fire twice</strong>. Whether it actually double-fires depends on your scheduler — some dedupe, some don't — but the risk is real, especially for jobs that send emails, charge customers or mutate data.</p>
+<p>The practical advice: avoid scheduling critical jobs between 01:00 and 03:00 local time, make jobs idempotent so a double run is harmless, and always verify DST behavior in the timezone your scheduler actually uses (often UTC on servers, which has no DST at all). The console above computes every run in your selected timezone and flags both skips and potential double-fires automatically — one of the few free tools that does.</p>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Cron cheat sheet: common examples</h3>
+<div class="overflow-x-auto my-4">
+<table class="w-full text-sm border-collapse">
+<thead><tr class="text-left text-[#C4B5FD]">
+<th class="border border-[#C4B5FD]/20 px-3 py-2">Expression</th><th class="border border-[#C4B5FD]/20 px-3 py-2">Meaning</th>
+</tr></thead>
+<tbody class="text-[13px]">
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">* * * * *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Every minute</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">*/15 * * * *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Every 15 minutes</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 * * * *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Every hour, on the hour</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 9 * * *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Every day at 09:00</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 9 * * 1-5</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Weekdays at 09:00</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">30 2 * * 0</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Sundays at 02:30</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 0 1 * *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">First day of every month at midnight</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 0 1 1 *</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Once a year: midnight on January 1st</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 12 * * 6</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Saturdays at noon</td></tr>
+<tr><td class="mono border border-[#C4B5FD]/20 px-3 py-2 text-[#6EE7B7]">0 0 * * 0</td><td class="border border-[#C4B5FD]/20 px-3 py-2">Sundays at midnight</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="text-xl font-bold text-[#C4B5FD] mt-8 mb-3">Mistakes to avoid</h3>
+<p><strong class="text-white">Swapping minute and hour.</strong> <code class="mono text-[#6EE7B7]">0 9 * * *</code> (9 a.m. daily) versus <code class="mono text-[#6EE7B7]">9 0 * * *</code> (9 minutes past midnight) — one transposed field, wildly different behavior. Always double-check field order with a parser before deploying.</p>
+<p><strong class="text-white">Assuming the server's timezone.</strong> A crontab entry runs in the system's local timezone, which on many servers is UTC — not your laptop's timezone. A job you think runs at "9 a.m." might run at 9 a.m. UTC. When in doubt, set the timezone explicitly and verify with the next-runs list.</p>
+<p><strong class="text-white">Overlapping runs.</strong> If a job takes 20 minutes but its schedule fires every 10, instances pile up and can exhaust memory, duplicate work or corrupt data. Use the overlap-risk check above: enter your expected job duration and it compares it against the real interval between consecutive runs.</p>
+<p><strong class="text-white">Impossible dates.</strong> <code class="mono text-[#6EE7B7]">0 0 30 2 *</code> looks valid but February never has 30 days — the job will never run, and cron will never tell you. Similarly <code class="mono text-[#6EE7B7]">0 0 29 2 *</code> only fires in leap years. A good tester reports "no upcoming runs" instead of leaving you guessing.</p>
+<p><strong class="text-white">Testing in production.</strong> Never deploy an untested schedule for anything important. Paste the expression into a tester, read the plain-English explanation out loud, scan the next ten run times, and run the would-it-fire diagnostic against a few specific dates — including a DST transition weekend. Thirty seconds of checking beats a 2 a.m. incident every time.</p>
+</article>
+
+<!-- ================= FAQs ================= -->
+<div class="mt-12">
+<h2 class="text-2xl font-extrabold text-white mb-6">Frequently asked questions</h2>
+<div class="space-y-4">
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">What does */15 * * * * mean in cron?</h3>
+<p class="mt-2 text-sm text-slate-300/90">It means "every 15 minutes". The <code class="mono">*/15</code> in the minute field selects minutes 0, 15, 30 and 45 of every hour, while the remaining four asterisks mean every hour, every day of the month, every month and every day of the week. So the job fires at :00, :15, :30 and :45 past each hour, around the clock.</p>
+</div>
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">If I set both day-of-month and day-of-week, when does my cron job run?</h3>
+<p class="mt-2 text-sm text-slate-300/90">It runs when <em>either</em> condition matches — this is cron's OR rule. For example, <code class="mono">0 0 1 * 1</code> fires at midnight on the 1st of every month <em>or</em> every Monday, not only when the 1st is a Monday. If you need both conditions to hold simultaneously, standard cron cannot express it; use a wrapper script that checks the date, or a scheduler with richer syntax such as Quartz.</p>
+</div>
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">What is the difference between standard cron and Quartz cron?</h3>
+<p class="mt-2 text-sm text-slate-300/90">Quartz adds a seconds field at the start (and an optional year field at the end), uses <code class="mono">?</code> as a "no specific value" placeholder in one of the two day fields, numbers Sunday as 1 instead of 0, and evaluates day-of-month and day-of-week with AND logic rather than standard cron's OR rule. A Quartz expression like <code class="mono">0 */15 * ? * *</code> is the equivalent of the standard <code class="mono">*/15 * * * *</code>.</p>
+</div>
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">Can I schedule GitHub Actions workflows with cron?</h3>
+<p class="mt-2 text-sm text-slate-300/90">Yes — the <code class="mono">schedule</code> trigger in a workflow file accepts standard 5-field cron expressions. Keep in mind that the shortest supported interval is 5 minutes, schedules run in UTC, and GitHub may delay runs by several minutes during high load. CronSage's GitHub Actions mode warns you automatically if your expression fires more often than every five minutes.</p>
+</div>
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">Why did my scheduled job skip a run or run twice?</h3>
+<p class="mt-2 text-sm text-slate-300/90">Daylight saving time is the usual culprit. When clocks spring forward, the skipped hour never happens, so any job scheduled inside it silently misses a run. When clocks fall back, the repeated hour happens twice, so a job scheduled inside it may fire twice. CronSage detects both cases for your selected timezone and lists them as warnings above the next-runs timeline.</p>
+</div>
+<div class="rounded-xl border border-[#C4B5FD]/20 bg-[#353147] p-5">
+<h3 class="font-bold text-[#C4B5FD]">How can I test a cron expression before deploying it?</h3>
+<p class="mt-2 text-sm text-slate-300/90">Paste it into the parser at the top of this page: read the plain-English explanation, scan the next and previous run times, and use the "would it fire at this time?" diagnostic to check specific dates — including a daylight-saving transition weekend. Also verify the timezone your scheduler uses (many servers run on UTC) and check the overlap-risk warning if your job takes a while to finish.</p>
+</div>
+</div>
+</div>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does */15 * * * * mean in cron?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It means \"every 15 minutes\". The */15 in the minute field selects minutes 0, 15, 30 and 45 of every hour, while the remaining four asterisks mean every hour, every day of the month, every month and every day of the week." }
+    },
+    {
+      "@type": "Question",
+      "name": "If I set both day-of-month and day-of-week, when does my cron job run?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It runs when either condition matches — this is cron's OR rule. For example, 0 0 1 * 1 fires at midnight on the 1st of every month or every Monday, not only when the 1st is a Monday." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between standard cron and Quartz cron?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Quartz adds a seconds field at the start (and an optional year field at the end), uses ? as a no-specific-value placeholder in one of the two day fields, numbers Sunday as 1 instead of 0, and evaluates day-of-month and day-of-week with AND logic rather than standard cron's OR rule." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I schedule GitHub Actions workflows with cron?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — the schedule trigger in a workflow file accepts standard 5-field cron expressions. The shortest supported interval is 5 minutes, schedules run in UTC, and GitHub may delay runs during high load." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why did my scheduled job skip a run or run twice?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Daylight saving time is the usual culprit. When clocks spring forward, the skipped hour never happens, so jobs scheduled inside it miss a run. When clocks fall back, the repeated hour happens twice, so a job scheduled inside it may fire twice." }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I test a cron expression before deploying it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Paste it into a cron parser: read the plain-English explanation, scan the next and previous run times, and use a would-it-fire diagnostic to check specific dates including daylight-saving transition weekends. Also verify the scheduler's timezone and check for overlap risk." }
+    }
+  ]
+}
+</script>
+
+<!-- ================= FOOTER ================= -->
+<footer class="border-t border-[#C4B5FD]/15 mt-6">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm text-slate-400"><span class="font-extrabold"><span class="text-[#C4B5FD]">Cron</span><span class="text-[#6EE7B7]">Sage</span></span> — free unlimited cron parsing, right in your browser.</p>
+    <nav class="flex items-center gap-5 text-sm">
+      <a href="#top" class="text-slate-400 hover:text-[#C4B5FD]">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-400 hover:text-[#C4B5FD]">More Tools</a>
+    </nav>
+  </div>
+<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+
+<script id="cronsage-core">
+'use strict';
+/* ============================================================
+   CronSage core — pure cron parsing / describing / scheduling.
+   No DOM, no network. Shared VERBATIM between the test suite
+   and cronsage.html (inlined into <script id="cronsage-core">).
+   ============================================================ */
+
+const CS_MONTH_NAMES = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+const CS_DOW_NAMES = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
+const CS_MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CS_DOW_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function csFieldSpecs(dialect) {
+  const std = [
+    { key:'minute', label:'Minute',        min:0, max:59 },
+    { key:'hour',   label:'Hour',          min:0, max:23 },
+    { key:'dom',    label:'Day of month',  min:1, max:31 },
+    { key:'month',  label:'Month',         min:1, max:12, names:CS_MONTH_NAMES },
+    { key:'dow',    label:'Day of week',   min:0, max:7,  names:CS_DOW_NAMES, dow:true },
+  ];
+  if (dialect === 'quartz') {
+    return [
+      { key:'second', label:'Second',        min:0, max:59 },
+      { key:'minute', label:'Minute',        min:0, max:59 },
+      { key:'hour',   label:'Hour',          min:0, max:23 },
+      { key:'dom',    label:'Day of month',  min:1, max:31, allowQ:true },
+      { key:'month',  label:'Month',         min:1, max:12, names:CS_MONTH_NAMES },
+      { key:'dow',    label:'Day of week',   min:0, max:7,  names:CS_DOW_NAMES, dow:true, quartzDow:true, allowQ:true },
+      { key:'year',   label:'Year',          min:1970, max:2099, optional:true },
+    ];
+  }
+  return std;
+}
+
+function csRangeFull(spec) {
+  return { lo: spec.dow ? 0 : spec.min, hi: spec.dow ? 6 : spec.max };
+}
+
+function csParseValue(tok, spec, fail) {
+  const t = String(tok).trim().toLowerCase();
+  if (t === '') fail(`empty value in ${spec.label.toLowerCase()} field.`);
+  if (spec.names && Object.prototype.hasOwnProperty.call(spec.names, t)) {
+    return spec.names[t]; // month 1-12, dow 0-6 already
+  }
+  if (!/^-?\d+$/.test(t)) {
+    const hint = spec.names ? ` (or names like ${Object.keys(spec.names).slice(0,3).join(', ')}…)` : '';
+    fail(`'${tok}' is not a valid ${spec.label.toLowerCase()} value${hint}.`);
+  }
+  let v = parseInt(t, 10);
+  if (spec.dow && v === 7) v = 0; // both 0 and 7 mean Sunday
+  if (v < spec.min || v > spec.max) {
+    const extra = spec.quartzDow ? ', where 1=SUN … 7=SAT (0 also = SUN)' : '';
+    fail(`'${tok}' is out of range (${spec.min}–${spec.max}${extra}) for ${spec.label.toLowerCase()}.`);
+  }
+  return v;
+}
+
+function csParseField(token, spec) {
+  const raw = String(token == null ? '' : token).trim();
+  const fail = (msg) => { const e = new Error(msg); e.field = spec.label; e.fieldKey = spec.key; throw e; };
+  const full = csRangeFull(spec);
+  if (raw === '') fail('field is empty.');
+  if (raw === '?') {
+    if (!spec.allowQ) fail(`'?' is only valid in the Quartz day-of-month / day-of-week fields — use '*' here.`);
+    const values = [];
+    for (let v = full.lo; v <= full.hi; v++) values.push(v);
+    return { values, wildcard:true, raw };
+  }
+  const values = new Set();
+  let wildcard = false;
+  const items = raw.split(',');
+  if (items.length === 1 && (raw === '*' || raw === '*/1')) wildcard = true;
+  for (const item0 of items) {
+    const item = item0.trim();
+    const m = item.match(/^([^/]+?)(?:\/(\d+))?$/);
+    if (!m) fail(`'${item}' is not valid in the ${spec.label.toLowerCase()} field.`);
+    const base = m[1].trim();
+    const stepRaw = m[2];
+    const step = stepRaw == null ? 1 : parseInt(stepRaw, 10);
+    if (stepRaw != null && (step < 1 || step > (full.hi - full.lo))) {
+      fail(`step '/${stepRaw}' is out of range for ${spec.label.toLowerCase()}.`);
+    }
+    if (base === '') fail(`empty list item in ${spec.label.toLowerCase()} field.`);
+    let lo, hi;
+    if (base === '*') { lo = full.lo; hi = full.hi; }
+    else if (base.indexOf('-') !== -1) {
+      const dash = base.split('-');
+      if (dash.length !== 2) fail(`'${item}' is not a valid range in the ${spec.label.toLowerCase()} field.`);
+      lo = csParseValue(dash[0], spec, fail);
+      hi = csParseValue(dash[1], spec, fail);
+      if (lo > hi) fail(`reversed range '${item}' in ${spec.label.toLowerCase()} — write it as '${dash[1].trim()}-${dash[0].trim()}'.`);
+    } else {
+      lo = hi = csParseValue(base, spec, fail);
+    }
+    for (let v = lo; v <= hi; v += step) values.add(v);
+  }
+  if (values.size === 0) fail(`no valid values in the ${spec.label.toLowerCase()} field.`);
+  return { values:[...values].sort((a,b) => a - b), wildcard, raw };
+}
+
+function parseCron(expr, dialect) {
+  dialect = (dialect === 'quartz' || dialect === 'github') ? dialect : 'standard';
+  const errors = [];
+  const text = String(expr == null ? '' : expr).trim().replace(/\s+/g, ' ');
+  if (!text) {
+    return { ok:false, dialect, fields:null, meta:null,
+      errors:[{ field:'Expression', fieldKey:'_expr', message:'Enter a cron expression first — try "*/15 * * * *".' }] };
+  }
+  const parts = text.split(' ');
+  const specs = csFieldSpecs(dialect);
+  if (dialect === 'quartz') {
+    if (parts.length !== 6 && parts.length !== 7) {
+      return { ok:false, dialect, fields:null, meta:null,
+        errors:[{ field:'Expression', fieldKey:'_expr',
+          message:`Quartz needs 6 fields (second minute hour day-of-month month day-of-week) or 7 (+ year) — found ${parts.length}.` }] };
+    }
+  } else if (parts.length !== 5) {
+    const name = dialect === 'github' ? 'GitHub Actions' : 'standard';
+    return { ok:false, dialect, fields:null, meta:null,
+      errors:[{ field:'Expression', fieldKey:'_expr',
+        message:`${name} cron needs 5 fields (minute hour day-of-month month day-of-week) — found ${parts.length}.` }] };
+  }
+  const fields = {};
+  const used = specs.slice(0, parts.length);
+  for (let i = 0; i < used.length; i++) {
+    const spec = used[i];
+    try {
+      fields[spec.key] = csParseField(parts[i], spec);
+    } catch (e) {
+      errors.push({ field: spec.label, fieldKey: spec.key, message: e.message, token: parts[i] });
+      fields[spec.key] = null;
+    }
+  }
+  const domR = !!(fields.dom && !fields.dom.wildcard);
+  const dowR = !!(fields.dow && !fields.dow.wildcard);
+  if (dialect === 'quartz' && domR && dowR && errors.length === 0) {
+    errors.push({ field:'Day of week', fieldKey:'dow',
+      message:`Quartz requires '?' in day-of-month or day-of-week when the other is set — both cannot be specific. Put '?' in the field you don't care about.` });
+  }
+  const ok = errors.length === 0;
+  return { ok, dialect, fields: ok ? fields : fields, meta: { domRestricted: domR, dowRestricted: dowR }, errors };
+}
+
+/* ---------------- plain-English description ---------------- */
+
+function csJoinList(items) {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return items[0] + ' and ' + items[1];
+  return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+}
+function csOrdinal(n) {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+function csFmtTime(h, m) {
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function csDetectStep(values, fullMin) {
+  if (values.length < 2 || values[0] !== fullMin) return 0;
+  const step = values[1] - values[0];
+  if (step <= 0) return 0;
+  for (let i = 2; i < values.length; i++) if (values[i] - values[i-1] !== step) return 0;
+  return step;
+}
+function csEveryText(field, unit, fullMin) {
+  const step = csDetectStep(field.values, fullMin);
+  if (step > 1) return `Every ${step} ${unit}s`;
+  if (field.wildcard) return `Every ${unit}`;
+  return `Every ${unit}`;
+}
+function csDescribeTime(minF, hourF) {
+  const M = minF.values, H = hourF.values;
+  const mWild = minF.wildcard, hWild = hourF.wildcard;
+  if (mWild && hWild) return 'Every minute';
+  if (!mWild && hWild) {
+    const step = csDetectStep(M, 0);
+    if (step > 1) return `Every ${step} minutes`;
+    if (M.length === 1) return `At ${M[0]} minutes past every hour`;
+    return `At minutes ${csJoinList(M.map(String))} past every hour`;
+  }
+  if (mWild && !hWild) {
+    return `Every minute during ${H.length === 1 ? 'hour ' + H[0] : 'hours ' + csJoinList(H.map(String))}`;
+  }
+  if (M.length === 1 && H.length === 1) return `At ${csFmtTime(H[0], M[0])}`;
+  if (H.length === 1) return `At ${csJoinList(M.map(m => csFmtTime(H[0], m)))}`;
+  if (M.length === 1) return `At ${M[0]} minutes past ${H.length <= 4 ? 'hours ' + csJoinList(H.map(String)) : H.length + ' hours a day'}`;
+  return `At minutes ${csJoinList(M.map(String))} past ${H.length <= 4 ? 'hours ' + csJoinList(H.map(String)) : H.length + ' hours a day'}`;
+}
+function csDowText(values) {
+  const names = values.map(v => CS_DOW_FULL[v]);
+  if (values.length === 7) return 'every day';
+  if (values.length === 1) return 'every ' + names[0];
+  const isWeekdays = values.length === 5 && values.every((v,i) => v === [1,2,3,4,5][i]);
+  if (isWeekdays) return 'Monday to Friday';
+  const isWeekend = values.length === 2 && values[0] === 0 && values[1] === 6;
+  if (isWeekend) return 'on weekends';
+  let contiguous = values.length > 1;
+  for (let i = 1; i < values.length && contiguous; i++) if (values[i] !== values[i-1] + 1) contiguous = false;
+  if (contiguous) return `${names[0]} to ${names[names.length-1]}`;
+  return 'on ' + csJoinList(names);
+}
+function describeCron(parsed) {
+  const F = parsed.fields;
+  let prefix = '';
+  if (parsed.dialect === 'quartz' && !F.second.wildcard && !(F.second.values.length === 1 && F.second.values[0] === 0)) {
+    prefix = csEveryText(F.second, 'second', 0) + ', ';
+  }
+  const time = csDescribeTime(F.minute, F.hour);
+  const { domRestricted: domR, dowRestricted: dowR } = parsed.meta;
+  let day;
+  if (domR && dowR && parsed.dialect !== 'quartz') {
+    day = `on the ${csJoinList(F.dom.values.map(csOrdinal))} or ${csDowText(F.dow.values)}`;
+  } else if (domR) {
+    day = `on the ${csJoinList(F.dom.values.map(csOrdinal))}`;
+  } else if (dowR) {
+    day = csDowText(F.dow.values);
+  } else {
+    day = 'every day';
+  }
+  const month = F.month.wildcard ? '' : ` in ${csJoinList(F.month.values.map(m => CS_MONTH_FULL[m-1]))}`;
+  const year = (parsed.dialect === 'quartz' && F.year && !F.year.wildcard)
+    ? ` in ${csJoinList(F.year.values.map(String))}` : '';
+  return `${prefix}${time}, ${day}${month}${year}.`;
+}
+
+function csFieldText(key, field) {
+  if (!field) return '—';
+  if (field.raw === '?') return 'any (Quartz “?”)';
+  if (field.wildcard) {
+    const unit = { second:'second', minute:'minute', hour:'hour', dom:'day of the month', month:'month', dow:'day of the week', year:'year' }[key] || key;
+    return 'every ' + unit;
+  }
+  const fmt = (x) => key === 'month' ? CS_MONTH_FULL[x-1].slice(0,3)
+    : key === 'dow' ? CS_DOW_FULL[x].slice(0,3) : String(x);
+  return csJoinList(field.values.map(fmt));
+}
+
+/* ---------------- timezone helpers (Intl-based) ---------------- */
+
+const CS_DTF_CACHE = {};
+function csDtf(tz) {
+  if (!CS_DTF_CACHE[tz]) {
+    CS_DTF_CACHE[tz] = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
+    });
+  }
+  return CS_DTF_CACHE[tz];
+}
+function csValidTz(tz) {
+  try { csDtf(tz).format(new Date(0)); return true; } catch (e) { return false; }
+}
+function csUtcToWall(tz, utcMs) {
+  const parts = csDtf(tz).formatToParts(new Date(utcMs));
+  const g = {};
+  for (const p of parts) g[p.type] = p.value;
+  return {
+    year: parseInt(g.year, 10), month: parseInt(g.month, 10), day: parseInt(g.day, 10),
+    hour: parseInt(g.hour, 10), minute: parseInt(g.minute, 10), second: parseInt(g.second, 10)
+  };
+}
+function csWallEquals(a, b) {
+  return a.year===b.year && a.month===b.month && a.day===b.day &&
+         a.hour===b.hour && a.minute===b.minute && (a.second||0)===(b.second||0);
+}
+function csTzOffset(tz, utcMs) {
+  const w = csUtcToWall(tz, utcMs);
+  const asUtc = Date.UTC(w.year, w.month-1, w.day, w.hour, w.minute, w.second);
+  return Math.round((asUtc - utcMs) / 60000);
+}
+/* Resolve a wall-clock time in tz -> UTC. Detects DST gaps (spring
+   forward: time never happens) and folds (fall back: time happens twice). */
+function csResolveWall(tz, w) {
+  const base = Date.UTC(w.year, w.month-1, w.day, w.hour, w.minute, w.second || 0);
+  const offA = csTzOffset(tz, base - 43200000);
+  const offB = csTzOffset(tz, base + 43200000);
+  const cands = [];
+  for (const off of [offA, offB]) {
+    const u = base - off * 60000;
+    if (cands.indexOf(u) === -1) cands.push(u);
+  }
+  const valid = cands.filter(u => csWallEquals(csUtcToWall(tz, u), { ...w, second: w.second || 0 }));
+  if (valid.length === 0) return { status:'gap' };
+  if (valid.length === 1) return { status:'ok', utcMs: valid[0] };
+  valid.sort((a,b) => a - b);
+  return { status:'ambiguous', utcMs: valid[0], utcMsList: valid };
+}
+function csDaysInMonth(y, mo) { return new Date(Date.UTC(y, mo, 0)).getUTCDate(); }
+function csDowOf(y, mo, d) { return new Date(Date.UTC(y, mo-1, d)).getUTCDay(); }
+
+function csDayMatches(parsed, y, mo, d) {
+  const F = parsed.fields;
+  const dow = csDowOf(y, mo, d);
+  const domOk = F.dom.values.indexOf(d) !== -1;
+  const dowOk = F.dow.values.indexOf(dow) !== -1;
+  const { domRestricted: domR, dowRestricted: dowR } = parsed.meta;
+  if (parsed.dialect === 'quartz') return domOk && dowOk; // '?' makes the other side a wildcard
+  if (domR && dowR) return domOk || dowOk;               // classic cron OR rule
+  if (domR) return domOk;
+  if (dowR) return dowOk;
+  return true;
+}
+
+/* Hierarchical next/previous run search. Returns
+   { runs:[{utcMs, wall, status}], warnings:[{type:'skip'|'double', wall, note}], exhausted } */
+function csFindRuns(parsed, tz, fromMs, count, direction) {
+  const fwd = direction !== 'prev';
+  count = Math.max(1, Math.min(50, count | 0));
+  const runs = [];
+  const warnings = [];
+  const seenW = {};
+  const F = parsed.fields;
+  const startW = csUtcToWall(tz, fromMs);
+  const yearVals = F.year ? F.year.values : null;
+  const secs = parsed.dialect === 'quartz' ? F.second.values : [0];
+  const y0 = startW.year;
+  const maxYears = 6;
+  let guard = 0;
+  outer:
+  for (let yi = 0; yi <= maxYears; yi++) {
+    const y = fwd ? y0 + yi : y0 - yi;
+    if (yearVals && yearVals.indexOf(y) === -1) continue;
+    let months = F.month.values.filter(m => yi > 0 ? true : (fwd ? m >= startW.month : m <= startW.month));
+    if (!fwd) months = months.slice().reverse();
+    for (const mo of months) {
+      const dim = csDaysInMonth(y, mo);
+      const days = [];
+      for (let d = 1; d <= dim; d++) {
+        if (yi === 0 && mo === startW.month) {
+          if (fwd && d < startW.day) continue;
+          if (!fwd && d > startW.day) continue;
+        }
+        if (csDayMatches(parsed, y, mo, d)) days.push(d);
+      }
+      if (!fwd) days.reverse();
+      for (const d of days) {
+        const isStartDay = yi === 0 && mo === startW.month && d === startW.day;
+        let hours = F.hour.values;
+        if (!fwd) hours = hours.slice().reverse();
+        for (const h of hours) {
+          if (isStartDay) {
+            if (fwd && h < startW.hour) continue;
+            if (!fwd && h > startW.hour) continue;
+          }
+          let mins = F.minute.values;
+          if (!fwd) mins = mins.slice().reverse();
+          for (const mi of mins) {
+            if (isStartDay && h === startW.hour) {
+              if (fwd && mi < startW.minute) continue;
+              if (!fwd && mi > startW.minute) continue;
+            }
+            let ss = secs;
+            if (!fwd) ss = ss.slice().reverse();
+            for (const s of ss) {
+              if (isStartDay && h === startW.hour && mi === startW.minute) {
+                if (fwd && s < startW.second) continue;
+                if (!fwd && s > startW.second) continue;
+              }
+              if (++guard > 4000000) break outer;
+              const w = { year:y, month:mo, day:d, hour:h, minute:mi, second:s };
+              // Full wall->UTC resolve for every candidate: correct across
+              // DST gaps (spring-forward skip) and folds (fall-back double fire).
+              const rsl = csResolveWall(tz, w);
+              if (rsl.status === 'gap') {
+                const k = 'gap' + y + '-' + mo + '-' + d + ' ' + h + ':' + mi;
+                if (!seenW[k]) {
+                  seenW[k] = 1;
+                  warnings.push({ type:'skip', wall:{...w},
+                    note:`${csFmtWallShort(w)} never happens — clocks spring forward over it (DST gap), so this run is skipped.` });
+                }
+                continue;
+              }
+              const utcMs = rsl.utcMs;
+              const status = rsl.status === 'ambiguous' ? 'ambiguous' : 'ok';
+              if (status === 'ambiguous') {
+                const k = 'amb' + y + '-' + mo + '-' + d + ' ' + h + ':' + mi;
+                if (!seenW[k]) {
+                  seenW[k] = 1;
+                  warnings.push({ type:'double', wall:{...w}, utcMsList:rsl.utcMsList,
+                    note:`${csFmtWallShort(w)} happens twice — clocks fall back over it, so this run may fire twice unless your scheduler dedupes.` });
+                }
+              }
+              if (fwd ? utcMs <= fromMs : utcMs >= fromMs) continue;
+              runs.push({ utcMs, wall:{...w}, status });
+              if (runs.length >= count) break outer;
+            }
+          }
+        }
+      }
+    }
+  }
+  return { runs, warnings, exhausted: runs.length < count };
+}
+
+function csFmtWallShort(w) {
+  return `${CS_DOW_FULL[csDowOf(w.year, w.month, w.day)].slice(0,3)}, ${w.day} ${CS_MONTH_FULL[w.month-1].slice(0,3)} ${w.year} ${csFmtTime(w.hour, w.minute)}`;
+}
+function csFmtRun(tz, utcMs) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz, weekday:'short', day:'numeric', month:'short', year:'numeric',
+    hour:'2-digit', minute:'2-digit', hourCycle:'h23'
+  }).format(new Date(utcMs));
+}
+function csRel(ms, nowMs) {
+  const diff = ms - nowMs;
+  const past = diff < 0;
+  let m = Math.round(Math.abs(diff) / 60000);
+  let s;
+  if (m < 1) s = 'less than a minute';
+  else if (m < 60) s = m + 'm';
+  else if (m < 60*24) s = Math.floor(m/60) + 'h ' + (m%60) + 'm';
+  else s = Math.floor(m/1440) + 'd ' + Math.floor((m%1440)/60) + 'h';
+  return past ? s + ' ago' : 'in ' + s;
+}
+
+/* "Would it fire at this time?" — wall-clock input evaluated in tz. */
+function csFiresAt(parsed, tz, wIn) {
+  const F = parsed.fields;
+  const checks = [];
+  const push = (label, expected, actual, ok) => checks.push({ label, expected, actual, ok: !!ok });
+  const w0 = { year:wIn.year, month:wIn.month, day:wIn.day, hour:wIn.hour, minute:wIn.minute, second:0 };
+  const res = csResolveWall(tz, w0);
+  if (res.status === 'gap') {
+    return { fire:false, reason:'gap', checks,
+      note:`${csFmtWallShort(w0)} does not exist in ${tz} — clocks spring forward over it (DST gap), so nothing can fire then.` };
+  }
+  const w = csUtcToWall(tz, res.utcMs);
+  const dow = csDowOf(w.year, w.month, w.day);
+  const has = (vals, v) => vals.indexOf(v) !== -1;
+  let allOk = true;
+  const consider = (ok) => { if (!ok) allOk = false; return ok; };
+  if (F.second) push('Second', csFieldText('second', F.second), String(w.second), consider(has(F.second.values, w.second)));
+  push('Minute', csFieldText('minute', F.minute), String(w.minute), consider(has(F.minute.values, w.minute)));
+  push('Hour', csFieldText('hour', F.hour), String(w.hour), consider(has(F.hour.values, w.hour)));
+  push('Month', csFieldText('month', F.month), CS_MONTH_FULL[w.month-1], consider(has(F.month.values, w.month)));
+  const domOk = has(F.dom.values, w.day);
+  const dowOk = has(F.dow.values, dow);
+  const { domRestricted: domR, dowRestricted: dowR } = parsed.meta;
+  let dayOk, dayExpected;
+  if (parsed.dialect === 'quartz')      { dayOk = domOk && dowOk; dayExpected = `DOM “${F.dom.raw}” AND DOW “${F.dow.raw}”`; }
+  else if (domR && dowR)                { dayOk = domOk || dowOk; dayExpected = `DOM “${F.dom.raw}” OR DOW “${F.dow.raw}” (cron OR-rule)`; }
+  else if (domR)                        { dayOk = domOk;          dayExpected = `day-of-month “${F.dom.raw}”`; }
+  else if (dowR)                        { dayOk = dowOk;          dayExpected = `day-of-week “${F.dow.raw}”`; }
+  else                                  { dayOk = true;           dayExpected = 'any day'; }
+  push('Day', dayExpected, `${CS_DOW_FULL[dow]} ${w.day} ${CS_MONTH_FULL[w.month-1]}`, consider(dayOk));
+  if (F.year) push('Year', csFieldText('year', F.year), String(w.year), consider(has(F.year.values, w.year)));
+  return { fire: allOk, reason:null, checks,
+    note: res.status === 'ambiguous'
+      ? `${csFmtWallShort(w0)} happens twice in ${tz} (DST fall-back) — a scheduler may fire it twice.`
+      : null };
+}
+
+/* Overlap risk: flags when the gap between two consecutive runs is
+   shorter than the expected job duration. */
+function csCheckOverlap(parsed, tz, durationMin, fromMs) {
+  const r = csFindRuns(parsed, tz, fromMs, 2, 'next');
+  if (r.runs.length < 2) {
+    return { risk:false, intervalMin:null, runs:r.runs,
+      note:'Fewer than two upcoming runs found in the next 6 years — cannot assess overlap.' };
+  }
+  const intervalMin = (r.runs[1].utcMs - r.runs[0].utcMs) / 60000;
+  return { risk: intervalMin < durationMin, intervalMin, runs: r.runs, note:null };
+}
+
+/* Export text builder (UI passes tz + a reference "now"). */
+function csBuildExport(parsed, expr, tz, nextRuns, prevRuns, warnings, nowMs) {
+  const L = [];
+  L.push('CronSage — cron explanation');
+  L.push('Expression : ' + expr);
+  L.push('Dialect    : ' + ({ standard:'Standard (5-field)', quartz:'Quartz (6/7-field)', github:'GitHub Actions (5-field)' }[parsed.dialect] || parsed.dialect));
+  L.push('Timezone   : ' + tz);
+  L.push('');
+  L.push('Meaning    : ' + describeCron(parsed));
+  L.push('');
+  L.push(`Next ${nextRuns.length} runs (${csRel(nextRuns.length ? nextRuns[0].utcMs : nowMs, nowMs)} for the first):`);
+  nextRuns.forEach((r, i) => L.push(`  ${i+1}. ${csFmtRun(tz, r.utcMs)}${r.status === 'ambiguous' ? '  [DST: happens twice]' : ''}`));
+  if (prevRuns && prevRuns.length) {
+    L.push('');
+    L.push(`Previous ${prevRuns.length} runs:`);
+    prevRuns.forEach((r, i) => L.push(`  ${i+1}. ${csFmtRun(tz, r.utcMs)}`));
+  }
+  if (warnings && warnings.length) {
+    L.push('');
+    L.push('Timezone warnings:');
+    warnings.forEach(w => L.push(`  - ${w.note}`));
+  }
+  L.push('');
+  L.push('Generated by CronSage — free unlimited cron parsing.');
+  return L.join('\n');
+}
+
+var CronSage = {
+  parseCron, describeCron, csFindRuns, csFiresAt, csCheckOverlap,
+  csBuildExport, csFieldText, csFmtRun, csRel, csValidTz,
+  csFieldSpecs, CS_MONTH_FULL, CS_DOW_FULL
+};
+
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var CS = window.CronSage;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var DIALECT_META = {
+    standard: {
+      label: 'Standard (5-field)',
+      fields: ['minute', 'hour', 'day of month', 'month', 'day of week'],
+      samples: ['*/15 * * * *', '0 9 * * 1-5', '30 2 * * *', '0 0 1 * *', '0 12 * * 0']
+    },
+    quartz: {
+      label: 'Quartz (6/7-field)',
+      fields: ['second', 'minute', 'hour', 'day of month', 'month', 'day of week', 'year?'],
+      samples: ['0 */15 * ? * *', '0 0 12 ? * WED', '0 30 9 ? * MON-FRI']
+    },
+    github: {
+      label: 'GitHub Actions (5-field)',
+      fields: ['minute', 'hour', 'day of month', 'month', 'day of week'],
+      samples: ['*/5 * * * *', '0 9 * * 1-5', '0 0 * * 0']
+    }
+  };
+
+  var TIMEZONES = [
+    ['UTC', 'UTC'],
+    ['America/New_York', 'New York (ET)'], ['America/Chicago', 'Chicago (CT)'],
+    ['America/Denver', 'Denver (MT)'], ['America/Los_Angeles', 'Los Angeles (PT)'],
+    ['America/Anchorage', 'Anchorage'], ['Pacific/Honolulu', 'Honolulu'],
+    ['America/Sao_Paulo', 'Sao Paulo'],
+    ['Europe/London', 'London'], ['Europe/Berlin', 'Berlin'], ['Europe/Moscow', 'Moscow'],
+    ['Africa/Cairo', 'Cairo'], ['Asia/Dubai', 'Dubai'], ['Asia/Karachi', 'Karachi'],
+    ['Asia/Kolkata', 'Kolkata'], ['Asia/Dhaka', 'Dhaka'], ['Asia/Bangkok', 'Bangkok'],
+    ['Asia/Singapore', 'Singapore'], ['Asia/Tokyo', 'Tokyo'], ['Asia/Seoul', 'Seoul'],
+    ['Australia/Sydney', 'Sydney'], ['Pacific/Auckland', 'Auckland']
+  ];
+
+  var state = { dialect: 'standard', tz: 'UTC', parsed: null, expr: '', runs: [], warnings: [] };
+
+  function fmtDur(min) {
+    if (min < 1) return Math.round(min * 60) + ' sec';
+    if (min < 60) return (Math.round(min * 10) / 10) + ' min';
+    var h = Math.floor(min / 60), m = Math.round(min % 60);
+    if (h < 48) return h + ' h' + (m ? ' ' + m + ' min' : '');
+    return Math.floor(h / 24) + ' days ' + (h % 24) + ' h';
+  }
+
+  function initTz() {
+    var sel = $('tzSelect');
+    sel.innerHTML = TIMEZONES.map(function (z) {
+      return '<option value="' + z[0] + '">' + esc(z[1]) + ' — ' + z[0] + '</option>';
+    }).join('');
+    var detected = 'UTC';
+    try {
+      var dtz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (dtz && CS.csValidTz(dtz)) detected = dtz;
+    } catch (e) {}
+    if (TIMEZONES.every(function (z) { return z[0] !== detected; })) {
+      var opt = document.createElement('option');
+      opt.value = detected; opt.textContent = detected + ' (local)';
+      sel.appendChild(opt);
+    }
+    sel.value = detected;
+    state.tz = detected;
+  }
+
+  function setDialect(d) {
+    state.dialect = d;
+    var pills = document.querySelectorAll('.dialect-pill');
+    for (var i = 0; i < pills.length; i++) {
+      pills[i].classList.toggle('pill-active', pills[i].getAttribute('data-dialect') === d);
+    }
+    $('fieldChips').innerHTML = DIALECT_META[d].fields.map(function (f, i) {
+      return '<span class="mono rounded-md bg-[#2b2839] border border-[#C4B5FD]/20 px-2.5 py-1 text-[11px] text-slate-300"><span class="text-[#6EE7B7] font-bold">' + (i + 1) + '</span> ' + esc(f) + '</span>';
+    }).join('');
+    $('sampleChips').innerHTML = DIALECT_META[d].samples.map(function (s) {
+      return '<button class="sample-chip mono rounded-lg border border-[#C4B5FD]/25 bg-[#2b2839] px-2.5 py-1 text-[#C4B5FD] hover:border-[#6EE7B7]/60 hover:text-[#6EE7B7] transition-colors" data-expr="' + esc(s) + '">' + esc(s) + '</button>';
+    }).join('');
+    var chips = document.querySelectorAll('.sample-chip');
+    for (var j = 0; j < chips.length; j++) {
+      chips[j].addEventListener('click', function () {
+        $('cronInput').value = this.getAttribute('data-expr');
+        doParse();
+      });
+    }
+    $('githubNote').classList.toggle('hidden', d !== 'github');
+    if (state.parsed) doParse();
+  }
+
+  function doParse() {
+    var expr = $('cronInput').value;
+    var p = CS.parseCron(expr, state.dialect);
+    var errBox = $('errorBox'), errList = $('errorList');
+    if (!p.ok) {
+      errList.innerHTML = p.errors.map(function (e) {
+        return '<li class="flex gap-2 items-start"><span class="mono shrink-0 rounded bg-[#F87171]/20 px-2 py-0.5 text-xs font-bold text-[#F87171]">' + esc(e.field) + '</span>' +
+          '<span>' + esc(e.message) + (e.token ? ' <span class="mono text-slate-400">Got: &ldquo;' + esc(e.token) + '&rdquo;</span>' : '') + '</span></li>';
+      }).join('');
+      errBox.classList.remove('hidden');
+      $('results').classList.add('hidden');
+      state.parsed = null;
+      return;
+    }
+    errBox.classList.add('hidden');
+    state.parsed = p;
+    state.expr = expr.trim().replace(/\s+/g, ' ');
+    var now = Date.now();
+    var next = CS.csFindRuns(p, state.tz, now, 12, 'next');
+    state.runs = next.runs;
+    state.warnings = next.warnings;
+
+    $('englishText').textContent = CS.describeCron(p);
+    $('englishMeta').textContent = state.expr + '   ·   ' + DIALECT_META[state.dialect].label + '   ·   ' + state.tz;
+
+    var specs = CS.csFieldSpecs(state.dialect);
+    $('fieldRows').innerHTML = specs.filter(function (s) { return p.fields[s.key]; }).map(function (s) {
+      var f = p.fields[s.key];
+      return '<div class="flex items-start justify-between gap-3 rounded-lg bg-[#2b2839] px-3 py-2">' +
+        '<dt class="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">' + esc(s.label) + '</dt>' +
+        '<dd class="text-right min-w-0"><div class="mono text-[#6EE7B7] break-all">' + esc(f.raw) + '</div>' +
+        '<div class="text-xs text-slate-400 mt-0.5">' + esc(CS.csFieldText(s.key, f)) + '</div></dd></div>';
+    }).join('');
+
+    renderRuns();
+    $('diagResult').classList.add('hidden');
+    $('overlapResult').classList.add('hidden');
+    try {
+      localStorage.setItem('cronsage-v1', JSON.stringify({ expr: state.expr, dialect: state.dialect, tz: state.tz }));
+    } catch (e) {}
+  }
+
+  function renderRuns() {
+    var box = $('nextRuns');
+    var now = Date.now();
+    var shown = state.runs.slice(0, 8);
+    if (!shown.length) {
+      box.innerHTML = '<p class="text-sm text-slate-300">No upcoming runs found in the next 6 years. This schedule may <span class="font-bold text-[#FBBF24]">never fire</span> — check for impossible dates like February 30th.</p>';
+    } else {
+      box.innerHTML = shown.map(function (r) {
+        var amb = r.status === 'ambiguous';
+        return '<div class="relative fade-in">' +
+          '<span class="tl-dot ' + (amb ? 'bg-[#FBBF24]' : 'bg-[#6EE7B7]') + '"></span>' +
+          '<div class="font-semibold text-white text-[15px]">' + esc(CS.csFmtRun(state.tz, r.utcMs)) + '</div>' +
+          '<div class="text-xs text-slate-400 mt-0.5">' + esc(CS.csRel(r.utcMs, now)) +
+          (amb ? ' <span class="ml-1 rounded bg-[#FBBF24]/20 px-1.5 py-0.5 font-bold text-[#FBBF24]">DST: may fire twice</span>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+    $('tzBadge').textContent = '· ' + state.tz;
+    var ex = $('exhaustNote');
+    if (shown.length > 0 && shown.length < 8) {
+      ex.textContent = 'Only ' + shown.length + ' run(s) found in the next 6 years — this schedule fires rarely or stops firing.';
+      ex.classList.remove('hidden');
+    } else { ex.classList.add('hidden'); }
+
+    var pr = CS.csFindRuns(state.parsed, state.tz, Date.now(), 5, 'prev').runs;
+    $('prevRuns').innerHTML = pr.length ? pr.map(function (r) {
+      return '<li class="flex items-center justify-between gap-2 rounded-lg bg-[#2b2839] px-3 py-2"><span class="text-slate-200">' +
+        esc(CS.csFmtRun(state.tz, r.utcMs)) + '</span><span class="text-xs text-slate-500 whitespace-nowrap">' +
+        esc(CS.csRel(r.utcMs, Date.now())) + '</span></li>';
+    }).join('') : '<li class="text-slate-400 text-sm">No previous runs found in the last 6 years.</li>';
+
+    var dl = $('dstList');
+    dl.innerHTML = state.warnings.length ? state.warnings.map(function (w) {
+      var icon = w.type === 'skip' ? '&#9205;' : '&#9198;';
+      var cls = w.type === 'skip' ? 'text-[#FBBF24]' : 'text-[#C4B5FD]';
+      var tag = w.type === 'skip'
+        ? '<span class="mono text-[10px] font-bold uppercase tracking-wider rounded bg-[#FBBF24]/20 px-1.5 py-0.5 text-[#FBBF24]">skip</span>'
+        : '<span class="mono text-[10px] font-bold uppercase tracking-wider rounded bg-[#C4B5FD]/20 px-1.5 py-0.5 text-[#C4B5FD]">double-fire</span>';
+      return '<li class="flex gap-2.5 items-start rounded-lg bg-[#2b2839] px-3 py-2.5"><span class="' + cls + '">' + icon + '</span><span class="' + cls + '">' + tag + ' ' + esc(w.note) + '</span></li>';
+    }).join('') : '<li class="text-slate-400">No daylight-saving skips or double-fires detected around the upcoming runs in ' + esc(state.tz) + '. Runs are evaluated in wall-clock time for this zone.</li>';
+
+    $('results').classList.remove('hidden');
+
+    if (state.dialect === 'github') {
+      var ov = CS.csCheckOverlap(state.parsed, state.tz, 5, Date.now());
+      var gw = $('githubWarn');
+      if (ov.risk && ov.intervalMin != null) {
+        gw.textContent = 'This expression fires every ' + fmtDur(ov.intervalMin) + ' — GitHub Actions will throttle anything under 5 minutes.';
+        gw.classList.remove('hidden');
+      } else { gw.classList.add('hidden'); }
+    }
+  }
+
+  function doDiag() {
+    var box = $('diagResult');
+    if (!state.parsed) {
+      box.innerHTML = '<p class="text-sm text-[#FBBF24]">Parse a cron expression first, then run the diagnostic.</p>';
+      box.classList.remove('hidden');
+      return;
+    }
+    var v = $('diagInput').value;
+    if (!v) {
+      box.innerHTML = '<p class="text-sm text-[#FBBF24]">Pick a date and time first.</p>';
+      box.classList.remove('hidden');
+      return;
+    }
+    var m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if (!m) {
+      box.innerHTML = '<p class="text-sm text-[#F87171]">Could not read that date/time.</p>';
+      box.classList.remove('hidden');
+      return;
+    }
+    var res = CS.csFiresAt(state.parsed, state.tz,
+      { year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5] });
+    var badge = res.fire
+      ? '<span class="inline-block rounded-xl bg-[#6EE7B7] px-5 py-2 text-lg font-extrabold text-[#2E2A3B]">YES &mdash; it fires</span>'
+      : '<span class="inline-block rounded-xl bg-[#F87171] px-5 py-2 text-lg font-extrabold text-[#2E2A3B]">NO &mdash; it does not fire</span>';
+    var rows = res.checks.map(function (c) {
+      return '<tr class="border-t border-[#C4B5FD]/10"><td class="py-2 pr-2 font-semibold text-slate-300">' + esc(c.label) + '</td>' +
+        '<td class="py-2 pr-2 mono text-[11px] text-slate-400">' + esc(c.expected) + '</td>' +
+        '<td class="py-2 pr-2 mono text-sm text-white">' + esc(c.actual) + '</td>' +
+        '<td class="py-2 text-right whitespace-nowrap">' + (c.ok ? '<span class="font-bold text-[#6EE7B7]">&#10003; match</span>' : '<span class="font-bold text-[#F87171]">&#10007; no</span>') + '</td></tr>';
+    }).join('');
+    box.innerHTML = badge +
+      '<p class="mono mt-2 text-xs text-slate-400">Checked as ' + esc(state.tz) + ' wall-clock time.</p>' +
+      (res.note ? '<p class="mt-3 text-sm text-[#FBBF24]">' + esc(res.note) + '</p>' : '') +
+      '<div class="overflow-x-auto"><table class="mt-2 w-full text-sm"><tbody>' + rows + '</tbody></table></div>';
+    box.classList.remove('hidden');
+  }
+
+  function doOverlap() {
+    var box = $('overlapResult');
+    if (!state.parsed) {
+      box.innerHTML = '<p class="text-sm text-[#FBBF24]">Parse a cron expression first, then check overlap.</p>';
+      box.classList.remove('hidden');
+      return;
+    }
+    var dur = Math.max(1, parseFloat($('durInput').value) || 1);
+    var r = CS.csCheckOverlap(state.parsed, state.tz, dur, Date.now());
+    if (r.note) {
+      box.innerHTML = '<p class="text-sm text-slate-300">' + esc(r.note) + '</p>';
+    } else if (r.risk) {
+      box.innerHTML = '<div class="rounded-xl border border-[#FBBF24]/40 bg-[#FBBF24]/10 p-4">' +
+        '<p class="font-extrabold text-[#FBBF24]">&#9888; Overlap risk detected</p>' +
+        '<p class="mt-1.5 text-sm text-slate-200">Two consecutive runs are only <span class="mono font-bold">' + esc(fmtDur(r.intervalMin)) + '</span> apart, but the job takes <span class="mono font-bold">' + esc(String(dur)) + ' min</span>. ' +
+        'The next run would start before the previous one finishes &mdash; runs can pile up, duplicate work, or exhaust resources.</p>' +
+        '<p class="mono mt-2 text-xs text-slate-400">' + esc(CS.csFmtRun(state.tz, r.runs[0].utcMs)) + ' &rarr; ' + esc(CS.csFmtRun(state.tz, r.runs[1].utcMs)) + '</p></div>';
+    } else {
+      box.innerHTML = '<div class="rounded-xl border border-[#6EE7B7]/40 bg-[#6EE7B7]/10 p-4">' +
+        '<p class="font-extrabold text-[#6EE7B7]">&#10003; No overlap risk</p>' +
+        '<p class="mt-1.5 text-sm text-slate-200">Consecutive runs are <span class="mono font-bold">' + esc(fmtDur(r.intervalMin)) + '</span> apart &mdash; comfortably longer than the ' + esc(String(dur)) + '-minute job duration.</p></div>';
+    }
+    box.classList.remove('hidden');
+  }
+
+  function exportText() {
+    var prev = CS.csFindRuns(state.parsed, state.tz, Date.now(), 5, 'prev').runs;
+    return CS.csBuildExport(state.parsed, state.expr, state.tz, state.runs.slice(0, 8), prev, state.warnings, Date.now());
+  }
+
+  function copyText(t, btn) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+  }
+
+  // ---- wire up ----
+  initTz();
+  var pills = document.querySelectorAll('.dialect-pill');
+  for (var i = 0; i < pills.length; i++) {
+    pills[i].addEventListener('click', function () { setDialect(this.getAttribute('data-dialect')); });
+  }
+  var restored = null;
+  try { restored = JSON.parse(localStorage.getItem('cronsage-v1') || 'null'); } catch (e) {}
+  if (restored) {
+    if (restored.dialect && DIALECT_META[restored.dialect]) state.dialect = restored.dialect;
+    if (restored.tz && CS.csValidTz(restored.tz)) {
+      var has = false;
+      for (var k = 0; k < $('tzSelect').options.length; k++) {
+        if ($('tzSelect').options[k].value === restored.tz) { has = true; break; }
+      }
+      if (!has) {
+        var opt = document.createElement('option');
+        opt.value = restored.tz; opt.textContent = restored.tz;
+        $('tzSelect').appendChild(opt);
+      }
+      $('tzSelect').value = restored.tz;
+      state.tz = restored.tz;
+    }
+    if (restored.expr) $('cronInput').value = restored.expr;
+  }
+  setDialect(state.dialect);
+  $('tzSelect').addEventListener('change', function () {
+    state.tz = this.value;
+    if (state.parsed) doParse();
+  });
+  $('parseBtn').addEventListener('click', doParse);
+  $('cronInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') doParse(); });
+  $('diagBtn').addEventListener('click', doDiag);
+  $('overlapBtn').addEventListener('click', doOverlap);
+  $('copyEnglish').addEventListener('click', function () { copyText($('englishText').textContent, this); });
+  $('copyExplain').addEventListener('click', function () { copyText(exportText(), this); });
+  $('downloadTxt').addEventListener('click', function () {
+    var blob = new Blob([exportText()], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cronsage-explanation.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+
+  if (!$('cronInput').value) $('cronInput').value = '*/15 * * * *';
+  doParse();
+})();
+</script>
+</body>
+</html>
