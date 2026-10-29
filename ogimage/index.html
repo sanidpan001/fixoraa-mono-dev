@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Graph Meta Tags Generator — Social Card Preview | OgImage</title>
+<meta name="description" content="Open Graph meta tags generator: build og + Twitter card tags, preview the social card, validate your image. Free dev tool.">
+<link rel="canonical" href="https://dev.fixoraa.tech/ogimage/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Open Graph Meta Tags Generator — Social Card Preview | OgImage">
+<meta property="og:description" content="Open Graph meta tags generator: build og + Twitter card tags, preview the social card, validate your image. Free dev tool.">
+<meta property="og:url" content="https://dev.fixoraa.tech/ogimage/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "OgImage",
+      "url": "https://dev.fixoraa.tech/ogimage/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Open Graph meta tags generator: build og + Twitter card tags, preview the social card, validate your image. Free dev tool.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What are Open Graph meta tags?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open Graph meta tags (og:title, og:description, og:image\u2026) tell social platforms what title, description, and image to show in link preview cards. They were created by Facebook in 2010 and are now read by Twitter, LinkedIn, Slack, Discord, and messaging apps."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should og:image be an absolute or relative URL?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use absolute URLs like https://yoursite.com/images/card.jpg. Crawlers resolve relative URLs inconsistently, so /images/card.jpg often breaks \u2014 it is the single most common Open Graph bug."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the ideal Open Graph image size?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "1200 \u00d7 630 pixels (1.91:1 aspect ratio), under ~1MB. That is Facebook's native size and every other platform degrades gracefully from it. Keep text inside the central safe zone since platforms crop edges differently."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does my link still show the old preview after I fixed the tags?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Crawler caching. Facebook, WhatsApp, and others cache previews for hours or days. Use Facebook's Sharing Debugger ('Scrape Again'), Twitter's Card Validator, or version the image filename (card-v2.jpg) to bust the cache."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need separate Twitter card tags?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Set twitter:card to summary_large_image for the big-image layout \u2014 without it Twitter may render a small thumbnail. Title, description, and image can fall back to your og: tags."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will meta tags injected by JavaScript work for social crawlers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most social crawlers do not run JavaScript, so client-side-injected tags are invisible to them. Use server-side rendering, static generation, or a prerendering service so the tags are in the raw HTML."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#F9F0F3; --surface:#FFFFFF; --accent:#9F1239; --accent-ink:#FFFFFF;
+  --ink:#24272E; --muted:#606A76; --line:#EDD4DB;
+  --display:'Space Mono',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.og-wrap{font-family:'Space Mono',monospace;background:#F9F0F3;color:#24272E;padding:56px 20px 72px;}.og-ledger{max-width:960px;margin:0 auto;}.og-head{text-align:center;margin-bottom:26px;}.og-logo{font-size:44px;}.og-head h1{font-size:clamp(28px,4.6vw,44px);margin:10px 0 8px;font-weight:700;line-height:1.15;}.og-tag{font-family:Inter,system-ui,sans-serif;color:#606A76;font-size:16.5px;margin:0;}.og-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}.og-card{background:#FFFFFF;border:1px solid #EDD4DB;border-radius:18px;padding:28px;box-shadow:0 14px 36px rgba(159,18,57,.07);}.og-card h2{font-family:Inter,system-ui,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#606A76;margin:0 0 14px;border-bottom:2px solid #F9F0F3;padding-bottom:10px;}.og-field{margin-bottom:13px;font-family:Inter,system-ui,sans-serif;}.og-field label{display:block;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#606A76;margin-bottom:6px;}.og-field input,.og-field textarea,.og-field select{width:100%;padding:11px 13px;font-size:14.5px;border:2px solid #EDD4DB;border-radius:10px;font-family:inherit;box-sizing:border-box;}.og-field input:focus,.og-field textarea:focus{outline:none;border-color:#9F1239;}.og-snippet{background:#24272E;color:#F3D3DD;border-radius:12px;padding:18px;font-size:12.5px;line-height:1.75;overflow-x:auto;white-space:pre;margin:0;}.og-actions{display:flex;gap:8px;margin-top:12px;font-family:Inter,system-ui,sans-serif;flex-wrap:wrap;}.og-actions button{border:2px solid #9F1239;background:#fff;border-radius:10px;padding:9px 18px;font-size:13.5px;font-weight:700;cursor:pointer;color:#9F1239;font-family:inherit;}.og-preview{border:1px solid #EDD4DB;border-radius:14px;overflow:hidden;font-family:Inter,system-ui,sans-serif;}.og-preview img{width:100%;height:200px;object-fit:cover;display:block;background:#F9F0F3;}.og-preview .og-pbody{padding:16px;}.og-preview .og-psite{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#606A76;}.og-preview .og-ptitle{font-size:17px;font-weight:700;margin:6px 0;}.og-preview .og-pdesc{font-size:14px;color:#606A76;line-height:1.55;}.og-check{list-style:none;margin:14px 0 0;padding:0;font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;}.og-check li{padding:8px 0;border-bottom:1px dashed #EDD4DB;}.og-check .ok{color:#166534;font-weight:700;}.og-check .bad{color:#9F1239;font-weight:700;}.og-imgstat{font-family:Inter,system-ui,sans-serif;font-size:13.5px;color:#606A76;margin-top:10px;line-height:1.6;}@media (max-width:760px){.og-grid{grid-template-columns:1fr;}.og-card{padding:22px 18px;}.og-wrap{padding:40px 14px 56px;}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="OgImage home">
+      <span class="fx-logo-tile" aria-hidden="true">🖼️</span>
+      <span class="fx-brand">OgImage</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-ledger-lines" aria-label="OgImage tool">
+<section class='og-wrap'><div class='og-ledger'><div class='og-head'><div class='og-logo' aria-hidden='true'>🖼️</div><h1>Open Graph Meta Tags Generator</h1><p class='og-tag'>Tags in — beautiful link previews out.</p></div><div class='og-grid'><div class='og-card'><h2>Page details</h2><div class='og-field'><label for='og-t'>Title (≤ 60 chars)</label><input type='text' id='og-t' value='My Amazing Article' maxlength='120'></div><div class='og-field'><label for='og-d'>Description (50–160 chars)</label><textarea id='og-d' rows='2' maxlength='300'>A practical guide that earns every click it gets.</textarea></div><div class='og-field'><label for='og-i'>Image URL (absolute, 1200×630)</label><input type='text' id='og-i' value='https://via.placeholder.com/1200x630.png?text=Preview' placeholder='https://yoursite.com/images/card.jpg'></div><div class='og-field'><label for='og-u'>Canonical URL</label><input type='text' id='og-u' value='https://example.com/my-article' placeholder='https://yoursite.com/page'></div><div class='og-field'><label for='og-type'>Type</label><select id='og-type'><option value='website'>website</option><option value='article'>article</option><option value='product'>product</option></select></div><div class='og-field'><label for='og-tw'>Twitter card</label><select id='og-tw'><option value='summary_large_image'>summary_large_image</option><option value='summary'>summary</option></select></div></div><div class='og-card'><h2>Live card preview</h2><div class='og-preview'><img id='og-pimg' alt='Card preview image'><div class='og-pbody'><div class='og-psite' id='og-psite'>example.com</div><div class='og-ptitle' id='og-ptitle'></div><div class='og-pdesc' id='og-pdesc'></div></div></div><div class='og-imgstat' id='og-imgstat'>Enter an image URL to validate its size.</div><h2 style='margin-top:20px'>Validator checklist</h2><ul class='og-check' id='og-check'></ul></div></div><div class='og-card' style='margin-top:20px'><h2>Generated tags — paste into &lt;head&gt;</h2><pre class='og-snippet' id='og-snippet'></pre><div class='og-actions'><button id='og-copy' type='button'>Copy snippet</button></div></div></div></section>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>What Are Open Graph Meta Tags?</h2><p>When you paste a link into Twitter, Facebook, LinkedIn, Slack, Discord, or iMessage, the rich preview card — title, description, big image — does not come from magic. It comes from <strong>meta tags</strong> in your page's <code>&lt;head&gt;</code>. The dominant standard is the <strong>Open Graph protocol</strong>, created by Facebook in 2010: tags like <code>&lt;meta property="og:title" content="..."&gt;</code> that describe your page in a structured way any crawler can read. Twitter then built its own <strong>Twitter Card</strong> tags (<code>twitter:card</code>, <code>twitter:image</code>) on top of the same idea, falling back to Open Graph values when its own tags are missing.</p><p>Without these tags, platforms guess — usually badly. They grab the <code>&lt;title&gt;</code>, the first paragraph of text, and some random image (often a favicon or an ad banner). With them, you control exactly what millions of people see when your link travels. For content sites, the preview card is frequently the <em>actual</em> first impression; the click happens only if the card earns it. Studies of social click-through consistently show that posts with complete, attractive cards outperform bare links by wide margins.</p><h2>The Essential Tags</h2><p>You need surprisingly few tags to cover nearly every platform:</p><ul><li><strong>og:title</strong> — the card headline. Keep it under ~60 characters so it is not truncated. This tool's core function builds exactly this tag: <code>ogTitle('Hello')</code> → <code>&lt;meta property="og:title" content="Hello"&gt;</code>.</li><li><strong>og:description</strong> — one or two sentences, 50–160 characters. It should work as a standalone pitch for someone who has never heard of you.</li><li><strong>og:image</strong> — absolute URL to the preview image. The single highest-impact tag on the page.</li><li><strong>og:url</strong> — the canonical URL of the page. Prevents duplicate cards for URL variants (with/without trailing slash, UTM parameters).</li><li><strong>og:type</strong> — usually <code>website</code>; use <code>article</code> for blog posts (which unlocks <code>article:published_time</code> and author tags).</li><li><strong>twitter:card</strong> — set to <code>summary_large_image</code> for the big-image layout. Without it, Twitter may render the small thumbnail card.</li></ul><p>That is the 90% solution. Everything else — <code>og:site_name</code>, <code>og:locale</code>, image dimensions — is refinement.</p><h2>The Image: 1200 × 630 or Bust</h2><p>The recommended Open Graph image size is <strong>1200 × 630 pixels</strong> (a 1.91:1 aspect ratio). This is not arbitrary: it is the size Facebook's crawler requests, and every other platform degrades gracefully from it. The minimums that still work are 600 × 315 (below this, Facebook may refuse to render a large card) and 300 × 200 for LinkedIn's fallback. Keep the file under ~1MB — crawlers time out on slow images — and prefer JPG for photos, PNG for graphics with text.</p><p>Design for the <strong>safe zone</strong>: keep text and logos inside the central ~1000 × 520 region. Different platforms crop differently — Twitter's mobile app, LinkedIn's feed, and Slack's unfurl each shave the edges slightly differently. The classic failure is a beautiful card where the headline text gets cropped on mobile. This tool's image validator loads your image URL and reports the actual dimensions, so you catch a 400 × 400 square or a 3MB monster before you ship.</p><table><thead><tr><th>Platform</th><th>Card size</th><th>Notes</th></tr></thead><tbody><tr><td>Facebook</td><td>1200 × 630</td><td>Defines the standard; crops to 1.91:1</td></tr><tr><td>Twitter / X (large)</td><td>1200 × 628 (2:1)</td><td>Needs twitter:card = summary_large_image</td></tr><tr><td>LinkedIn</td><td>1200 × 627</td><td>Falls back gracefully from 1.91:1</td></tr><tr><td>Slack / Discord</td><td>~1200 × 630</td><td>Unfurls from og: tags; Discord needs the image publicly reachable</td></tr><tr><td>iMessage / WhatsApp</td><td>~1200 × 630</td><td>WhatsApp caches aggressively — test with fresh URLs</td></tr></tbody></table><h2>Absolute URLs: The Number-One Bug</h2><p>The most common Open Graph failure is a <strong>relative image URL</strong>: <code>content="/images/card.jpg"</code>. It works in your browser, and it fails everywhere else, because the crawler fetching your page has no base URL context the way a browser does (technically it does, but many crawlers resolve relative og:image URLs inconsistently — Facebook historically mishandled them). Always use the full <code>https://yoursite.com/images/card.jpg</code>. Same for <code>og:url</code>. This tool generates absolute-URL-first output and the checklist flags relative URLs.</p><h2>Caching: Why Your Fixed Card Still Looks Broken</h2><p>You fixed the tags, reposted the link, and the old broken card is still there. This is <strong>crawler caching</strong>, and it surprises everyone once. Facebook caches link previews for days; WhatsApp caches nearly forever per URL; Twitter's card validator can force a refresh. The remedies:</p><ul><li><strong>Facebook:</strong> run the URL through the Sharing Debugger and click 'Scrape Again.'</li><li><strong>Twitter/X:</strong> use the Card Validator to refresh the cache.</li><li><strong>LinkedIn:</strong> the Post Inspector refreshes their cache.</li><li><strong>WhatsApp:</strong> append a cache-busting query string (<code>?v=2</code>) — it treats it as a new URL. Crude but effective.</li><li><strong>Slack:</strong> unfurls refresh on a schedule; re-posting usually picks up changes within hours.</li></ul><p>Pro tip: version your og:image filename (<code>card-v2.jpg</code>) instead of overwriting — new filename, new cache entry, zero waiting.</p><h2>Twitter Cards vs Open Graph</h2><p>Twitter reads Open Graph tags as fallback, so a page with only og: tags still gets a decent Twitter card. But two Twitter-specific tags are worth setting explicitly. <code>twitter:card</code> with <code>summary_large_image</code> forces the big-image layout (the default without it is the small thumbnail, which wastes your 1200 × 630 image). <code>twitter:creator</code> (your @handle) adds attribution. Everything else — title, description, image — Twitter happily takes from your og: tags. One subtlety: Twitter's crawler requires the image to be publicly accessible without login and under 5MB, and it is pickier about SSL validity than Facebook's.</p><h2>Dynamic Pages and Framework Gotchas</h2><p>Social crawlers mostly <strong>do not run JavaScript</strong>. If your meta tags are injected client-side by React/Vue after load, crawlers see an empty head and your cards break. The fixes, in order of preference: <strong>server-side rendering</strong> (Next.js, Nuxt, or any SSR), <strong>static generation</strong> with per-page tags baked in at build time, or a <strong>prerendering service</strong> that serves crawler user-agents a rendered snapshot. For SPAs, the pragmatic minimum is SSR (or at least pre-rendering) for the pages people actually share — usually article, product, and landing pages.</p><h2>The Validator Checklist, Explained</h2><p>This tool's checklist encodes what experienced developers verify before shipping:</p><ol><li><strong>Title present and ≤ 60 chars</strong> — longer titles get truncated mid-word on most platforms.</li><li><strong>Description 50–160 chars</strong> — shorter looks empty, longer gets cut.</li><li><strong>Image absolute URL, ≥ 600 × 315</strong> — relative URLs and tiny images are the two classic failures.</li><li><strong>twitter:card set</strong> — without it you risk the small-thumbnail layout.</li><li><strong>og:url canonical</strong> — consolidates share counts and prevents duplicate cards.</li><li><strong>No JavaScript dependency</strong> — tags must be in the raw HTML the crawler fetches.</li></ol><h2>Beyond the Basics: Article Tags and Rich Objects</h2><p>For publishers, <code>og:type=article</code> unlocks <code>article:published_time</code>, <code>article:author</code>, and <code>article:section</code> — used by news aggregators and Facebook's article ranking. E-commerce sites can use <code>og:type=product</code> with price tags (support varies). Video pages get <code>og:video</code> for inline playback in feeds. And <code>og:locale</code> plus <code>og:locale:alternate</code> help multilingual sites serve the right card per region. None of these replace the core six tags — they are the second coat of paint.</p><h2>Measuring Card Performance</h2><p>Once your cards are live, treat them like any other conversion surface. UTM parameters on shared links (kept out of og:url so the canonical stays clean) let analytics attribute traffic to social shares. A/B test card images the way you would ad creative — the image is typically 70%+ of the card's visual weight, and swapping a generic stock photo for a specific, high-contrast image with minimal text routinely moves click-through. The preview in this tool shows you what the platforms will show; the checklist makes sure the machinery underneath is sound.</p><h2>Open Graph for E-commerce and Video</h2><p>Product pages deserve richer cards than the basics. The <code>og:type=product</code> object supports price and availability tags (<code>product:price:amount</code>, <code>product:price:currency</code>, <code>product:availability</code>), which some platforms render as price badges directly on the card — a meaningful click-through lever for retail. Video pages can use <code>og:video</code> (with <code>og:video:width</code>, <code>og:video:height</code>, and <code>og:video:type</code>) to enable inline playback in feeds on platforms that support it; a playable card dramatically outperforms a static one for video content. Podcasts and music get <code>og:audio</code> similarly. The pattern is consistent: the more structured data you provide, the richer the platform's rendering — but only the core six tags are universally supported, so treat the rest as progressive enhancement.</p><p>E-commerce has one extra trap: <strong>variant URLs</strong>. A product with color/size variants often has a URL per variant, and without a canonical <code>og:url</code> each variant generates its own card — fragmenting share counts and showing the wrong variant image in shares. Point every variant's og:url at the canonical product URL and pick the hero image deliberately.</p><h2>International and Multi-Region Cards</h2><p>Global sites need per-locale cards. The <code>og:locale</code> tag declares the page's language-region (e.g., <code>en_US</code>), and <code>og:locale:alternate</code> lists the other available locales — crawlers use these to pick the right card for the viewer's region. In practice, most teams implement this by rendering locale-specific tag sets server-side per URL path (<code>/en/…</code> vs <code>/fr/…</code>), with translated titles and descriptions and sometimes locale-appropriate imagery. Test each locale's URL separately in the platform debuggers; a French user seeing the English card is a silent conversion killer. Right-to-left locales deserve a design check too — card layouts mirror, and text baked into images will not.</p><h2>When Cards Break: A Troubleshooting Guide</h2><ol><li><strong>No image renders:</strong> check the URL is absolute, publicly reachable (no login wall, no hotlink protection blocking the crawler), and under size limits. Test with curl from an external server.</li><li><strong>Wrong image:</strong> another <code>og:image</code> tag earlier in the head wins, or the crawler cached an old one — scrape again / version the filename.</li><li><strong>Card shows but title is wrong:</strong> duplicate <code>og:title</code> tags, or the crawler read a JavaScript-rendered page before hydration — check raw HTML.</li><li><strong>Works on Facebook, not Twitter:</strong> missing <code>twitter:card</code>, or Twitter's crawler is blocked by robots.txt (it obeys it; Facebook's is more lenient).</li><li><strong>Works everywhere except WhatsApp:</strong> WhatsApp caches per URL aggressively and needs the image under ~300KB for reliable rendering — compress and version the URL.</li><li><strong>Intermittent failures:</strong> slow image hosting — crawlers time out. Move og images to a CDN with fast global TTFB.</li></ol>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>What are Open Graph meta tags?</summary><p>Open Graph meta tags (og:title, og:description, og:image…) tell social platforms what title, description, and image to show in link preview cards. They were created by Facebook in 2010 and are now read by Twitter, LinkedIn, Slack, Discord, and messaging apps.</p></details>
+<details><summary>Should og:image be an absolute or relative URL?</summary><p>Use absolute URLs like https://yoursite.com/images/card.jpg. Crawlers resolve relative URLs inconsistently, so /images/card.jpg often breaks — it is the single most common Open Graph bug.</p></details>
+<details><summary>What is the ideal Open Graph image size?</summary><p>1200 × 630 pixels (1.91:1 aspect ratio), under ~1MB. That is Facebook's native size and every other platform degrades gracefully from it. Keep text inside the central safe zone since platforms crop edges differently.</p></details>
+<details><summary>Why does my link still show the old preview after I fixed the tags?</summary><p>Crawler caching. Facebook, WhatsApp, and others cache previews for hours or days. Use Facebook's Sharing Debugger ('Scrape Again'), Twitter's Card Validator, or version the image filename (card-v2.jpg) to bust the cache.</p></details>
+<details><summary>Do I need separate Twitter card tags?</summary><p>Set twitter:card to summary_large_image for the big-image layout — without it Twitter may render a small thumbnail. Title, description, and image can fall back to your og: tags.</p></details>
+<details><summary>Will meta tags injected by JavaScript work for social crawlers?</summary><p>Most social crawlers do not run JavaScript, so client-side-injected tags are invisible to them. Use server-side rendering, static generation, or a prerendering service so the tags are in the raw HTML.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">OgImage</div>
+    <p>OgImage builds Open Graph + Twitter card meta tags with a live social-card preview, image-size validator, and a best-practice checklist.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function ogTitle(title){return '<meta property="og:title" content="'+title+'">';}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){var t=document.getElementById('og-t'),d=document.getElementById('og-d'),img=document.getElementById('og-i'),url=document.getElementById('og-u'),type=document.getElementById('og-type'),tw=document.getElementById('og-tw'),snip=document.getElementById('og-snippet'),pimg=document.getElementById('og-pimg'),psite=document.getElementById('og-psite'),ptitle=document.getElementById('og-ptitle'),pdesc=document.getElementById('og-pdesc'),check=document.getElementById('og-check'),imgstat=document.getElementById('og-imgstat'),copyBtn=document.getElementById('og-copy');if(!t||!snip)return;function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}function host(u){try{return new URL(u).hostname;}catch(e){return'';}}function buildTags(){var lines=[];lines.push(ogTitle(t.value));lines.push('<meta property="og:description" content="'+d.value+'">');lines.push('<meta property="og:image" content="'+img.value+'">');lines.push('<meta property="og:url" content="'+url.value+'">');lines.push('<meta property="og:type" content="'+type.value+'">');lines.push('<meta name="twitter:card" content="'+tw.value+'">');lines.push('<meta name="twitter:title" content="'+t.value+'">');lines.push('<meta name="twitter:description" content="'+d.value+'">');lines.push('<meta name="twitter:image" content="'+img.value+'">');return lines;}function render(){var tags=buildTags();snip.textContent=tags.join('\n');if(pimg){pimg.src=img.value;ptitle.textContent=t.value||'(no title)';pdesc.textContent=d.value||'(no description)';psite.textContent=host(url.value)||'yoursite.com';}var items=[];function li(ok,msg){return '<li><span class="'+(ok?'ok':'bad')+'">'+(ok?'PASS':'FAIL')+'</span> — '+msg+'</li>';}items.push(li(t.value.length>0&&t.value.length<=60,'Title present and within 60 characters ('+t.value.length+')'));items.push(li(d.value.length>=50&&d.value.length<=300,'Description present ('+d.value.length+' chars; aim 50–160 for display)'));items.push(li(/^https?:\/\//i.test(img.value),'Image URL is absolute (https://…)'));items.push(li(tw.value==='summary_large_image','Twitter large-image card selected'));items.push(li(/^https?:\/\//i.test(url.value),'Canonical og:url is absolute'));if(check)check.innerHTML=items.join('');}function validateImg(){var src=img.value;if(!src||!/^https?:\/\//i.test(src)){if(imgstat)imgstat.textContent='Enter an absolute image URL to validate.';return;}if(imgstat)imgstat.textContent='Loading image…';var im=new Image();im.onload=function(){var w=im.naturalWidth,h=im.naturalHeight;var ratio=(w/h).toFixed(2);var ok=w>=1200&&h>=630;if(imgstat)imgstat.innerHTML='Image is <b>'+w+' × '+h+'</b> (ratio '+ratio+'). '+(ok?'Meets the 1200×630 recommendation.':w>=600&&h>=315?'Above minimum 600×315, but below the 1200×630 ideal.':'Below minimum — cards may render small or fail.');};im.onerror=function(){if(imgstat)imgstat.textContent='Could not load that image URL — check it is public and correct.';};im.src=src;}['og-t','og-d','og-i','og-u','og-type','og-tw'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',function(){render();if(id==='og-i')validateImg();});if(el&&el.tagName==='SELECT')el.addEventListener('change',render);});if(copyBtn)copyBtn.addEventListener('click',function(){var s=snip.textContent;if(navigator.clipboard&&s){navigator.clipboard.writeText(s).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy snippet';},1500);});}});render();validateImg();});}
+</script>
+</body>
+</html>
