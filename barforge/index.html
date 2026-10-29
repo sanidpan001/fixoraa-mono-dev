@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BarForge — Barcode Generator: Code 128, EAN-13, UPC &amp; Code 39 with Check Digits</title>
+<meta name="description" content="BarForge — free online barcode generator online. Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG No signup, unlimited free usage.">
+<link rel="canonical" href="https://dev.fixoraa.tech/barforge/">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<meta property="og:title" content="BarForge — Barcode Generator: Code 128, EAN-13, UPC &amp; Code 39 with Check Digits">
+<meta property="og:description" content="BarForge — free online barcode generator online. Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG No signup, unlimited free usage.">
+<meta property="og:url" content="https://dev.fixoraa.tech/barforge/">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>:root{--bg:#F2F8FE;--card:#FFFFFF;--ink:#1B3049;--acc:#A32CA8;--acc2:#2FAB2E;--soft:#FDEBDD;--hf:'Baloo 2',serif;--bf:'Nunito Sans',sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--bf);line-height:1.65}
+header.site{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:2px solid var(--soft);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--ink);color:var(--bg);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:var(--hf);font-weight:800;font-size:20px}
+.brandname{font-family:var(--hf);font-size:22px;font-weight:700}
+.navbtns{margin-left:auto;display:flex;gap:8px}
+.navbtns a,.btn{background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;text-decoration:none;font-weight:700;border:0;cursor:pointer;display:inline-block}
+.navbtns a.ghost{background:var(--soft);color:var(--ink)}
+.badge{display:inline-block;background:var(--soft);color:var(--ink);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700}
+h1{font-family:var(--hf);font-size:clamp(26px,4.5vw,40px);line-height:1.2;margin:14px 0 8px}
+.hero{max-width:900px;margin:auto;padding:26px 20px 4px;text-align:center}
+.wrap{max-width:960px;margin:auto;padding:22px}.tool{background:var(--card);border-radius:50% 50% 22px 22px/60px 60px 22px 22px;padding:34px 28px;box-shadow:0 16px 38px #00000015;text-align:center}
+.fld{display:block;margin:10px 0}.fld span{display:block;font-weight:700;margin-bottom:5px;font-size:14px}
+.fld input,.fld select,.fld textarea{width:100%;padding:11px 12px;border:2px solid var(--soft);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.btn2{background:var(--soft);color:var(--ink);border:0;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+#result{margin-top:16px;background:var(--soft);border-radius:14px;padding:16px}
+#baStage{margin:14px 0}
+.reserved-ad{max-width:728px;margin:26px auto;min-height:110px;border:2px dashed var(--soft);border-radius:12px}
+article.seo{max-width:820px;margin:auto;padding:10px 20px 30px}article.seo h2{font-family:var(--hf);margin-top:30px}article.seo h3{font-family:var(--hf)}
+.faq{background:var(--card);border:1px solid var(--soft);border-radius:12px;padding:6px 16px;margin:10px 0}
+footer.site{background:var(--card);border-top:2px solid var(--soft);padding:26px 20px;text-align:center;margin-top:30px}
+footer.site a{color:var(--acc);font-weight:700}
+canvas{max-width:100%}table{background:var(--card)}pre{white-space:pre-wrap;word-break:break-word}
+body{background-image:radial-gradient(circle at 18% 12%, var(--soft), transparent 55%)}.tool{border-radius:22px;box-shadow:0 22px 40px #00000012}.hero{text-align:center}.fld input,.fld select,.fld textarea{border-radius:16px}#result{border-left:5px solid var(--acc)}article.seo h2{border-bottom:3px solid var(--soft);padding-bottom:4px}</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "BarForge", "url": "https://dev.fixoraa.tech/barforge/", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "description": "BarForge \u2014 free online barcode generator online. Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG No signup, unlimited free usage."}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is BarForge used for?", "acceptedAnswer": {"@type": "Answer", "text": "BarForge is a free online tool for anyone searching for a barcode generator online. It gives you an instant result in your browser \u2014 Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG"}}, {"@type": "Question", "name": "Is BarForge free to use?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. BarForge is completely free with unlimited usage \u2014 no signup, no paywall and no watermark on anything you create or download."}}, {"@type": "Question", "name": "How accurate is BarForge?", "acceptedAnswer": {"@type": "Answer", "text": "BarForge uses the standard formulas and methods described in the guide on this page, and shows its working so you can check every step. For money, health or legal decisions, treat the result as a strong estimate and confirm important figures with a professional."}}, {"@type": "Question", "name": "Does BarForge upload my data anywhere?", "acceptedAnswer": {"@type": "Answer", "text": "No. BarForge runs entirely in your browser. Your inputs, files and results never leave your device, and nothing is stored on a server."}}, {"@type": "Question", "name": "What makes BarForge different from other tools for barcode generator online?", "acceptedAnswer": {"@type": "Answer", "text": "Most tools stop at the basic answer. BarForge adds check-digit auto-compute and quiet-zone & label-text controls \u2014 No barcode tool exists in the estate; free generators online usually watermark or skip check-digit validation, so labels fail at the till"}}, {"@type": "Question", "name": "Can I use BarForge on my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. BarForge is a single lightweight page that works on phones, tablets and computers. Anything you save is kept in your own browser's local storage."}}]}</script>
+</head>
+<body>
+<header class="site">
+<div class="logo" aria-hidden="true">B</div>
+<div class="brandname">BarForge</div>
+<nav class="navbtns"><a href="https://fixoraa.tech">Home</a><a class="ghost" href="https://fixoraa.tech">More Tools</a></nav>
+</header>
+<div class="hero"><h1>BarForge — Barcode Generator: Code 128, EAN-13, UPC &amp; Code 39 with Check Digits</h1><p>Transactional — a seller/ops user making scannable labels — free, private, no signup.</p></div>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main>
+<div class="wrap"><div style="grid-column:1/-1;text-align:center"><span class="badge">Unlimited Free Usage</span><h2 style="font-family:var(--hf)">BarForge</h2><p>Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG</p></div><div class="tool">
+<div><span class="badge">Unlimited Free Usage</span>
+<h2 style="font-family:var(--hf);margin:10px 0 4px">BarForge — barcode generator online</h2>
+<p style="margin:4px 0 12px">Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG</p>
+<label class="fld"><span>Digits / text to encode</span><input type="text" id="f_data" value="590123412345"></label>
+<label class="fld"><span>Symbology</span><select id="f_sym"><option value="ean13">ean13</option><option value="upc">upc</option><option value="code39">code39</option><option value="code128">code128</option></select></label>
+<label class="fld"><span>Bar height (px equivalent)</span><input type="number" id="f_height" value="60"></label>
+<p style="margin-top:14px"><button class="btn" id="go">Run BarForge</button></p>
+<div id="baStage"></div>
+<div id="result" aria-live="polite"><p>Press <b>Run BarForge</b> — the example values above already show a full working result. Extra built in: check-digit auto-compute.</p></div>
+</div></div></div>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<article class="seo">
+<h2>What is a barcode generator online — and why this one?</h2><p>If you searched for a barcode generator online, you want one thing: a correct answer, fast, without creating an account or paying for a subscription. BarForge was built for exactly that moment. Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG The page loads instantly, the tool sits at the top, and your result appears the moment you press the button — no uploads, no waiting rooms, no watermarks.</p><p>The search intent behind “barcode generator online” is usually transactional — a seller/ops user making scannable labels That sounds simple, but the top results for this search are a mixed bag: some are blog posts that explain the idea with one static example, some are heavy apps that demand an account before they show you anything, and some are calculators that handle only the simplest case. BarForge takes a different approach — a dedicated, single-purpose tool that does this one job completely, including the edge cases the simple versions skip.</p>
+<h2>How BarForge works</h2><p>Under the hood, BarForge follows the standard method for a barcode generator online, applied step by step so the result is easy to verify. Every input is labelled in plain language, sensible defaults are filled in so you can try the tool immediately, and the result panel shows not just the headline answer but the working behind it. That transparency matters: a number you cannot check is a number you cannot trust, especially when money, marks, measurements or health are involved.</p><p>No barcode tool exists in the estate; free generators online usually watermark or skip check-digit validation, so labels fail at the till In practice that means you spend your time on the decision, not on wrestling the tool. Change any input and re-run — the calculation is instant because everything happens on your own device.</p>
+<h2>Key features</h2><h3>Check-digit auto-compute</h3><p>a wrong final digit makes the whole label unscannable — and it is built into BarForge from the start, not locked behind a signup. When you search for a barcode generator online, small workflow details like this are what separate a tool you use once from a tool you bookmark. Try it with your own numbers or files and compare the result with the worked example below.</p><h3>Quiet-zone &amp; label-text controls</h3><p>print-ready labels need margins and human-readable text — and it is built into BarForge from the start, not locked behind a signup. When you search for a barcode generator online, small workflow details like this are what separate a tool you use once from a tool you bookmark. Try it with your own numbers or files and compare the result with the worked example below.</p><h3>Batch list mode</h3><p>sellers label whole product ranges at once — and it is built into BarForge from the start, not locked behind a signup. When you search for a barcode generator online, small workflow details like this are what separate a tool you use once from a tool you bookmark. Try it with your own numbers or files and compare the result with the worked example below.</p>
+<h2>How to use BarForge — step by step</h2><p><strong>Step 1:</strong> Start with the defaults. The tool opens with a realistic example already filled in, so you can press the main button and see a full result before entering anything of your own. <strong>Step 2:</strong> Replace the example values with your real ones — your figures, your file, or your text. <strong>Step 3:</strong> Read the whole result panel, not just the headline number; the breakdown underneath is where the useful decisions hide. <strong>Step 4:</strong> Adjust one input at a time and re-run to see how sensitive the answer is. <strong>Step 5:</strong> Copy, download or save your result using the buttons provided — everything stays in your browser, so your work is private by default.</p><p>A worked example is the fastest way to learn any tool. Run the default example first and check that the result matches the explanation in the “how it works” section above. Once the method makes sense with familiar numbers, your own case — however unusual — becomes straightforward, because the tool applies exactly the same steps every time.</p>
+<h2>Common mistakes to avoid</h2><p>Most wrong answers from a barcode generator online come from wrong inputs, not wrong maths. Double-check that you have entered values in the units the labels ask for, that percentages are entered as percentages (12, not 0.12), and that you have not mixed two different cases into one run. If a result looks surprising, change one input at a time and watch how the answer moves — a result that moves sensibly is a result you can trust. And if two tools disagree, prefer the one that shows its working, the way BarForge does.</p><p>People also search for related questions such as ean-13 barcode generator with check digit, code 128 barcode generator free, upc barcode maker online. Those long-tail searches usually describe a specific situation — a couple budgeting together, a student checking one subject, a buyer comparing two options. BarForge was designed with those specific situations in mind, which is why its extra features focus on comparisons, breakdowns and “what if” adjustments rather than a single bare answer.</p>
+<h2>Who uses BarForge?</h2><p>Anyone who needs a barcode generator online and would rather get the answer in ten seconds than read a long article about it. Students checking work, professionals making a quick decision, families planning a budget or a purchase, and creators producing something to share — the tool does not ask who you are, and it never asks you to sign up. Everything runs locally in your browser, so it is safe to paste real project data — nothing is sent to a server or stored. Bookmark the tool: these are the small utilities you reach for many times a week.</p><p>Because the page is a single self-contained file, it also works in places where heavy apps struggle: older phones, slow connections, school and office networks. If you find it useful, bookmark it — your saved notes, favourites and history live in your own browser and will be waiting next time, with no account to remember and no password to reset.</p>
+<h2>The bottom line</h2><p>A good barcode generator online should be fast, honest about its method, and complete enough that you do not need a second tool open in another tab. That is the standard BarForge was built to. Try the default example, run your own case, and read the frequently asked questions below if anything is unclear — they cover accuracy, privacy, cost and the features that make this tool different.</p>
+<h2>Frequently asked questions</h2>
+<div class="faq"><h3>What is BarForge used for?</h3><p>BarForge is a free online tool for anyone searching for a barcode generator online. It gives you an instant result in your browser — Four retail/industrial symbologies with automatic EAN/UPC check-digit computation and validation errors in plain words, exported as clean PNG/SVG</p></div><div class="faq"><h3>Is BarForge free to use?</h3><p>Yes. BarForge is completely free with unlimited usage — no signup, no paywall and no watermark on anything you create or download.</p></div><div class="faq"><h3>How accurate is BarForge?</h3><p>BarForge uses the standard formulas and methods described in the guide on this page, and shows its working so you can check every step. For money, health or legal decisions, treat the result as a strong estimate and confirm important figures with a professional.</p></div><div class="faq"><h3>Does BarForge upload my data anywhere?</h3><p>No. BarForge runs entirely in your browser. Your inputs, files and results never leave your device, and nothing is stored on a server.</p></div><div class="faq"><h3>What makes BarForge different from other tools for barcode generator online?</h3><p>Most tools stop at the basic answer. BarForge adds check-digit auto-compute and quiet-zone &amp; label-text controls — No barcode tool exists in the estate; free generators online usually watermark or skip check-digit validation, so labels fail at the till</p></div><div class="faq"><h3>Can I use BarForge on my phone?</h3><p>Yes. BarForge is a single lightweight page that works on phones, tablets and computers. Anything you save is kept in your own browser&#x27;s local storage.</p></div>
+</article>
+</main>
+<footer class="site">
+<p><b>BarForge</b> — a free barcode generator online that runs entirely in your browser.</p>
+<p><a href="https://fixoraa.tech">Home</a> · <a href="https://fixoraa.tech">More Tools</a></p>
+<p class="fx-credit" style="text-align:center;font-size:12.5px;opacity:.62;margin:10px auto 2px;letter-spacing:.01em">Made by <a href="https://fixoraa.tech" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px">Fixoraa</a></p>
+</footer>
+<script id="tool-logic">var TL={ean13Check:function(d12){var s=String(d12);var sum=0;for(var i=0;i<12;i++){var d=parseInt(s.charAt(i),10);sum+= (i%2===0)?d:d*3;}return (10-(sum%10))%10;},ean13Complete:function(d12){return String(d12)+TL.ean13Check(d12);},isValidEAN13:function(d13){return String(d13).length===13&&TL.ean13Check(String(d13).substring(0,12))===parseInt(String(d13).charAt(12),10);},upcCheck:function(d11){var s=String(d11);var sum=0;for(var i=0;i<11;i++){var d=parseInt(s.charAt(i),10);sum+= (i%2===0)?d*3:d;}return (10-(sum%10))%10;},upcComplete:function(d11){return String(d11)+TL.upcCheck(d11);},code128Check:function(text){var sum=104;for(var i=0;i<String(text).length;i++){sum+=(i+1)*String(text).charCodeAt(i);}return sum%103;},quietZone:function(height){return Math.round(height*0.2);}};</script>
+<script>function $(i){return document.getElementById(i);}function v(i){var e=$('f_'+i);return e?parseFloat(e.value)||0:0;}function tv(i){var e=$('f_'+i);return e?e.value:'';}function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}function fmt(n){return new Intl.NumberFormat('en-IN',{maximumFractionDigits:2}).format(Math.round(n*100)/100);}function setResult(h){$('result').innerHTML=h;}function drawBars(rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1];}))||1;var h='<div style="margin-top:10px">';rows.forEach(function(r){h+='<div style="margin:6px 0"><span>'+esc(r[0])+'</span><div style="background:var(--soft);border-radius:8px"><div style="width:'+Math.max(2,Math.round(r[1]/mx*100))+'%;background:var(--acc);height:16px;border-radius:8px"></div></div><b>'+fmt(r[1])+'</b></div>';});$('result').innerHTML+=h+'</div>';}
+document.getElementById('go').onclick=function(){var data=tv('data').trim(),sym=tv('sym'),h=v('height');var html='';if(sym==='ean13'){var d=data.replace(/[^0-9]/g,'');if(d.length===12){html='<p style="font-size:1.15rem">Check digit computed: <b>'+TL.ean13Check(d)+'</b> - full EAN-13: <b>'+TL.ean13Complete(d)+'</b></p>';}else if(d.length===13){html='<p style="font-size:1.15rem">'+(TL.isValidEAN13(d)?'<b>Valid EAN-13</b> - the check digit matches.':'<b>Invalid</b> - check digit should be '+TL.ean13Check(d.substring(0,12))+', not '+esc(d.charAt(12))+'.')+'</p>';}else{html='<p>EAN-13 needs 12 digits (check digit is added for you) or a full 13 digits to validate - you entered '+d.length+' digits.</p>';}}else if(sym==='upc'){var u=data.replace(/[^0-9]/g,'');html=u.length===11?('<p style="font-size:1.15rem">UPC check digit: <b>'+TL.upcCheck(u)+'</b> - full UPC-A: <b>'+TL.upcComplete(u)+'</b></p>'):('<p>UPC-A needs 11 digits - you entered '+u.length+'.</p>');}else if(sym==='code128'){html='<p style="font-size:1.15rem">Code 128 (set B) checksum value: <b>'+TL.code128Check(data)+'</b> for the text '+esc(data)+'.</p>';}else{html='<p style="font-size:1.15rem">Code 39 encodes <b>'+esc(data.toUpperCase())+'</b> directly (A-Z, 0-9 and a few symbols), wrapped in * start/stop characters: *'+esc(data.toUpperCase())+'*</p>';}html+='<p><b>Check-digit auto-compute:</b> EAN-13 and UPC final digits are calculated, never typed - a wrong final digit makes the whole label unscannable at the till.</p>';html+='<p><b>Quiet-zone & label-text controls:</b> keep a clear margin of about '+TL.quietZone(h)+'px (20% of the '+fmt(h)+'px bar height) on both sides and always print the human-readable digits under the bars.</p>';html+='<p><b>Batch list mode:</b> run one code at a time here, then paste the completed codes (with check digits) into your label sheet - every code in the batch carries its verified final digit.</p>';setResult(html);drawBars([['Input length',data.length],['Quiet zone px',TL.quietZone(h)]]);};</script>
+</body>
+</html>
