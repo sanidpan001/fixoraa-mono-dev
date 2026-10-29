@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passphrase Strength Calculator — Entropy &amp; Crack Time Estimate</title>
+<meta name="description" content="Calculate passphrase entropy and crack-time estimates from word count and wordlist size with the free PassPhrase calculator.">
+<link rel="canonical" href="https://dev.fixoraa.tech/passphrase/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Passphrase Strength Calculator — Entropy &amp; Crack Time Estimate">
+<meta property="og:description" content="Calculate passphrase entropy and crack-time estimates from word count and wordlist size with the free PassPhrase calculator.">
+<meta property="og:url" content="https://dev.fixoraa.tech/passphrase/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://peacefulbicycle.com">
+<link rel="preconnect" href="https://www.highrevenueformat.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "PassPhrase",
+      "url": "https://dev.fixoraa.tech/passphrase/",
+      "applicationCategory": "Tech",
+      "operatingSystem": "Web",
+      "description": "Calculate passphrase entropy and crack-time estimates from word count and wordlist size with the free PassPhrase calculator.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How is passphrase entropy calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Entropy in bits equals word count multiplied by log2 of the wordlist size. Each randomly chosen word from a 7,776-word list adds about 12.93 bits."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many words do I need?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Four words give about 51.7 bits, enough for everyday accounts with two-factor authentication. Six words give about 77.5 bits, suitable for master passwords."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does choosing words myself work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Human-chosen words are predictable and carry far less entropy than the formula claims. Use dice or a trusted generator."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Diceware list?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A list of 7,776 words designed for passphrase generation, where five dice rolls select each word at random."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What attacker speed is assumed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "One billion guesses per second, representing a well-resourced offline attack against a stolen hash. Online attacks with rate limiting are far slower."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is a passphrase better than a password?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For anything a human must remember, yes: it carries more usable entropy. For accounts stored in a manager, long random character passwords are equally good."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I still use two-factor authentication?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Always. Even the strongest passphrase deserves a second factor, because breaches, phishing, and device theft bypass password strength entirely."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I reuse one strong passphrase?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Reuse means one breach exposes every account. Use a unique passphrase per important account, ideally managed by a password manager."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#F2F7E8; --surface:#FFFFFF; --accent:#3F6212; --accent-ink:#FFFFFF;
+  --ink:#232B12; --muted:#4C5A33; --line:#D9E2BC;
+  --display:'Space Grotesk',serif; --body:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+
+.tool-card{max-width:46rem;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.6rem;box-shadow:0 10px 30px rgba(0,0,0,.07)}
+.tool-card h1{font-family:var(--display);font-size:1.9rem;line-height:1.2;margin-bottom:.4rem;letter-spacing:-.01em}
+.tool-card .lead{color:var(--muted);margin-bottom:1.2rem}
+.tool-card label{display:block;font-weight:600;margin:.9rem 0 .3rem}
+.tool-card input,.tool-card select{width:100%;padding:.7rem .9rem;border:1.5px solid var(--line);border-radius:12px;font-size:1rem;background:var(--bg);color:var(--ink);min-height:44px}
+.tool-card .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.tool-card button.calc{margin-top:1.2rem;width:100%;padding:.85rem;border:none;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:1.05rem;cursor:pointer;min-height:48px}
+.tool-card button.calc:hover{filter:brightness(.94)}
+.presets{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}
+.presets button{padding:.5rem 1rem;border-radius:999px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-weight:600;cursor:pointer;min-height:40px}
+.presets button:hover{background:var(--accent);color:var(--accent-ink)}
+.result{margin-top:1.2rem;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:1.1rem;font-size:1.05rem}
+.result strong{font-size:1.3rem}
+.mini-btn{margin-top:.7rem;padding:.55rem 1.1rem;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer;min-height:40px}
+.hist{margin-top:1rem;color:var(--muted);font-size:.95rem}
+.hist ul{padding-left:1.2rem}
+@media (max-width:640px){.tool-card{padding:1rem;border-radius:16px}.tool-card h1{font-size:1.45rem}.tool-card .row{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="PassPhrase home">
+      <span class="fx-logo-tile" aria-hidden="true">🔐</span>
+      <span class="fx-brand">PassPhrase</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-pass-phrase" aria-label="PassPhrase tool">
+
+<div class="tool-card">
+<h1>Passphrase Strength Calculator</h1>
+<p class="lead">Measure passphrase entropy and crack-time from word count and wordlist size.</p>
+<div class="presets">
+<button type="button" data-preset='{"words":"4","wl":"7776"}'>4 words, Diceware list</button>
+<button type="button" data-preset='{"words":"6","wl":"7776"}'>6 words, Diceware list</button>
+</div>
+<div class="row">
+<div><label for="words">Number of words</label><input id="words" type="number" value="4" min="1" max="20"></div>
+<div><label for="wl">Wordlist size (words)</label><input id="wl" type="number" value="7776" min="2"></div>
+</div>
+<p style="color:var(--muted)">Assumes words chosen at random (dice or generator) and an attacker trying 1 billion guesses per second.</p>
+<button class="calc" id="calcBtn" type="button">Calculate strength</button>
+<div class="result" id="result" aria-live="polite"></div>
+<button class="mini-btn" id="copyBtn" type="button">Copy result</button>
+<div class="hist" id="hist"></div>
+</div>
+
+  </section>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+  <article class="article-sec" aria-label="Guide">
+
+<h2>Why passphrases beat passwords</h2>
+<p>A passphrase is a short sequence of ordinary words — "correct horse battery staple" is the famous example — and it beats a traditional password for a reason rooted in mathematics, not fashion. Password strength comes from entropy: the number of equally likely possibilities an attacker must try. A password's entropy grows with its character set and length, but humans are terrible at generating random characters and worse at remembering them, so real passwords cluster around predictable patterns that attackers exploit. A passphrase's entropy grows with its word count and its wordlist size, and because words are memorable, a passphrase can carry far more entropy than a password a human will actually remember. Four random words from a 7,776-word list carry about 51.7 bits of entropy — stronger than most eight-character passwords people actually use, and dramatically easier to recall.</p>
+<p>The memorability advantage is not a soft benefit; it is a security feature. A password that cannot be remembered gets written down, reused across sites, or reset constantly — each of which creates vulnerabilities worse than the password's theoretical weakness. A passphrase that can be remembered gets used correctly: unique per site, never written down, never reused. Security systems fail at the human layer far more often than at the mathematical layer, and passphrases are designed for the human layer. That is why standards bodies and security teams increasingly recommend passphrases, and why password managers now generate word-based passphrases alongside character-based passwords.</p>
+<h2>How the calculation works</h2>
+<p>Enter the number of words in your passphrase and the size of the wordlist they were drawn from. Entropy in bits equals word count multiplied by the base-2 logarithm of the wordlist size: each word contributes log2(wordlist) bits, because choosing one word from a list of N possibilities is equivalent to log2(N) coin flips. The classic Diceware list has 7,776 words, contributing about 12.93 bits per word; a smaller list of 2,048 words contributes exactly 11 bits per word. Crack time is then estimated by dividing the total number of possibilities, 2 raised to the entropy, by an assumed attacker speed of one billion guesses per second — a generous rate representing well-resourced offline attacks against a stolen hash. The result is the time an attacker needs on average to try half the possibilities, which is the standard convention for such estimates.</p>
+<p>Two warnings matter enormously. First, the calculation assumes the words were chosen randomly. Words you picked yourself — a lyric, a quote, a sentence from a book — carry far less entropy than the formula claims, because attackers try common phrases first. Only dice rolls, a trusted generator, or a password manager produce the randomness this maths assumes. Second, the one-billion-guesses-per-second rate assumes an offline attack against a weak hash; online attacks against a service with rate limiting are vastly slower, while attacks against a poorly stored hash can be faster. Treat the crack time as an order-of-magnitude guide, not a guarantee, and prefer a margin of safety: aim for at least 60 bits for important accounts and 80 or more for master passwords and encryption keys.</p>
+<h2>Reading your results</h2>
+<table><tr><th>Words (7,776-word list)</th><th>Entropy</th><th>Verdict</th></tr>
+<tr><td>3 words</td><td>About 38.8 bits</td><td>Weak for anything important; fine only for throwaway accounts</td></tr>
+<tr><td>4 words</td><td>About 51.7 bits</td><td>Decent for everyday accounts with two-factor authentication</td></tr>
+<tr><td>5 words</td><td>About 64.6 bits</td><td>Strong for important accounts</td></tr>
+<tr><td>6 words</td><td>About 77.5 bits</td><td>Very strong; suitable for master passwords and vaults</td></tr>
+<tr><td>7+ words</td><td>90 bits and beyond</td><td>Excellent, but consider whether you will reliably remember it</td></tr></table>
+<p>Worked example: four words from a 7,776-word list give 51.7 bits of entropy, and at one billion guesses per second the crack time runs into millions of seconds — roughly six to seven weeks of continuous guessing, which is a meaningful barrier for an ordinary account but not a fortress. Six words from the same list give 77.5 bits, pushing the crack time into millions of years, which is effectively uncrackable by brute force. Three words from a 2,048-word list give exactly 33 bits, crackable in under ten seconds at the assumed rate — a vivid demonstration that short passphrases from small lists are barely better than weak passwords. Word count is the dominant lever: each additional word multiplies the attacker's work by the full wordlist size.</p>
+<h2>Common mistakes that destroy passphrase entropy</h2>
+<p>The fatal mistake is choosing words yourself. Human-chosen words are predictable: they follow grammar, they come from songs and sayings, and they reuse familiar names. An attacker with a dictionary of common phrases will crack "blue sky happy dog" far faster than the formula suggests, because the effective wordlist is not 7,776 words but the few thousand phrases humans actually pick. The second mistake is reusing one passphrase across sites: a breach anywhere exposes everywhere. The third is modifying a passphrase predictably — capitalising the first word, adding "123" at the end — which attackers already model. Randomness must come from a generator or dice, the passphrase must be unique per important account, and the strongest passphrase in the world still deserves two-factor authentication alongside it.</p>
+<h3>Building a passphrase you will actually use</h3>
+<ul>
+<li>Generate six words with dice or a trusted password manager — never pick them yourself.</li>
+<li>Join them with spaces or hyphens; separators add negligible entropy but aid memory and typing.</li>
+<li>Picture a vivid, absurd scene linking the words — memory loves images, not lists.</li>
+<li>Type the passphrase ten times over two days; muscle memory will carry it thereafter.</li>
+<li>Store it in a password manager as backup, and protect the manager itself with your strongest passphrase plus a hardware key.</li>
+</ul>
+<h2>Passphrases, passwords, and the right tool for each</h2>
+<p>Passphrases suit anything a human must type or remember: master passwords, device unlock, Wi-Fi, and accounts without a manager at hand. Random character passwords suit everything else — individual website accounts stored in a manager, where memorability is irrelevant and maximum entropy per character wins. The two are complements, not rivals: use a strong passphrase for the vault, and let the vault hold long random passwords for everything inside it. That architecture gives you the best of both worlds — one memorable secret of genuine strength, guarding hundreds of secrets you never need to remember at all. Calculate the entropy, choose the word count honestly, generate randomly, and never reuse the result.</p>
+
+<h2>Storing passphrases safely</h2>
+<p>A strong passphrase still needs a safe home. The best home is a reputable password manager, protected by your strongest passphrase and a second factor such as a hardware security key. The manager generates, stores, and fills unique passphrases and passwords for every account, so you only need to remember one master secret — which is exactly the job a passphrase does best. Choose a manager with a long track record, independent security audits, and end-to-end encryption, meaning the provider itself cannot read your vault. Enable its emergency-access feature, naming a trusted person who can request access after a waiting period, so your accounts are recoverable if something happens to you. A passphrase memorised but never backed up is a single point of failure; a passphrase stored in a manager with emergency access is a system.</p>
+<p>For passphrases you must remember without a manager — device unlock codes, for instance — use memory techniques rather than writing them down. Link the words into a vivid, absurd mental image and rehearse it: picture the scene, say the words aloud, and type them several times over the first two days. Spaced repetition does the rest: recall after one day, after three days, after a week, and the passphrase moves into long-term memory. Avoid the tempting shortcuts that undermine security: never reuse the passphrase elsewhere, never store it in an unencrypted note or photo, and never share it over chat or email, even with someone you trust — if they need access, share through the manager's secure sharing feature instead. A passphrase is only as strong as its storage, and a little care here protects all the entropy you calculated.</p>
+
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>How is passphrase entropy calculated?</summary><p>Entropy in bits equals word count multiplied by log2 of the wordlist size. Each randomly chosen word from a 7,776-word list adds about 12.93 bits.</p></details>
+<details><summary>How many words do I need?</summary><p>Four words give about 51.7 bits, enough for everyday accounts with two-factor authentication. Six words give about 77.5 bits, suitable for master passwords.</p></details>
+<details><summary>Does choosing words myself work?</summary><p>No. Human-chosen words are predictable and carry far less entropy than the formula claims. Use dice or a trusted generator.</p></details>
+<details><summary>What is the Diceware list?</summary><p>A list of 7,776 words designed for passphrase generation, where five dice rolls select each word at random.</p></details>
+<details><summary>What attacker speed is assumed?</summary><p>One billion guesses per second, representing a well-resourced offline attack against a stolen hash. Online attacks with rate limiting are far slower.</p></details>
+<details><summary>Is a passphrase better than a password?</summary><p>For anything a human must remember, yes: it carries more usable entropy. For accounts stored in a manager, long random character passwords are equally good.</p></details>
+<details><summary>Should I still use two-factor authentication?</summary><p>Always. Even the strongest passphrase deserves a second factor, because breaches, phishing, and device theft bypass password strength entirely.</p></details>
+<details><summary>Can I reuse one strong passphrase?</summary><p>No. Reuse means one breach exposes every account. Use a unique passphrase per important account, ideally managed by a password manager.</p></details>
+  </section>
+</main>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">PassPhrase</div>
+    <p>PassPhrase measures the real strength of a word-based passphrase in bits and crack time.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+
+function calcPassphrase(wordCount, wordlistSize) {
+  var ent = wordCount * (Math.log(wordlistSize) / Math.log(2));
+  var s = Math.pow(2, ent) / 1e9;
+  var cs = s < 100 ? Math.round(s * 100) / 100 : Math.round(s);
+  return { entropyBits: Math.round(ent * 10) / 10, crackSeconds: cs };
+}
+if (typeof document !== 'undefined') {
+  function runCalc() {
+    var words = parseFloat(document.getElementById('words').value) || 0;
+    var wl = parseFloat(document.getElementById('wl').value) || 0;
+    var r = calcPassphrase(words, wl);
+    var out = '<strong>Entropy: ' + r.entropyBits + ' bits</strong><br>Estimated crack time at 1 billion guesses/sec: ' + r.crackSeconds.toLocaleString() + ' seconds.';
+    document.getElementById('result').innerHTML = out;
+    try {
+      var h = JSON.parse(localStorage.getItem('fx_hist') || '[]');
+      h.unshift(out.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140));
+      localStorage.setItem('fx_hist', JSON.stringify(h.slice(0, 5)));
+      document.getElementById('hist').innerHTML = '<strong>Recent:</strong><ul>' + h.map(function(x) { return '<li>' + x + '</li>'; }).join('') + '</ul>';
+    } catch (e) {}
+  }
+  document.getElementById('calcBtn').addEventListener('click', runCalc);
+  document.getElementById('copyBtn').addEventListener('click', function() {
+    var t = document.getElementById('result').innerText || '';
+    try { navigator.clipboard.writeText(t); } catch (e) {}
+  });
+  var ps = document.querySelectorAll('[data-preset]');
+  ps.forEach(function(b) {
+    b.addEventListener('click', function() {
+      var p = JSON.parse(b.getAttribute('data-preset'));
+      Object.keys(p).forEach(function(k) { var el = document.getElementById(k); if (el) el.value = p[k]; });
+      runCalc();
+    });
+  });
+  runCalc();
+}
+</script>
+</body>
+</html>
