@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache-Control Header Generator — Correct Caching Directives | HttpCache</title>
+<meta name="description" content="Cache-Control header generator: build correct headers from caching intent, with presets, CDN notes, and directive explainer. Free dev tool.">
+<link rel="canonical" href="https://dev.fixoraa.tech/httpcache/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Cache-Control Header Generator — Correct Caching Directives | HttpCache">
+<meta property="og:description" content="Cache-Control header generator: build correct headers from caching intent, with presets, CDN notes, and directive explainer. Free dev tool.">
+<meta property="og:url" content="https://dev.fixoraa.tech/httpcache/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "HttpCache",
+      "url": "https://dev.fixoraa.tech/httpcache/",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Web",
+      "description": "Cache-Control header generator: build correct headers from caching intent, with presets, CDN notes, and directive explainer. Free dev tool.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the Cache-Control header?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cache-Control is an HTTP response header that tells browsers, CDNs, and proxies whether a response may be cached, where, and for how long. It is the main control for web caching and one of the highest-impact web performance settings."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between public, private, and no-store?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "public allows any cache (browser, CDN, proxies) to store the response \u2014 for identical-for-everyone assets. private allows only the end user's browser \u2014 for personalized content. no-store forbids all caching \u2014 for sensitive data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I choose a max-age value?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "max-age is the freshness lifetime in seconds: 3600 = 1 hour, 86400 = 1 day, 31536000 = 1 year. After it expires, the cache must revalidate before reuse. This tool converts hours/days to seconds automatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "When should I use the immutable directive?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "immutable promises the body will never change during its lifetime, so browsers skip even force-reload revalidation. Only use it with content-hashed filenames (app.a3f9c2.js) where a changed file gets a new name."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is no-cache the same as no-store?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No \u2014 no-cache means 'store it but always revalidate before reuse.' no-store means 'never store it at all.' For sensitive data like banking or health responses, you want no-store."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I apply a generated header to my site?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Copy the generated header from this tool, set it in your server or framework config (e.g., nginx add_header, Express res.set, or your CDN's rules), then verify in DevTools \u2192 Network: the response should show your cache-control value and repeat loads should come from cache."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#F9F1F4; --surface:#FFFFFF; --accent:#9D174D; --accent-ink:#FFFFFF;
+  --ink:#20242C; --muted:#5A6478; --line:#EDD5DE;
+  --display:'JetBrains Mono',serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.hc-wrap{font-family:'JetBrains Mono',monospace;background:#F9F1F4;color:#20242C;padding:56px 20px 72px;}.hc-stack{max-width:840px;margin:0 auto;}.hc-card{background:#FFFFFF;border:1px solid #EDD5DE;border-radius:20px;padding:32px 30px;margin-bottom:20px;box-shadow:0 14px 36px rgba(157,23,77,.07);}.hc-card.top{text-align:center;}.hc-logo{font-size:44px;}.hc-card h1{font-size:clamp(28px,4.6vw,44px);margin:10px 0 8px;font-weight:700;line-height:1.15;}.hc-tag{font-family:Inter,system-ui,sans-serif;color:#5A6478;font-size:16.5px;margin:0;}.hc-card h2{font-family:Inter,system-ui,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#5A6478;margin:0 0 14px;}.hc-intents{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.hc-intents button{border:2px solid #EDD5DE;background:#fff;border-radius:14px;padding:14px;font-family:Inter,system-ui,sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;color:#20242C;text-align:left;}.hc-intents button small{display:block;font-weight:400;color:#5A6478;font-size:12.5px;margin-top:4px;}.hc-intents button.on{border-color:#9D174D;background:#F9F1F4;}.hc-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-family:Inter,system-ui,sans-serif;margin-top:16px;}.hc-row input[type=range]{flex:1;min-width:160px;accent-color:#9D174D;}.hc-agelabel{font-size:15px;font-weight:700;color:#9D174D;min-width:130px;}.hc-scope{display:flex;gap:8px;font-family:Inter,system-ui,sans-serif;}.hc-scope button{border:2px solid #EDD5DE;background:#fff;border-radius:999px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;color:#5A6478;}.hc-scope button.on{background:#9D174D;color:#fff;border-color:#9D174D;}.hc-dirs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;font-family:Inter,system-ui,sans-serif;}.hc-dirs label{display:flex;gap:8px;align-items:center;border:1px solid #EDD5DE;border-radius:10px;padding:9px 14px;font-size:13.5px;cursor:pointer;}.hc-dirs input{accent-color:#9D174D;}.hc-header{background:#20242C;color:#F5D3E0;border-radius:14px;padding:20px;font-size:16.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}.hc-actions{display:flex;gap:8px;margin-top:12px;font-family:Inter,system-ui,sans-serif;flex-wrap:wrap;}.hc-actions button{border:2px solid #9D174D;background:#fff;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;color:#9D174D;font-family:inherit;}.hc-explain{font-family:Inter,system-ui,sans-serif;font-size:14.5px;line-height:1.7;}.hc-explain dt{font-weight:700;color:#9D174D;margin-top:10px;}.hc-explain dd{margin:2px 0 0;color:#20242C;}.hc-presets{display:flex;gap:8px;flex-wrap:wrap;font-family:Inter,system-ui,sans-serif;}.hc-presets button{border:1px dashed #9D174D;background:#F9F1F4;border-radius:10px;padding:9px 14px;font-size:13.5px;cursor:pointer;color:#20242C;}.hc-cdn{font-family:Inter,system-ui,sans-serif;font-size:14.5px;line-height:1.75;color:#20242C;}@media (max-width:600px){.hc-intents{grid-template-columns:1fr;}.hc-card{padding:24px 20px;}.hc-wrap{padding:40px 14px 56px;}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="HttpCache home">
+      <span class="fx-logo-tile" aria-hidden="true">⚡</span>
+      <span class="fx-brand">HttpCache</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-deck-stack" aria-label="HttpCache tool">
+<section class='hc-wrap'><div class='hc-stack'><div class='hc-card top'><div class='hc-logo' aria-hidden='true'>⚡</div><h1>Cache-Control Header Generator</h1><p class='hc-tag'>Tell it what you're caching — get the header right.</p></div><div class='hc-card'><h2>1 · Caching intent</h2><div class='hc-intents' id='hc-intents'><button data-i='static' class='on' type='button'>Hashed static assets<small>app.a3f9c2.js — filename changes on edit</small></button><button data-i='image' type='button'>Images &amp; fonts<small>Rarely change, not hashed</small></button><button data-i='api' type='button'>API responses<small>Public data, per-endpoint freshness</small></button><button data-i='html' type='button'>HTML pages<small>Must stay fresh, reference the assets</small></button></div><h2 style='margin-top:20px'>2 · Freshness lifetime</h2><div class='hc-row'><input type='range' id='hc-age' min='0' max='31536000' step='60' value='31536000'><span class='hc-agelabel' id='hc-agelabel'></span></div><h2 style='margin-top:20px'>3 · Scope</h2><div class='hc-scope' id='hc-scope'><button data-s='public' class='on' type='button'>public</button><button data-s='private' type='button'>private</button><button data-s='no-store' type='button'>no-store</button></div><h2 style='margin-top:20px'>4 · Extra directives</h2><div class='hc-dirs'><label><input type='checkbox' id='hc-d-immutable' checked> immutable</label><label><input type='checkbox' id='hc-d-mustrev'> must-revalidate</label><label><input type='checkbox' id='hc-d-swr'> stale-while-revalidate=86400</label><label><input type='checkbox' id='hc-d-notransform'> no-transform</label></div></div><div class='hc-card'><h2>Generated header</h2><div class='hc-header' id='hc-header'></div><div class='hc-actions'><button id='hc-copy' type='button'>Copy header</button><button id='hc-nginx' type='button'>Copy as nginx snippet</button></div><h2 style='margin-top:22px'>Preset library</h2><div class='hc-presets' id='hc-presets'></div></div><div class='hc-card'><h2>Directive explainer</h2><dl class='hc-explain'><dt>public / private / no-store</dt><dd>Who may cache: everyone, the browser only, or nobody. Personalized responses must never be public.</dd><dt>max-age=N</dt><dd>Freshness lifetime in seconds. After it expires, caches must revalidate before reuse.</dd><dt>immutable</dt><dd>Promises the body never changes — browsers skip even force-reload revalidation. Only for hashed filenames.</dd><dt>must-revalidate</dt><dd>Stale copies must be revalidated with the origin before serving. Use where staleness has consequences.</dd><dt>stale-while-revalidate=N</dt><dd>Serve stale instantly while refreshing in the background — users never wait.</dd><dt>s-maxage=N</dt><dd>Overrides max-age for shared (CDN) caches only — different lifetimes for edge vs browser.</dd></dl><h2 style='margin-top:22px'>CDN notes</h2><div class='hc-cdn'><ul style='margin:0;padding-left:20px'><li>Query strings create separate cache objects — good for busting, bad with random params.</li><li>Set <b>Vary: Accept-Encoding</b> when serving compressed responses.</li><li>Prefer long TTL + purge-on-deploy over short TTLs.</li><li>Strip cookies from the cache key for public assets or hit rates collapse.</li></ul></div></div></div></section>
+  </section>
+  <article class="article-sec" aria-label="Guide">
+<h2>What the Cache-Control Header Does</h2><p>Every HTTP response can carry a <strong>Cache-Control</strong> header, and it is the single most important line in web performance. It tells browsers, CDNs, and proxies three things: <strong>whether</strong> the response may be stored, <strong>where</strong> it may be stored, and <strong>how long</strong> it stays fresh. Get it right and repeat visits load in milliseconds from a cache near the user; get it wrong and users see stale prices, broken deploys, or — just as bad — nothing cached at all and a slow site.</p><p>The header is a comma-separated list of directives. The two you will use most are the <strong>scope</strong> (<code>public</code>, <code>private</code>, or <code>no-store</code>) and the <strong>freshness lifetime</strong> (<code>max-age=N</code>, in seconds). This tool's core function builds exactly that pair — <code>cacheHeader(3600, 'public')</code> produces <code>public, max-age=3600</code> — and the UI layers on the real-world directives professionals add around it.</p><h2>Public vs Private vs No-Store</h2><p>The scope directive answers one question: <em>who is allowed to keep a copy?</em></p><ul><li><strong>public</strong> — anyone may cache it: the user's browser, the CDN, corporate proxies, all of them. Use for assets that are identical for every user: images, fonts, versioned JS/CSS.</li><li><strong>private</strong> — only the end user's browser may cache it, never a shared cache. Use for personalized responses: account pages, API responses containing user data.</li><li><strong>no-store</strong> — do not store it anywhere, ever. Use for sensitive data (banking, health) and for responses that must never be reused. Note: <code>no-cache</code> is <em>not</em> the same thing — it means 'store it, but revalidate with the server before every reuse.'</li></ul><p>The classic bug is serving personalized HTML with <code>public</code>: one user's dashboard gets cached at the CDN and served to the next visitor. The classic opposite bug is serving static assets with <code>private</code> or no header at all, forcing every user to re-download your 2MB JavaScript bundle on every visit.</p><h2>Max-Age: How Long Is Fresh?</h2><table><thead><tr><th>Content type</th><th>Typical max-age</th><th>Reasoning</th></tr></thead><tbody><tr><td>Hashed static assets (app.a3f9c2.js)</td><td>31536000 (1 year) + immutable</td><td>Filename changes when content changes — can never go stale</td></tr><tr><td>Images, fonts</td><td>604800–2592000 (1 week–30 days)</td><td>Rarely change; long cache with versioned URLs</td></tr><tr><td>HTML pages</td><td>0–3600</td><td>Must stay fresh; often no-cache with revalidation</td></tr><tr><td>API responses (public data)</td><td>60–3600</td><td>Balance freshness vs load; use ETags for revalidation</td></tr><tr><td>API responses (personalized)</td><td>0, private</td><td>Fresh per user; browser-only caching at most</td></tr></tbody></table><p>The golden rule of cache lifetimes: <strong>cache the immutable aggressively, keep the entry points fresh</strong>. Your fingerprinted assets (filenames containing a content hash) can be cached for a year with <code>immutable</code> because a changed file gets a new name — the old cached copy can never be wrong. Your HTML, which <em>references</em> those filenames, must be revalidated quickly so users pick up the new references. This two-tier strategy is how modern frameworks (Next.js, Vite, Create React App) achieve both instant repeat loads and safe deploys.</p><h2>The Directives That Matter (Explainer)</h2><h3>must-revalidate</h3><p>Once the cached copy goes stale, the cache <em>must</em> check with the origin server before serving it. Without this, some caches are allowed to serve stale content in edge cases (like when the origin is unreachable). Add it to anything where staleness has consequences — prices, inventory, account state.</p><h3>immutable</h3><p>A promise: this response body will <em>never</em> change during its freshness lifetime. Browsers take it seriously — Firefox and Chrome will not even revalidate on a force-reload for immutable resources. Only use it with content-hashed filenames; applying it to a mutable URL is how you ship a bug that users cannot clear.</p><h3>stale-while-revalidate=N</h3><p>The performance secret weapon: serve the stale copy <em>immediately</em> while fetching a fresh one in the background for next time. Users never wait; content stays reasonably fresh. Excellent for semi-static content like blog posts, docs, and marketing pages. Pair with a modest max-age: fresh for an hour, usable-while-revalidating for a day.</p><h3>no-transform</h3><p>Forbids intermediate caches from modifying the body — relevant when carriers or proxies compress or transcode images. Matters for image-heavy sites behind aggressive middleboxes.</p><h3>s-maxage=N</h3><p>Overrides max-age <em>only for shared caches</em> (CDNs). Lets you tell the CDN 'keep it for a day' while telling browsers 'keep it for an hour' — fine-grained control over the two cache layers.</p><h2>CDN Notes: What Changes at the Edge</h2><p>A CDN is a shared cache with opinions. Key things to know:</p><ul><li><strong>Query strings:</strong> most CDNs treat <code>style.css?v=2</code> as a different object from <code>style.css?v=1</code> — useful for cache-busting, dangerous if your app generates random query strings (each becomes a separate, rarely-hit cache entry).</li><li><strong>Vary:</strong> the <code>Vary</code> header tells caches that the response differs by request header (e.g., <code>Vary: Accept-Encoding</code>). A missing Vary on compressed responses is a classic cause of 'works for me' encoding bugs.</li><li><strong>Purge vs TTL:</strong> long TTLs are fine if your CDN supports instant purge on deploy. The modern pattern is long max-age + purge-on-deploy, not short max-age.</li><li><strong>Cache keys and cookies:</strong> if your CDN includes cookies in the cache key (some do by default), every logged-in user gets a separate cache entry and your hit rate collapses. Strip or ignore cookies for public assets.</li></ul><h2>Validation: ETags and Last-Modified</h2><p>Freshness (max-age) is only half the story; <strong>validation</strong> is the other half. When a cached copy goes stale, the client can ask 'has it changed?' instead of re-downloading: the server answers with an <strong>ETag</strong> (a content fingerprint) or <strong>Last-Modified</strong> timestamp. If nothing changed, the server replies <code>304 Not Modified</code> with an empty body — all the latency savings of caching with none of the staleness risk. The winning combination for HTML and APIs is <strong>short max-age (or no-cache) + ETag</strong>: always check, rarely download.</p><h2>Common Cache-Control Mistakes</h2><ol><li><strong>Caching HTML for a year.</strong> Users get stuck on old deploys. HTML should be fresh; assets should be long-lived.</li><li><strong>Using no-cache when you mean no-store.</strong> <code>no-cache</code> still stores — it just revalidates. For truly sensitive data, <code>no-store</code>.</li><li><strong>Forgetting immutable needs hashed filenames.</strong> Immutable on a mutable URL is a footgun.</li><li><strong>Private data served as public.</strong> Audit any response containing user data — one <code>public</code> on a dashboard endpoint is a breach.</li><li><strong>No header at all.</strong> Without Cache-Control, browsers fall back to heuristic caching (often 10% of time since Last-Modified) — unpredictable and usually too short for assets, too long for HTML.</li></ol><h2>How to Verify Your Headers</h2><p>Generate the header here, set it, then verify in the real world: open DevTools → Network tab → click a request → check the <code>cache-control</code> response header and the <strong>Size</strong> column ('memory cache' / 'disk cache' means it worked). For CDN behavior, check the age or x-cache headers your provider adds. Tools like WebPageTest and Google's PageSpeed Insights will flag missing or misconfigured caching as one of the highest-impact fixes — because it usually is.</p><h2>Framework Defaults: What You Get Out of the Box</h2><p>Modern frameworks have opinions about caching, and knowing them saves debugging. <strong>Next.js</strong> serves <code>_next/static</code> assets with <code>public, max-age=31536000, immutable</code> (hashed filenames — the gold standard) while pages default to short-lived or revalidated responses. <strong>Vite</strong> emits hashed asset filenames designed for the same year-long immutable treatment; you add the header in your server or CDN config. <strong>Nginx</strong> ships no Cache-Control by default — you write the <code>add_header</code> lines yourself, which is why generated snippets like this tool's nginx copy button exist. <strong>Cloudflare, Fastly, and AWS CloudFront</strong> respect your origin's Cache-Control but each add their own edge-TTL settings that can override it — always check whose TTL actually wins in your CDN's dashboard, because an edge rule of 'respect origin' versus 'override to 1 hour' changes everything.</p><p>The single most common production bug in this space is the <strong>hashed-asset HTML mismatch</strong>: assets cached for a year (correct) while the HTML referencing them is also cached for a day or more (incorrect), so deploys do not reach users until the HTML expires. The fix is always the same two-tier setup: immutable year-long caching for fingerprinted assets, and <code>no-cache</code> + ETag (or very short max-age) for HTML entry points.</p><h2>Cache-Control and Privacy Regulations</h2><p>Caching intersects with privacy law in ways developers underestimate. A <code>public</code> directive on a response containing personal data is not just a bug — under GDPR-style regimes it can be a reportable incident if a shared cache serves one user's data to another. Audit every endpoint that returns user-specific content and ensure it carries <code>private</code> or <code>no-store</code>; better yet, set these at the framework middleware level so no endpoint can forget. Cookie-based sessions add another trap: some CDNs include cookies in the cache key by default, silently personalizing every cached object and destroying hit rates. The correct setup strips cookies from cache keys for public assets and bypasses the cache entirely for authenticated HTML. When in doubt, <code>private, max-age=0, must-revalidate</code> is the conservative default for anything behind a login.</p><h2>Debugging Cache Issues: A Checklist</h2><ol><li><strong>Check what was actually sent:</strong> DevTools → Network → response headers. Trust this over your config files.</li><li><strong>Check the Size column:</strong> 'memory cache' or 'disk cache' means the browser served it locally; a 200 with full download means it did not.</li><li><strong>Disable cache and compare:</strong> DevTools' 'Disable cache' checkbox isolates caching from application bugs.</li><li><strong>Look for the CDN's headers:</strong> <code>age</code>, <code>x-cache: HIT/MISS</code>, or <code>cf-cache-status</code> reveal the edge layer's decision.</li><li><strong>Test with curl:</strong> <code>curl -sI -H 'Cache-Control: no-cache' URL</code> shows origin headers without browser interference.</li><li><strong>Verify purge worked:</strong> after purging, confirm MISS on first request and HIT on second — a purge that 'succeeds' but leaves stale copies is worse than no purge.</li></ol>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>What is the Cache-Control header?</summary><p>Cache-Control is an HTTP response header that tells browsers, CDNs, and proxies whether a response may be cached, where, and for how long. It is the main control for web caching and one of the highest-impact web performance settings.</p></details>
+<details><summary>What is the difference between public, private, and no-store?</summary><p>public allows any cache (browser, CDN, proxies) to store the response — for identical-for-everyone assets. private allows only the end user's browser — for personalized content. no-store forbids all caching — for sensitive data.</p></details>
+<details><summary>How do I choose a max-age value?</summary><p>max-age is the freshness lifetime in seconds: 3600 = 1 hour, 86400 = 1 day, 31536000 = 1 year. After it expires, the cache must revalidate before reuse. This tool converts hours/days to seconds automatically.</p></details>
+<details><summary>When should I use the immutable directive?</summary><p>immutable promises the body will never change during its lifetime, so browsers skip even force-reload revalidation. Only use it with content-hashed filenames (app.a3f9c2.js) where a changed file gets a new name.</p></details>
+<details><summary>Is no-cache the same as no-store?</summary><p>No — no-cache means 'store it but always revalidate before reuse.' no-store means 'never store it at all.' For sensitive data like banking or health responses, you want no-store.</p></details>
+<details><summary>How do I apply a generated header to my site?</summary><p>Copy the generated header from this tool, set it in your server or framework config (e.g., nginx add_header, Express res.set, or your CDN's rules), then verify in DevTools → Network: the response should show your cache-control value and repeat loads should come from cache.</p></details>
+  </section>
+</main>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">HttpCache</div>
+    <p>HttpCache builds correct Cache-Control headers from your caching intent — static assets, APIs, or HTML — with CDN notes and a directive explainer.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function cacheHeader(maxAge,scope){return scope+', max-age='+maxAge;}
+if(typeof document!=='undefined'){document.addEventListener('DOMContentLoaded',function(){var ageR=document.getElementById('hc-age'),ageL=document.getElementById('hc-agelabel'),scopeBox=document.getElementById('hc-scope'),hdr=document.getElementById('hc-header'),copyBtn=document.getElementById('hc-copy'),nginxBtn=document.getElementById('hc-nginx'),presetBox=document.getElementById('hc-presets');if(!ageR||!hdr)return;var scope='public';var PRESETS=[['Year-long hashed assets',{i:'static',age:31536000,s:'public',d:['immutable']}],['Images, 30 days',{i:'image',age:2592000,s:'public',d:[]}],['Public API, 5 min',{i:'api',age:300,s:'public',d:['mustrev']}],['HTML, always fresh',{i:'html',age:0,s:'public',d:['mustrev']}],['Private API',{i:'api',age:0,s:'private',d:[]}],['Never cache (sensitive)',{i:'html',age:0,s:'no-store',d:[]}],['Docs, SWR 1 day',{i:'html',age:3600,s:'public',d:['swr']}]];var INTENT_AGE={static:31536000,image:2592000,api:300,html:0};function humanAge(s){if(s>=31536000)return'1 year';if(s>=2592000)return Math.round(s/2592000)+' months';if(s>=86400)return Math.round(s/86400)+' days';if(s>=3600)return Math.round(s/3600)+' hours';if(s>=60)return Math.round(s/60)+' min';return s+' sec';}function current(){var age=parseInt(ageR.value,10)||0;var dirs=[];var map={'hc-d-immutable':'immutable','hc-d-mustrev':'must-revalidate','hc-d-swr':'stale-while-revalidate=86400','hc-d-notransform':'no-transform'};for(var id in map){var el=document.getElementById(id);if(el&&el.checked)dirs.push(map[id]);}var h=cacheHeader(age,scope);if(dirs.length)h+=', '+dirs.join(', ');return h;}function render(){if(ageL)ageL.textContent=humanAge(parseInt(ageR.value,10)||0);hdr.textContent='Cache-Control: '+current();}function setScope(s){scope=s;var btns=scopeBox.querySelectorAll('button');for(var i=0;i<btns.length;i++)btns[i].classList.toggle('on',btns[i].getAttribute('data-s')===s);render();}if(scopeBox)scopeBox.addEventListener('click',function(e){var t=e.target.closest?e.target.closest('button'):null;if(t&&t.getAttribute('data-s'))setScope(t.getAttribute('data-s'));;});var intents=document.getElementById('hc-intents');if(intents)intents.addEventListener('click',function(e){var t=e.target.closest?e.target.closest('button'):null;if(!t)return;var btns=intents.querySelectorAll('button');for(var i=0;i<btns.length;i++)btns[i].classList.remove('on');t.classList.add('on');var k=t.getAttribute('data-i');ageR.value=INTENT_AGE[k]||0;render();});ageR.addEventListener('input',render);var dirIds=['hc-d-immutable','hc-d-mustrev','hc-d-swr','hc-d-notransform'];dirIds.forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('change',render);});if(presetBox){PRESETS.forEach(function(p){var b=document.createElement('button');b.type='button';b.textContent=p[0];b.addEventListener('click',function(){var cfg=p[1];ageR.value=cfg.age;setScope(cfg.s);dirIds.forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});var idmap={immutable:'hc-d-immutable',mustrev:'hc-d-mustrev',swr:'hc-d-swr'};cfg.d.forEach(function(k){var el=document.getElementById(idmap[k]);if(el)el.checked=true;});render();});presetBox.appendChild(b);});}function copyStr(s,btn){if(navigator.clipboard&&s){navigator.clipboard.writeText(s).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);});}}if(copyBtn)copyBtn.addEventListener('click',function(){copyStr('Cache-Control: '+current(),copyBtn);});if(nginxBtn)nginxBtn.addEventListener('click',function(){copyStr('add_header Cache-Control "'+current()+'" always;',nginxBtn);});render();});}
+</script>
+</body>
+</html>
