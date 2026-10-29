@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WiFi Coverage Range Estimator — How Far Will Your WiFi Reach?</title>
+<meta name="description" content="Estimate usable WiFi range through walls and floors, and see where to place a router, extender or mesh node.">
+<link rel="canonical" href="https://dev.fixoraa.tech/wifirange/">
+<link rel="preconnect" href="https://www.highrevenueformat.com">
+<link rel="preconnect" href="https://peacefulbicycle.com">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="WiFi Coverage Range Estimator — How Far Will Your WiFi Reach?">
+<meta property="og:description" content="Estimate usable WiFi range through walls and floors, and see where to place a router, extender or mesh node.">
+<meta property="og:url" content="https://dev.fixoraa.tech/wifirange/">
+<meta property="og:type" content="website">
+<script defer src="https://t.fixoraa.tech/track.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "WiFiRange",
+      "url": "https://dev.fixoraa.tech/wifirange/",
+      "applicationCategory": "Tech",
+      "operatingSystem": "Web",
+      "description": "Estimate usable WiFi range through walls and floors, and see where to place a router, extender or mesh node.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why is my WiFi range shorter than advertised?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Advertised ranges are measured in open air. Each wall, floor, appliance and neighbour's network reduces usable range, often by 20% or more per wall."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which walls block WiFi most?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Concrete, brick and metal block far more than plasterboard or wood. A metal-lined wall, aquarium, or fridge in the path can create a sharp dead zone."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is 2.4 GHz or 5 GHz better for range?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "2.4 GHz travels further through walls but is slower and more congested. 5 GHz is faster over short distances but fades faster through obstacles."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will an extender fix a dead zone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An extender can help if placed where it still gets a strong signal \u2014 halfway between router and dead zone. Placed inside the dead zone itself, it has nothing good to extend."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is mesh better than an extender?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Usually yes for larger homes: mesh nodes cooperate as one network with smoother handoffs, while extenders often halve bandwidth and create separate network names."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How can I improve range without buying anything?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Move the router to a central, elevated, open position away from metal and appliances, point antennas vertically, and switch congested devices to 5 GHz or Ethernet."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+
+:root{
+  --bg:#ecfeff; --surface:#cffafe; --accent:#155e75; --accent-ink:#ffffff;
+  --ink:#164e63; --muted:#155e75; --line:#a5f3fc;
+  --display:'Chakra Petch',serif; --body:'Barlow',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+.fx-container{max-width:72rem;margin:0 auto;padding-left:1rem;padding-right:1rem}
+@media(min-width:640px){.fx-container{padding-left:1.5rem;padding-right:1.5rem}}
+/* ad utilities (for the verbatim ad snippets) */
+.no-print{}
+.mx-auto{margin-left:auto;margin-right:auto}.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}.pt-4{padding-top:1rem}.pb-4{padding-bottom:1rem}
+@media(min-width:640px){.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:scale-100{transform:scale(1)}}
+.text-center{text-align:center}.block{display:block}
+.text-\[10px\]{font-size:10px}.tracking-\[0\.18em\]{letter-spacing:.18em}.uppercase{text-transform:uppercase}
+.text-slate-400{color:#94a3b8}.mb-1\.5{margin-bottom:.375rem}
+.flex{display:flex}.justify-center{justify-content:center}.overflow-hidden{overflow:hidden}
+.origin-top{transform-origin:top}.scale-\[0\.44\]{transform:scale(.44)}.shrink-0{flex-shrink:0}
+/* header */
+.fx-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.fx-header-in{display:flex;align-items:center;gap:.9rem;padding:.8rem 0;flex-wrap:wrap}
+.fx-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink)}
+.fx-logo-tile{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.fx-brand{font-family:var(--display);font-size:1.45rem;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.fx-nav{margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.fx-btn{display:inline-block;padding:.55rem 1.1rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.92rem;
+  border:2px solid var(--accent);color:var(--accent);background:transparent;transition:all .18s ease;min-height:44px;line-height:1.5}
+.fx-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid{background:var(--accent);color:var(--accent-ink)}
+.fx-btn.solid:hover{filter:brightness(.94)}
+.fx-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);border:1.5px dashed var(--accent);border-radius:999px;padding:.3rem .8rem;white-space:nowrap}
+/* tool section */
+.tool-sec{padding:2.2rem 0 1rem}
+/* article */
+.article-sec{padding:2.5rem 0;max-width:46rem;margin:0 auto}
+.article-sec h2{font-family:var(--display);font-size:1.55rem;margin:2rem 0 .8rem;line-height:1.25;letter-spacing:-.01em}
+.article-sec h3{font-size:1.15rem;margin:1.5rem 0 .6rem}
+.article-sec p,.article-sec li{margin-bottom:.85rem;color:var(--ink)}
+.article-sec ul,.article-sec ol{padding-left:1.4rem;margin-bottom:1rem}
+.article-sec table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+.article-sec th,.article-sec td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left}
+.article-sec th{background:var(--surface);font-weight:700}
+/* faq */
+.faq-sec{padding:1rem 0 3rem;max-width:46rem;margin:0 auto}
+.faq-sec h2{font-family:var(--display);font-size:1.55rem;margin-bottom:1.2rem}
+.faq-sec details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+.faq-sec summary{padding:1rem 1.2rem;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:44px}
+.faq-sec summary::-webkit-details-marker{display:none}
+.faq-sec summary::after{content:'+';font-size:1.4rem;color:var(--accent);flex-shrink:0}
+.faq-sec details[open] summary::after{content:'\2013'}
+.faq-sec details p{padding:0 1.2rem 1.1rem;color:var(--muted)}
+/* footer */
+.fx-footer{background:var(--surface);border-top:1px solid var(--line);padding:2.2rem 0;margin-top:1rem}
+.fx-footer .fx-brand{font-size:1.2rem}
+.fx-footer p{color:var(--muted);font-size:.95rem;max-width:44rem;margin:.5rem 0}
+.fx-footer nav{display:flex;gap:1.2rem;margin:1rem 0;flex-wrap:wrap}
+.fx-footer nav a{color:var(--accent);font-weight:600;text-decoration:none}
+.fx-footer nav a:hover{text-decoration:underline}
+.fx-credit{font-size:.9rem;color:var(--muted)}
+.fx-credit a{color:var(--accent);font-weight:700;text-decoration:none}
+@media(max-width:640px){.fx-brand{font-size:1.2rem}.tool-sec{padding:1.4rem 0 .6rem}}
+@media print{.no-print{display:none!important}}
+
+.wifi{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:56rem}.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.1rem}.card label{display:block;font-weight:600}.card input,.card select{width:100%;padding:.6rem;border:1px solid var(--line);border-radius:10px;margin-top:.3rem;font-size:1rem}.card.sig{grid-column:1/-1;text-align:center}.bars{display:flex;gap:.35rem;justify-content:center;align-items:flex-end;height:44px;margin-bottom:.6rem}.bars span{width:18px;background:var(--accent);border-radius:5px 5px 0 0}.bars span:nth-child(1){height:25%}.bars span:nth-child(2){height:50%}.bars span:nth-child(3){height:75%}.bars span:nth-child(4){height:100%}.presets{display:flex;flex-wrap:wrap;gap:.45rem;grid-column:1/-1}.presets button,.go,.copy{border:2px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:.5rem 1rem;font-weight:600;cursor:pointer;min-height:44px}.go{background:var(--accent);color:var(--accent-ink);margin-top:.8rem}.big{font-family:var(--display);font-size:2.4rem;font-weight:700}.biglab{color:var(--muted)}.sub{color:var(--muted);margin:.4rem 0 1.2rem;max-width:44rem}.note{color:var(--accent);font-weight:600}@media(max-width:640px){.wifi{grid-template-columns:1fr}.big{font-size:2rem}}
+</style>
+</head>
+<body>
+<header class="fx-header">
+  <div class="fx-container fx-header-in">
+    <a class="fx-logo" href="https://fixoraa.tech" aria-label="WiFiRange home">
+      <span class="fx-logo-tile" aria-hidden="true">📶</span>
+      <span class="fx-brand">WiFiRange</span>
+    </a>
+    <nav class="fx-nav" aria-label="Site">
+      <a class="fx-btn" href="https://fixoraa.tech">Home</a>
+      <a class="fx-btn solid" href="https://fixoraa.tech">More Tools</a>
+      <span class="fx-badge" aria-label="Free forever">&#8734; Unlimited Free Usage</span>
+    </nav>
+  </div>
+</header>
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="fx-container">
+  <section class="tool-sec tpl-signal-map" aria-label="WiFiRange tool">
+<h1>WiFi Coverage Range Estimator</h1><p class="sub">Walls and floors eat signal. Estimate your usable range before you move the router.</p><div class="wifi"><div class="card"><label>Router nominal range, open air (m)<input id="nom" type="number" min="0" step="any" value="50"></label></div><div class="card"><label>Walls between router and device<input id="walls" type="number" min="0" max="20" step="1" value="2"></label></div><div class="card"><label>Floors between router and device<select id="floor"><option value="0" selected>Same floor</option><option value="1">One floor apart</option></select></label></div><div class="card sig"><div class="bars"><span></span><span></span><span></span><span></span></div><p class="big" id="rR">&mdash;</p><p class="biglab">estimated usable range</p><p>Signal quality: <b id="rQ">&mdash;</b></p><p id="rTip"></p></div><div class="presets"><span>Presets:</span><button type="button" data-n="50" data-w="2">Flat, 2 walls</button><button type="button" data-n="60" data-w="4">House, 4 walls</button><button type="button" data-n="40" data-w="1">Open plan</button></div></div><button class="go" id="calc">Estimate range</button><button class="copy" id="copy">Copy result</button><button class="copy" id="save">Save to history</button><ul id="hist"></ul><p class="note" id="err"></p>
+  </section>
+  <div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:300px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script>
+      (function(grnp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.currentScript || d.scripts[d.scripts.length - 1];
+      s.settings = grnp || {};
+      s.src = "\/\/peacefulbicycle.com\/bnXtVJsnd.GElF0oYVWQcY\/Qe\/mf9qu-ZqUtlZk\/PzTHcx1LM\/jWIZwkMTj\/U\/t-NrzmUnyOMsj\/AzydO\/Qx";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+  </div>
+</div>
+  <article class="article-sec" aria-label="Guide">
+<h2>Why the box promises 100 metres and your bedroom gets 10</h2><p>Router boxes advertise impressive ranges, measured in open fields with nothing between router and device. Your home is not an open field. It is a maze of walls, floors, furniture, metal appliances and competing networks, each taking a cut of the signal. The result is familiar: full bars in the living room, one bar in the bedroom, and a dead zone in the garden office that no amount of restarting the router fixes. This estimator replaces guesswork with a simple model: start from the router's nominal open-air range, shrink it by a factor for each wall, shrink it again for a floor change, and read the usable range that remains. It is an estimate, not a survey, but it is usually close enough to decide whether a device will work, whether the router should move, or whether a mesh node is needed.</p><p>Signal loss through obstacles is not linear in the way people expect. The first wall hurts, the second hurts again on what remains, and so on — a compounding effect. That is why a device two rooms away can work fine while a device three rooms away drops out entirely: each wall multiplies the remaining range by roughly 0.8 in this model, so three walls leave about half the open-air range and five walls leave about a third. Floors are worse than walls because concrete floor slabs and their steel reinforcement absorb and reflect strongly, which is why the model applies an extra 0.7 factor for a floor change. Real homes vary — plasterboard walls are kinder than brick, and a hallway path with open doors is kinder than a straight line through rooms — but the compounding pattern holds.</p><h2>The model, plainly stated</h2><p>Estimated range = nominal range × 0.8^(number of walls) × 0.7 (if on a different floor, otherwise 1). A router rated at 50 metres in open air, two walls away on the same floor, gives 50 × 0.8 × 0.8 = 32 metres of estimated usable range. That does not mean signal stops dead at 32 metres; it means beyond roughly that distance, speeds and reliability fall off enough that video calls and streaming start to suffer. The quality bands in the tool reflect that: 30 metres or more is excellent for most homes, 20–30 metres is good, 10–20 metres is fair with slowdowns, and below 10 metres is poor, where an extender or mesh node is the honest fix rather than another router restart.</p><table><tr><th>Obstruction</th><th>Approximate effect</th><th>Notes</th></tr><tr><td>Plasterboard wall</td><td>Small loss</td><td>Often 10–20% range reduction</td></tr><tr><td>Brick wall</td><td>Moderate loss</td><td>Thicker and denser; worse at 5 GHz</td></tr><tr><td>Concrete floor</td><td>Large loss</td><td>Steel reinforcement adds to the effect</td></tr><tr><td>Metal appliance / fridge</td><td>Sharp local loss</td><td>Can shadow everything behind it</td></tr><tr><td>Water (aquarium, pipes)</td><td>Strong absorption</td><td>Water absorbs 2.4 GHz well</td></tr></table><p>Frequency matters as much as walls. The 2.4 GHz band travels further and penetrates better, but it has fewer channels, more interference from neighbours and Bluetooth, and lower top speeds. The 5 GHz band is faster and cleaner but fades faster through walls, which is why a phone may show a strong 2.4 GHz signal and a weak 5 GHz signal from the same router in the same spot. The newer 6 GHz band is faster still and shorter-ranged again. This estimator uses a single blended model; treat its result as optimistic for 5 GHz through several walls and pessimistic for 2.4 GHz in open plan spaces.</p><h2>A worked example</h2><p>Take a router with a 60 metre nominal range in a house where the study is four walls away on the same floor. Estimated range is 60 × 0.8^4 = 60 × 0.4096 = 24.58 metres. If the study is actually 18 metres from the router along the walking path, the estimate says it should work, in the good band, though speeds will be below the headline rate. Add a floor change — the study is upstairs — and the estimate falls to 24.58 × 0.7 = 17.20 metres, now in the fair band: usable for browsing and email, marginal for video calls. That single floor change is often the difference between a workable home office and a frustrating one, and it explains why moving the router to the stairwell, or adding a mesh node on the landing, helps so much.</p><p>Now a flat example: a 50 metre router, two plasterboard walls to the bedroom. Estimated range is 50 × 0.64 = 32 metres, excellent. If the bedroom is only 12 metres away, signal should be strong and the problem, if any, is more likely interference, an old device, or a router fault than range. That diagnostic value is the point: the estimator tells you whether range is even the plausible culprit before you spend money. If the estimate comfortably covers the distance and the connection still fails, look elsewhere — channel congestion, a failing router, or a device with a weak antenna.</p><h2>Where to put the router</h2><ul><li><b>Central and elevated:</b> a shelf at chest height near the centre of the home beats a router hidden in a corner cupboard on the floor.</li><li><b>Out in the open:</b> avoid metal cabinets, fish tanks, microwaves and thick furniture directly around the router.</li><li><b>Antennas vertical:</b> most home antennas radiate best sideways from a vertical antenna; a horizontal antenna beams signal into floor and ceiling.</li><li><b>Near the stairwell for two floors:</b> a stairwell is an open shaft that lets signal reach both floors with fewer walls in the way.</li><li><b>Close to heavy users:</b> if one room matters most, favour it over perfect geometric centrality.</li></ul><h2>Extender, mesh, or wired access point?</h2><ul><li><b>Extender:</b> cheapest, good for one small dead zone, but often halves bandwidth and needs careful placement in a strong-signal spot.</li><li><b>Mesh system:</b> best for larger homes; nodes form one network, devices roam smoothly, and you can add nodes as needed.</li><li><b>Wired access point:</b> best performance where Ethernet or powerline can reach: the access point gets full speed over wire and only the last hop is wireless.</li><li><b>Powerline adapters:</b> a useful middle ground in homes where running Ethernet is hard, though performance varies with wiring quality.</li><li><b>Move the router first:</b> free, often worth 20–30 percent of range, and the fix most people skip.</li></ul><h2>Common mistakes</h2><p>The most common mistake is placing an extender inside the dead zone, where it receives the same weak signal it is supposed to fix. Place it halfway, where signal is still good. The second is blaming the broadband provider for a WiFi range problem: run a speed test on a wired device first; if wired speed is fine, the problem is WiFi, not broadband. The third is using a single old router for a large, multi-floor home and expecting repeaters to compensate; at some point a mesh system or wired points are cheaper than the frustration. The fourth is ignoring neighbours: in flats, dozens of networks on the same channel slow everyone down, and switching to a less congested channel or to 5 GHz can help more than any hardware. Range, interference and hardware all matter, and this estimator isolates the first of the three.</p><h3>A quick home audit</h3><p>Walk your home with a WiFi analyser app and note signal strength in each room, then compare with this estimator's predictions. Where they agree, the model is working and the fix is placement or hardware. Where they disagree sharply, look for a specific blocker — a metal cabinet, an aquarium, a thick chimney breast — or for interference. A home network is a physical system: signal travels through real materials, and understanding those materials is what turns dead zones from mysteries into solvable problems.</p>
+  </article>
+  <section class="faq-sec" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+<details><summary>Why is my WiFi range shorter than advertised?</summary><p>Advertised ranges are measured in open air. Each wall, floor, appliance and neighbour's network reduces usable range, often by 20% or more per wall.</p></details>
+<details><summary>Which walls block WiFi most?</summary><p>Concrete, brick and metal block far more than plasterboard or wood. A metal-lined wall, aquarium, or fridge in the path can create a sharp dead zone.</p></details>
+<details><summary>Is 2.4 GHz or 5 GHz better for range?</summary><p>2.4 GHz travels further through walls but is slower and more congested. 5 GHz is faster over short distances but fades faster through obstacles.</p></details>
+<details><summary>Will an extender fix a dead zone?</summary><p>An extender can help if placed where it still gets a strong signal — halfway between router and dead zone. Placed inside the dead zone itself, it has nothing good to extend.</p></details>
+<details><summary>Is mesh better than an extender?</summary><p>Usually yes for larger homes: mesh nodes cooperate as one network with smoother handoffs, while extenders often halve bandwidth and create separate network names.</p></details>
+<details><summary>How can I improve range without buying anything?</summary><p>Move the router to a central, elevated, open position away from metal and appliances, point antennas vertically, and switch congested devices to 5 GHz or Ethernet.</p></details>
+  </section>
+</main>
+
+<footer class="fx-footer">
+  <div class="fx-container">
+    <div class="fx-brand">WiFiRange</div>
+    <p>WiFiRange estimates indoor WiFi reach after walls and floors, so dead zones stop being a surprise.</p>
+    <nav aria-label="Footer">
+      <a href="https://fixoraa.tech">Home</a>
+      <a href="https://fixoraa.tech">More Tools</a>
+    </nav>
+    <p class="fx-credit">Made by <a href="https://fixoraa.tech">Fixoraa</a> &middot; Free forever, no signup.</p>
+  </div>
+</footer>
+<script>
+function compute(nom,walls,floor){if(!(nom>0)||!(walls>=0))return{range:0,quality:'No signal'};var range=nom*Math.pow(0.8,walls)*(floor?0.7:1);var quality=range>=30?'Excellent':(range>=20?'Good':(range>=10?'Fair — expect slowdowns':'Poor — add an extender or mesh node'));return{range:Math.round(range*100)/100,quality:quality};}
+function go(){var n=parseFloat(document.getElementById('nom').value)||0;var w=parseFloat(document.getElementById('walls').value)||0;var f=parseFloat(document.getElementById('floor').value)||0;var r=compute(n,w,f);document.getElementById('rR').textContent=r.range+' m';document.getElementById('rQ').textContent=r.quality;document.getElementById('rTip').textContent=r.range<10?'Move the router closer, use a wired access point, or add a mesh node halfway to the dead zone.':'If the device sits within this range, signal should be usable for most tasks.';document.getElementById('err').textContent=(n>0)?'':'Enter a positive nominal range.';}
+document.getElementById('calc').addEventListener('click',go);
+document.querySelectorAll('.presets button').forEach(function(b){b.addEventListener('click',function(){document.getElementById('nom').value=b.dataset.n;document.getElementById('walls').value=b.dataset.w;go();});});
+document.getElementById('copy').addEventListener('click',function(){navigator.clipboard.writeText(document.getElementById('rR').textContent+' estimated WiFi range');});
+document.getElementById('save').addEventListener('click',function(){var li=document.createElement('li');li.textContent=document.getElementById('rR').textContent;document.getElementById('hist').appendChild(li);});
+go();
+</script>
+</body>
+</html>
